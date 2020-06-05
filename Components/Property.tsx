@@ -2,7 +2,7 @@ import React, { Component, ReactNode, ReactNodeArray, HTMLAttributes, HTMLProps,
 import IContentProperty, { ContentReferenceProperty, ContentAreaProperty } from '../Property';
 import IContent, { IContentData, GenericProperty} from '../Models/IContent';
 import IEpiserverContext from '../Core/IEpiserverContext';
-import { ContentLinkService } from 'Episerver/Models/ContentLink';
+import { ContentLinkService } from '../Models/ContentLink';
 import CmsComponent from './CmsComponent';
 import ContentArea from './ContentArea';
 

@@ -41,7 +41,7 @@ Make sure that your project provides the required peer dependencies for the libr
 |axios|^0.19.2|`npm install --save-prod axios`|
 |core-js|^3.6.5|`npm install --save-prod core-js`<br>`npm install --save-dev @types/core-js`|
 |dotenv|^8.2.0|`npm install --save-prod dotenv`|
-|lodash|^4.17.15|`npm install --save-prod lodash`|
+|lodash|^4.17.15|`npm install --save-prod lodash`<br>`npm install --save-dev @types/lodash`|
 |react|^16.13.1|`npm install --save-prod react`<br>`npm install --save-dev @types/react`|
 |react-dom|^16.13.1|`npm install --save-prod react-dom`<br>`npm install --save-dev @types/react-dom`|
 |react-helmet|^6.0.0|`npm install --save-prod react-helmet`<br>`npm install --save-dev @types/react-helmet`|
