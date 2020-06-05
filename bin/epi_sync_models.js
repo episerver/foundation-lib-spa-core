@@ -2,7 +2,7 @@
 
 const fs = require('fs');
 const path = require("path");
-const StringUtils = require('episerver/Util/StringUtils');
+const StringUtils = require('@episerver/spa-core/Util/StringUtils');
 const dotenv = require('dotenv');
 const axios = require('axios');
 
@@ -54,8 +54,8 @@ class EpiModelSync {
      */
     createAsyncTypeMapper(allItemNames) {
         const mapperFile = path.join(this.getModelPath(), 'TypeMapper.ts');
-        let mapper = "import { IContentType } from 'Episerver/Models/IContent';\nimport EpiserverSpaContext from 'Episerver/Spa';\n";
-        mapper += "import BaseTypeMapper, { TypeMapperTypeInfo } from 'Episerver/Loaders/BaseTypeMapper'\n;"
+        let mapper = "import { IContentType } from '@episerver/spa-core/Models/IContent';\nimport EpiserverSpaContext from '@episerver/spa-core/Spa';\n";
+        mapper += "import BaseTypeMapper, { TypeMapperTypeInfo } from '@episerver/spa-core/Loaders/BaseTypeMapper'\n;"
         //allItemNames.forEach(x => mapper += "import {"+this.getModelInstanceName(x)+"} from './"+ this.getModelInterfaceName(x)+"';\n")
         mapper += "\nexport default class TypeMapper extends BaseTypeMapper {\n";
         mapper += "  protected map : { [type: string]: TypeMapperTypeInfo } = {\n";
@@ -104,10 +104,10 @@ class EpiModelSync {
             const fileName = interfaceName + ".ts";
 
             //Imports
-            let iface = "import Property, {StringProperty, NumberProperty, BooleanProperty, ContentReferenceProperty, ContentAreaProperty, LinkListProperty, LinkProperty} from 'episerver/Property'\n";
-            iface += "import IContent, { BaseIContent } from 'episerver/Models/IContent'\n";
-            iface += "import ContentLink from 'episerver/Models/ContentLink'\n";
-            iface += "import { ComponentProps } from 'episerver/EpiComponent'\n\n"
+            let iface = "import Property, {StringProperty, NumberProperty, BooleanProperty, ContentReferenceProperty, ContentAreaProperty, LinkListProperty, LinkProperty} from '@episerver/spa-core/Property'\n";
+            iface += "import IContent, { BaseIContent } from '@episerver/spa-core/Models/IContent'\n";
+            iface += "import ContentLink from '@episerver/spa-core/Models/ContentLink'\n";
+            iface += "import { ComponentProps } from '@episerver/spa-core/EpiComponent'\n\n"
 
             //Heading
             iface += "/**\n * "+(info.DisplayName ? info.DisplayName : info.Name)+"\n *\n * "+(info.Description ? info.Description : "No Description available.")+"\n *\n * @GUID "+info.GUID+"\n */\n";
