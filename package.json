@@ -1,6 +1,6 @@
 {
     "name": "@episerver/spa-core",
-    "version": "0.0.4",
+    "version": "0.0.5",
     "description": "Episerver React SPA - Core Library",
     "homepage": "https://github.com/episerver/foundation-lib-spa-core",
     "bugs": "https://github.com/episerver/foundation-lib-spa-core/issues",
