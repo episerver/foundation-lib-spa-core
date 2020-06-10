@@ -6,10 +6,10 @@
     "module": "CommonJS",
     "declaration": true,
     "noImplicitAny": true,
-    "outDir": "./lib",
+    "outDir": "./dist",
     "strict": true,
     "moduleResolution": "node",
     "esModuleInterop": true
   },
-  "exclude": ["node_modules", "tests","lib"]
+  "exclude": ["node_modules", "tests", "dist"]
 }

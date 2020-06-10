@@ -1,3 +1,4 @@
+import jQuery from 'jQuery';
 import ViewContext from '../Repository/ViewContext';
 import IEpiserverContext from '../Core/IEpiserverContext';
 import EpiContext from '../Spa';
