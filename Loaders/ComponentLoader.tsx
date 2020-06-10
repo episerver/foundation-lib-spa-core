@@ -123,8 +123,8 @@ export default class ComponentLoader
             /* webpackInclude: /\.tsx$/ */
             /* webpackExclude: /\.noimport\.tsx$/ */
             /* webpackChunkName: "components" */
-            /* webpackMode: "lazy-once" */
-            /* webpackPrefetch: true */
+            /* webpackMode: "lazy" */
+            /* webpackPrefetch: false */
             /* webpackPreload: false */
             "app/Components/" + component)
             .then(exports => {
