@@ -1,17 +1,16 @@
 import { Action, AnyAction } from 'redux';
 import EpiContext from '../Spa';
+import getGlobal from '../AppGlobal';
 
-//Build context
-declare let global: any;
-declare let window: any;
-var ctx: any = window || global || {};
+// Build context
+const ctx = getGlobal();
 
 /**
  * The list of action keys available for the view context
  */
 enum ViewContextActions {
-  INIT = '@@EPI/INIT',
-  UPDATE_PATH = 'UPDATE_PATH',
+    INIT = '@@EPI/INIT',
+    UPDATE_PATH = 'UPDATE_PATH',
 }
 
 interface ViewContextState {
@@ -22,30 +21,30 @@ interface ViewContextState {
  * Action data type for this reducer
  */
 export interface ViewContextAction extends Action<ViewContextActions> {
-  path?: string;
+    path?: string;
 }
 
 export default class ViewContext {
-  public static StateKey: string = 'ViewContext';
+    public static StateKey: string = 'ViewContext';
 
-  /**
-   * Get the state of this reducer from the global state
-   *
-   * @param state
-   */
-  protected static getMyState(state: any): ViewContextState {
-    return state && state[this.StateKey] ? state[this.StateKey] : {};
-  }
+    /**
+     * Get the state of this reducer from the global state
+     *
+     * @param state
+     */
+    protected static getMyState(state: any): ViewContextState {
+        return state && state[this.StateKey] ? state[this.StateKey] : {};
+    }
 
-  /**
-   * Return the redux action to retrieve the current path
-   */
-  public static getCurrentPath(): (dispatch: (action: AnyAction) => AnyAction, getState: () => any) => string {
-    return (dispatch: (action: AnyAction) => AnyAction, getState: () => any): string => {
-      let myState = this.getMyState(getState());
-      return myState && myState.currentPath ? myState.currentPath : '';
-    };
-  }
+    /**
+     * Return the redux action to retrieve the current path
+     */
+    public static getCurrentPath(): (dispatch: (action: AnyAction) => AnyAction, getState: () => any) => string {
+        return (dispatch: (action: AnyAction) => AnyAction, getState: () => any): string => {
+            const myState = this.getMyState(getState());
+            return myState && myState.currentPath ? myState.currentPath : '';
+        };
+    }
 
   /**
    * Update the current path
@@ -55,7 +54,7 @@ export default class ViewContext {
   public static updateCurrentPath(path: string): ViewContextAction {
     return {
       type: ViewContextActions.UPDATE_PATH,
-      path: path,
+      path,
     };
   }
 
@@ -64,14 +63,14 @@ export default class ViewContext {
       case ViewContextActions.INIT:
         return this.buildInitialState();
       case ViewContextActions.UPDATE_PATH:
-        let newState: ViewContextState = Object.assign({}, state, { currentPath: action.path });
-        //window.history.pushState(newState, '', SpaContext.config().basePath + action.path);
+        const newState: ViewContextState = Object.assign({}, state, { currentPath: action.path });
+        // window.history.pushState(newState, '', SpaContext.config().basePath + action.path);
         return newState;
       default:
-        //No action
+        // No action
         break;
     }
-    return Object.assign({}, state); //No action, return unmodified
+    return Object.assign({}, state); // No action, return unmodified
   }
 
   protected static buildInitialState(): ViewContextState {

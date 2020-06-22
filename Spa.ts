@@ -7,12 +7,14 @@ import ViewContext from './Repository/ViewContext';
 // Application context
 import IEpiserverContext from './Core/IEpiserverContext';
 import IServiceContainer, { DefaultServices } from './Core/IServiceContainer';
-import EpiConfig from './AppConfig';
 import ContentDeliveryAPI from './ContentDeliveryAPI';
-import EventEngine, { IEventEngine } from './EventEngine';
+import IEventEngine from './Core/IEventEngine';
+import DefaultEventEngine from './Core/DefaultEventEngine';
 import { ContentReference, ContentLinkService, ContentApiId } from './Models/ContentLink';
 import ComponentLoader from './Loaders/ComponentLoader';
 import AppConfig from './AppConfig';
+import getGlobal from './AppGlobal';
+import PathProvider from './PathProvider';
 
 // Taxonomy
 import IContent from './Models/IContent';
@@ -21,12 +23,9 @@ import History from './Routing/History';
 import StringUtils from './Util/StringUtils';
 
 // Create context
-declare let global: any;
-declare let window: Window;
-const ctx: any = window || global || {};
+const ctx : any = getGlobal();
 ctx.EpiserverSpa = ctx.EpiserverSpa || {};
 ctx.epi = ctx.epi || {};
-declare let epi: any;
 
 interface EpiContentSavedEvent {
   successful: boolean;
@@ -51,15 +50,15 @@ export enum InitStatus
   Initialized
 }
 
-export class EpiserverSpaContext implements IEpiserverContext {
-    protected _config!: EpiConfig;
+export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
+    protected _config!: AppConfig;
     protected _initialized: InitStatus = InitStatus.NotInitialized;
     protected _state!: EnhancedStore;
     protected _isServerSideRendering!: boolean;
     protected _componentLoader!: ComponentLoader;
     protected _serviceContainer!: IServiceContainer;
 
-    public init(config: EpiConfig, serviceContainer: IServiceContainer, isServerSideRendering: boolean = false): void {
+    public init(config: AppConfig, serviceContainer: IServiceContainer, isServerSideRendering: boolean = false): void {
         // Generic init
         this._initialized = InitStatus.Initializing;
         this._isServerSideRendering = isServerSideRendering;
@@ -67,7 +66,8 @@ export class EpiserverSpaContext implements IEpiserverContext {
         this._config = config;
 
         // Register core services
-        this._serviceContainer.addService(DefaultServices.ContentDeliveryApi, new ContentDeliveryAPI({ getCurrentPath(): string { return window.location.pathname; }}, this._config));
+        this._serviceContainer.addService(DefaultServices.ContentDeliveryApi, new ContentDeliveryAPI(this, this._config));
+        this._serviceContainer.addService(DefaultServices.EventEngine, new DefaultEventEngine());
 
         // Have modules add services of their own
         if (this._config.modules) {
@@ -104,43 +104,45 @@ export class EpiserverSpaContext implements IEpiserverContext {
         this._state.dispatch(initAction);
     }
 
-  private _initEditMode() : void
-  {
-    if (!this._isServerSideRendering) {
-      this.events().addListener(
-        'beta/epiReady',
-        'EpiSpaReady',
-        (() => {
-          if (this.isDebugActive())
-            console.info('Episerver Ready, setting edit mode to', this.isInEditMode() ? 'true' : 'false');
-          this.contentDeliveryApi().setInEditMode(this.isInEditMode());
-        }).bind(this),
-        true,
-      );
-      this.events().addListener(
-        'beta/contentSaved',
-        'EpiContentSaved',
-        ((event: EpiContentSavedEvent) => {
-          if (this.isDebugActive()) console.info('Received updated content from the Episerver Shell', event);
-          if (event.successful) {
+    private _initEditMode() : void
+    {
+        if (!this._isServerSideRendering) {
+            this.events().addListener('beta/epiReady', 'BetaEpiReady', this.onEpiReady.bind(this), true);
+            this.events().addListener('beta/contentSaved', 'BetaEpiContentSaved', this.onEpiContentSaved.bind(this), true);
+            this.events().addListener('epiReady', 'EpiReady', this.onEpiReady.bind(this), true);
+            this.events().addListener('contentSaved', 'EpiContentSaved', this.onEpiContentSaved.bind(this), true);
+        }
+    }
+
+    private onEpiContentSaved(event: EpiContentSavedEvent) : void
+    {
+        if (this.isDebugActive()) console.info('Received updated content from the Episerver Shell', event);
+        if (event.successful) {
             const baseId = event.savedContentLink.split('_')[0];
             const baseContent = this.getContentById(baseId);
             if (baseContent) {
-              event.properties.forEach((prop) => {
-                this.dispatch(
-                  IContentActionFactory.updateContentProperty(baseContent as IContent, prop.name, prop.value),
-                );
-              });
+                event.properties.forEach((prop) => {
+                    this.dispatch(
+                        IContentActionFactory.updateContentProperty(baseContent as IContent, prop.name, prop.value),
+                    );
+                });
             }
 
             // Full refresh as we don't support partials yet....
             this.loadContentById(event.savedContentLink);
-          }
-        }).bind(this),
-        true,
-      );
+        }
     }
-  }
+
+    /**
+     * Handler for the postdata message sent by the Epishell to indicate that the environment is now ready
+     * and the edit mode can be detected.
+     */
+    private onEpiReady() : void
+    {
+        if (this.isDebugActive())
+            console.info('Episerver Ready, setting edit mode to', this.isInEditMode() ? 'true' : 'false');
+        this.contentDeliveryApi().setInEditMode(this.isInEditMode());
+    }
 
   public isInitialized(): boolean {
     return this._initialized === InitStatus.Initialized;
@@ -154,7 +156,7 @@ export class EpiserverSpaContext implements IEpiserverContext {
   public isServerSideRendering(): boolean {
     if (this._isServerSideRendering == null) {
       try {
-        this._isServerSideRendering = epi.isServerSideRendering === true;
+        this._isServerSideRendering = ctx.epi.isServerSideRendering === true;
       } catch (e) {
         return false;
       }
@@ -184,7 +186,7 @@ export class EpiserverSpaContext implements IEpiserverContext {
   }
 
   public events(): IEventEngine {
-    return EventEngine;
+    return this._serviceContainer.getService(DefaultServices.EventEngine);
   }
 
   public config(): Readonly<AppConfig> {

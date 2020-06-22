@@ -1,6 +1,7 @@
 export enum DefaultServices
 {
-    ContentDeliveryApi = 'ContentDeliveryAPI'
+    ContentDeliveryApi = 'ContentDeliveryAPI',
+    EventEngine = 'EventEngine'
 }
 
 export default interface IServiceContainer

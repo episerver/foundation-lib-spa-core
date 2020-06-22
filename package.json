@@ -1,62 +1,68 @@
 {
-    "name": "@episerver/spa-core",
-    "version": "0.0.5",
-    "description": "Episerver React SPA - Core Library",
-    "homepage": "https://github.com/episerver/foundation-lib-spa-core",
-    "bugs": "https://github.com/episerver/foundation-lib-spa-core/issues",
-    "private": true,
-    "author": "Episerver SA Team",
-    "license": "Apache-2.0",
-    "peerDependencies": {
-        "@reduxjs/toolkit": "^1.3.6",
-        "axios": "^0.19.2",
-        "core-js": "^3.6.5",
-        "dotenv": "^8.2.0",
-        "lodash": "^4.17.15",
-        "jquery": "^3.5.1",
-        "react": "^16.13.1",
-        "react-dom": "^16.13.1",
-        "react-helmet": "^6.0.0",
-        "react-redux": "^7.2.0",
-        "redux": "^4.0.5"
-    },
-    "devDependencies": {
-        "@reduxjs/toolkit": "^1.3.6",
-        "@types/axios": "^0.14.0",
-        "@types/core-js": "^2.5.3",
-        "@types/jquery": "^3.3.38",
-        "@types/lodash": "^4.14.151",
-        "@types/node": "^12.12.39",
-        "@types/react": "^16.9.35",
-        "@types/react-dom": "^16.9.8",
-        "@types/react-helmet": "^6.0.0",
-        "@types/react-redux": "^7.1.8",
-        "axios": "^0.19.2",
-        "core-js": "^3.6.5",
-        "cpy-cli": "^3.1.1",
-        "dotenv": "^8.2.0",
-        "jquery": "^3.5.1",
-        "lodash": "^4.17.15",
-        "prettier": "^2.0.5",
-        "react": "^16.13.1",
-        "react-dom": "^16.13.1",
-        "react-helmet": "^6.0.0",
-        "react-redux": "^7.2.0",
-        "redux": "^4.0.5",
-        "tslint": "^6.1.2",
-        "tslint-config-prettier": "^1.18.0",
-        "typescript": "^3.9.2"
-    },
-    "scripts": {
-        "build": "tsc && cpy ./Util/* ./dist/ --parents && cpy ./bin/* ./dist/ --parents && cpy ./package.json ./dist/",
-        "format": "prettier --write \"src/**/*.ts\" \"src/**/*.js\"",
-        "lint": "tslint -p tsconfig.json"
-    },
-    "main": "index.ts",
-    "directories": {
-        "bin": "./bin/"
-    },
-    "bin": {
-        "epi-sync-models": "./bin/epi_sync_models.js"
-    }
+  "author": {
+    "name": "Episerver SA Team"
+  },
+  "bin": {
+    "epi-sync-models": "bin/epi_sync_models.js"
+  },
+  "bugs": {
+    "url": "https://github.com/episerver/foundation-lib-spa-core/issues"
+  },
+  "bundleDependencies": false,
+  "deprecated": false,
+  "description": "Episerver React SPA - Core Library",
+  "devDependencies": {
+    "@reduxjs/toolkit": "^1.3.6",
+    "@types/axios": "^0.14.0",
+    "@types/core-js": "^2.5.3",
+    "@types/jquery": "^3.3.38",
+    "@types/lodash": "^4.14.151",
+    "@types/node": "^12.12.39",
+    "@types/react": "^16.9.35",
+    "@types/react-dom": "^16.9.8",
+    "@types/react-helmet": "^6.0.0",
+    "@types/react-redux": "^7.1.8",
+    "axios": "^0.19.2",
+    "core-js": "^3.6.5",
+    "cpy-cli": "^3.1.1",
+    "dotenv": "^8.2.0",
+    "jquery": "^3.5.1",
+    "lodash": "^4.17.15",
+    "prettier": "^2.0.5",
+    "react": "^16.13.1",
+    "react-dom": "^16.13.1",
+    "react-helmet": "^6.0.0",
+    "react-redux": "^7.2.0",
+    "redux": "^4.0.5",
+    "tslint": "^6.1.2",
+    "tslint-config-prettier": "^1.18.0",
+    "typescript": "^3.9.2"
+  },
+  "directories": {
+    "bin": "./bin/"
+  },
+  "homepage": "https://github.com/episerver/foundation-lib-spa-core",
+  "license": "Apache-2.0",
+  "main": "index.ts",
+  "name": "@episerver/spa-core",
+  "peerDependencies": {
+    "@reduxjs/toolkit": "^1.3.6",
+    "axios": "^0.19.2",
+    "core-js": "^3.6.5",
+    "dotenv": "^8.2.0",
+    "lodash": "^4.17.15",
+    "jquery": "^3.5.1",
+    "react": "^16.13.1",
+    "react-dom": "^16.13.1",
+    "react-helmet": "^6.0.0",
+    "react-redux": "^7.2.0",
+    "redux": "^4.0.5"
+  },
+  "private": true,
+  "scripts": {
+    "build": "tsc && cpy ./Util/* ./dist/ --parents && cpy ./bin/* ./dist/ --parents && cpy ./package.json ./dist/",
+    "format": "prettier --write \"src/**/*.ts\" \"src/**/*.js\"",
+    "lint": "tslint -p tsconfig.json"
+  },
+  "version": "0.0.5"
 }

@@ -1,4 +1,3 @@
-
 // External libraries
 import { EnhancedStore } from '@reduxjs/toolkit';
 
@@ -6,7 +5,7 @@ import { EnhancedStore } from '@reduxjs/toolkit';
 import IServiceContainer from './IServiceContainer';
 import EpiConfig from '../AppConfig';
 import ContentDeliveryAPI from '../ContentDeliveryAPI';
-import { IEventEngine } from '../EventEngine';
+import IEventEngine from './IEventEngine';
 import { DispatchableMethod, RepositoryAction } from '../Repository/AbstractRepostory';
 import { ContentReference, ContentApiId } from '../Models/ContentLink';
 import ComponentLoader from '../Loaders/ComponentLoader';
