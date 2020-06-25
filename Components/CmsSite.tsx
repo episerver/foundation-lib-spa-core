@@ -25,6 +25,7 @@ declare let __INITIAL__DATA__ : ServerContext;
 interface CmsSiteProps {
     context: IEpiserverContext
     path?: string
+    pageData?: ServerContext
 }
 
 /**
@@ -39,8 +40,18 @@ interface CmsSiteState {
  */
 export default class CmsSite extends Component<CmsSiteProps, CmsSiteState>
 {
+    private _myInitialData ?: ServerContext = undefined;
+
     constructor(props: CmsSiteProps) {
         super(props);
+        if (this.props.pageData) {
+            this._myInitialData = this.props.pageData;
+        } else {
+            try {
+                this._myInitialData = __INITIAL__DATA__;
+            } catch (e) { /* Ignored on purpose */ }
+        }
+
         this.state = { isStateLoading: false }
     }
 
@@ -76,9 +87,11 @@ export default class CmsSite extends Component<CmsSiteProps, CmsSiteState>
 
     public render() : ReactNode {
         if (this.props.context.isServerSideRendering()) {
+            if (this.props.context.isDebugActive()) console.log(' - Rendering disconnected layout');
             return this.renderDisconnected();
+        } else {
+            return this.renderConnected();
         }
-        return this.renderConnected();
     }
 
     protected renderDisconnected() : ReactNodeArray
@@ -87,7 +100,11 @@ export default class CmsSite extends Component<CmsSiteProps, CmsSiteState>
         const myStartPage : IContent = this.getInitialStartPage();
         const myContentLink : ContentLink = this.getInitialContentLink();
         const myContent : IContent = this.getInitialIContent();
-        return [<Helmet key="main-helmet-container"/>, <MyLayout key="main-layout" context={this.props.context} path={ __INITIAL__DATA__.Path } page={ myContentLink } expandedValue={ myContent } startPage={ myStartPage } />]
+        const myPath : string = this.getInitialPath();
+        return [
+            <Helmet   key="main-helmet" />,
+            <MyLayout key="main-layout" context={ this.props.context } path={ myPath } page={ myContentLink } expandedValue={ myContent } startPage={ myStartPage } />
+        ]
     }
 
     /**
@@ -174,33 +191,53 @@ export default class CmsSite extends Component<CmsSiteProps, CmsSiteState>
 
     protected getInitialIContent() : IContent
     {
-        if (isSerializedIContent(__INITIAL__DATA__.IContent)) {
-            return JSON.parse(__INITIAL__DATA__.IContent);
+        if (!this._myInitialData) {
+            throw 'No initial data found';
         }
-        return __INITIAL__DATA__.IContent;
+        if (isSerializedIContent(this._myInitialData.IContent)) {
+            return JSON.parse(this._myInitialData.IContent);
+        }
+        return this._myInitialData.IContent;
     }
 
     protected getInitialStartPage() : IContent
     {
-        if (isSerializedIContent(__INITIAL__DATA__.StartPageData)) {
-            return JSON.parse(__INITIAL__DATA__.StartPageData);
+        if (!this._myInitialData) {
+            throw 'No initial data found';
         }
-        return __INITIAL__DATA__.StartPageData;
+        if (isSerializedIContent(this._myInitialData.StartPageData)) {
+            return JSON.parse(this._myInitialData.StartPageData);
+        }
+        return this._myInitialData.StartPageData;
     }
 
     protected getInitialWebsite() : Website
     {
-        if (isSerializedWebsite(__INITIAL__DATA__.Website)) {
-            return JSON.parse(__INITIAL__DATA__.Website);
+        if (!this._myInitialData) {
+            throw 'No initial data found';
         }
-        return __INITIAL__DATA__.Website;
+        if (isSerializedWebsite(this._myInitialData.Website)) {
+            return JSON.parse(this._myInitialData.Website);
+        }
+        return this._myInitialData.Website;
     }
 
     protected getInitialContentLink() : ContentLink
     {
-        if (isSerializedContentLink(__INITIAL__DATA__.ContentLink)) {
-            return JSON.parse(__INITIAL__DATA__.ContentLink);
+        if (!this._myInitialData) {
+            throw 'No initial data found';
         }
-        return __INITIAL__DATA__.ContentLink;
+        if (isSerializedContentLink(this._myInitialData.ContentLink)) {
+            return JSON.parse(this._myInitialData.ContentLink);
+        }
+        return this._myInitialData.ContentLink;
+    }
+
+    protected getInitialPath() : string
+    {
+        if (!this._myInitialData) {
+            throw 'No initial data found';
+        }
+        return this._myInitialData.Path;
     }
 }

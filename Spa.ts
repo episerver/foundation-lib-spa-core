@@ -18,6 +18,7 @@ import PathProvider from './PathProvider';
 
 // Taxonomy
 import IContent from './Models/IContent';
+import ErrorPage from './Models/ErrorPage';
 import Website from './Models/Website';
 import History from './Routing/History';
 import StringUtils from './Util/StringUtils';
@@ -346,6 +347,9 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
   }
 
   public getRoutedContent(): IContent {
+    if (this.isServerSideRendering()) {
+      return ErrorPage.Error404;
+    }
     const c = this.getContentByPath(this.getCurrentPath());
     if (!c) {
       throw new Error("There's no currently routed content");

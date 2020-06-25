@@ -1,7 +1,7 @@
 import React, { Component, ReactNode, ReactNodeArray } from 'react';
 import IContent from '../Models/IContent';
 import ContentLink from '../Models/ContentLink';
-import CmsComponent from './CmsComponent';
+import EpiComponent, { EpiComponentType } from './EpiComponent';
 import Spinner, { SpinnerProps } from './Spinner';
 import IEpiserverContext from '../Core/IEpiserverContext';
 
@@ -77,12 +77,13 @@ export default class Layout extends Component<LayoutProps, LayoutState> implemen
     public renderLayout() : ReactNodeArray | ReactNode | null
     {
         let contentLink : ContentLink;
+        const ConnectedEpiComponent : EpiComponentType = EpiComponent.CreateComponent(this.props.context);
         if (this.props.page) {
             contentLink = this.props.page as ContentLink;
-            return <CmsComponent context={this.props.context} contentLink={ contentLink } expandedValue={this.props.expandedValue} actionName={this.props.actionName} actionData={this.props.actionData} />
+            return <ConnectedEpiComponent context={this.props.context} contentLink={ contentLink } expandedValue={this.props.expandedValue} actionName={this.props.actionName} actionData={this.props.actionData} />
         } else if (this.props.expandedValue) {
             contentLink = (this.props.expandedValue as IContent).contentLink;
-            return <CmsComponent context={this.props.context} contentLink={ contentLink } expandedValue={this.props.expandedValue} actionName={this.props.actionName} actionData={this.props.actionData} />
+            return <ConnectedEpiComponent context={this.props.context} contentLink={ contentLink } expandedValue={this.props.expandedValue} actionName={this.props.actionName} actionData={this.props.actionData} />
         }
         return this.renderEmpty();
     }

@@ -1,3 +1,9 @@
+// Set SSR
+import getGlobal from '@episerver/spa-core/AppGlobal';
+const ctx = getGlobal();
+ctx.epi = ctx.epi || {};
+ctx.epi.isServerSideRendering = true;
+
 // Global Libraries && Poly-fills
 import 'core-js';
 import ReactDOMServer from 'react-dom/server';

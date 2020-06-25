@@ -330,7 +330,7 @@ export default class ContentDeliveryAPI {
       },
       error: {
         propertyDataType: 'Unknown',
-        value: reason,
+        value: '', //reason,
       },
     };
   }

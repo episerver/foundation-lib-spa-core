@@ -1,6 +1,6 @@
 import ContentLink from '../Models/ContentLink';
 import React, { Component, ReactNode, ReactElement, ReactNodeArray } from 'react';
-import CmsComponent from './CmsComponent';
+import EpiComponent, { EpiComponentType } from './EpiComponent';
 import { ContentAreaProperty } from '../Property';
 import IEpiserverContext from '../Core/IEpiserverContext';
 
@@ -40,7 +40,7 @@ export interface ContentAreaSiteConfig {
 
     /**
      * Set the type of component for the items within this area, this gets passed to the 
-     * contentType attribute of the CmsComponent. The CmsComponent will prefix the reported 
+     * contentType attribute of the EpiComponent. The EpiComponent will prefix the reported 
      * type from Episerver with this value, if it does not start with this value already.
      * 
      * Defaults to: Block
@@ -171,7 +171,8 @@ export default class ContentArea extends Component<ContentAreaProps>
         }
 
         // Build component
-        const component = <CmsComponent context={this.props.context} contentLink={ item.contentLink } contentType={ this.getComponentType() } key={ item.contentLink.guidValue } expandedValue={ expandedValue } />;
+        const ConnectedEpiComponent : EpiComponentType = EpiComponent.CreateComponent(this.props.context);
+        const component = <ConnectedEpiComponent context={this.props.context} contentLink={ item.contentLink } contentType={ this.getComponentType() } key={ item.contentLink.guidValue } expandedValue={ expandedValue } />;
 
         // Return if no wrapping
         if (this.props.noWrap === true) {

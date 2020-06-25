@@ -28,8 +28,11 @@ var StringUtils = {
     if (typeof char != 'string' || char.length < 1) {
       throw 'Char must be a string of minimal one char';
     }
+    if (typeof subject == 'undefined' || subject === null) {
+      return '';
+    }
     if (typeof subject != 'string') {
-      throw 'Subject must be a string';
+      throw 'Subject must be a string, received: ' + typeof subject;
     }
 
     if (char.length > subject.length) {
@@ -55,8 +58,11 @@ var StringUtils = {
     if (typeof char != 'string' || char.length < 1) {
       throw 'Char must be a string of minimal one char';
     }
+    if (typeof subject == 'undefined' || subject === null) {
+      return '';
+    }
     if (typeof subject != 'string') {
-      throw 'Subject must be a string';
+      throw 'Subject must be a string, received: ' + typeof subject;
     }
 
     if (char.length > subject.length) {

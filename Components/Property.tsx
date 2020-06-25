@@ -3,7 +3,7 @@ import IContentProperty, { ContentReferenceProperty, ContentAreaProperty } from 
 import IContent, { IContentData, GenericProperty} from '../Models/IContent';
 import IEpiserverContext from '../Core/IEpiserverContext';
 import { ContentLinkService } from '../Models/ContentLink';
-import CmsComponent from './CmsComponent';
+import EpiComponent, { EpiComponentType } from './EpiComponent';
 import ContentArea from './ContentArea';
 
 export interface PropertyProps<T extends IContent> extends HTMLAttributes<HTMLElement>
@@ -76,7 +76,8 @@ export default class Property<T extends IContent> extends Component<PropertyProp
             case 'PropertyPageReference':
                 const link = (prop as ContentReferenceProperty).value;
                 const expValue = (prop as ContentReferenceProperty).expandedValue;
-                const item = <CmsComponent contentLink={link} expandedValue={expValue} context={this.props.context} className={this.props.className} />
+                const ConnectedEpiComponent : EpiComponentType = EpiComponent.CreateComponent(this.props.context);
+                const item = <ConnectedEpiComponent contentLink={link} expandedValue={expValue} context={this.props.context} className={this.props.className} />
                 return this.isEditable() ? <div data-epi-edit={ this.props.field }>{item}</div> : item;
             case 'PropertyContentArea':
                 return this.isEditable() ? 
