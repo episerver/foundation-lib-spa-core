@@ -296,10 +296,8 @@ export default class EpiComponent extends Component<EpiComponentProps, EpiCompon
 	public static CreateComponent(context: IEpiserverContext) : EpiComponentType
 	{
 		if (context.isServerSideRendering()) {
-			if (context.isDebugActive()) console.log(' - Using disconnected EpiComponent');
 			return EpiComponent;
 		}
-		if (context.isDebugActive()) console.log(' - Using connected EpiComponent');
 		return connect((state: any, ownProps: EpiComponentProps) : EpiComponentProps => {
 			const id : string = ContentLinkService.createApiId(ownProps.contentLink);
 			if (state.iContentRepo.items[id]) {
