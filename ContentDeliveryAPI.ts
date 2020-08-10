@@ -20,6 +20,23 @@ export function PathResponseIsIContent(iContent: PathResponse): iContent is ICon
   }
   return true;
 }
+export function PathResponseIsActionResponse<P extends any = any>(actionResponse: PathResponse): actionResponse is ActionResponse<P>
+{
+  if ((actionResponse as ActionResponse<P>).actionName) {
+    return true;
+  }
+  return false;
+}
+function getIContentFromPathResponse(response: PathResponse) : IContent | null
+{
+  if (PathResponseIsActionResponse(response)) {
+    return response.currentContent;
+  }
+  if (PathResponseIsIContent(response)) {
+    return response;
+  }
+  return null;
+}
 
 export default class ContentDeliveryAPI {
   protected config: AppConfig;
@@ -160,9 +177,9 @@ export default class ContentDeliveryAPI {
     if (this.config.autoExpandRequests) {
       serviceUrl.searchParams.append('expand', '*');
     }
-    return this.doRequest<IContent>(serviceUrl.href).catch((r) => {
+    return this.doRequest<PathResponse>(serviceUrl.href).catch((r) => {
       return this.buildNetworkError(r);
-    });
+    }).then(r => getIContentFromPathResponse(r));
   }
 
   public async getContentsByRefs(refs: Array<string>): Promise<Array<IContent>> {

@@ -1,5 +1,5 @@
 // Set SSR
-import getGlobal from '@episerver/spa-core/AppGlobal';
+import getGlobal from './AppGlobal';
 const ctx = getGlobal();
 ctx.epi = ctx.epi || {};
 ctx.epi.isServerSideRendering = true;
@@ -11,6 +11,7 @@ import { Helmet } from 'react-helmet';
 import React from 'react';
 
 // Episerver Libraries
+import IServiceContainer from './Core/IServiceContainer';
 import DefaultServiceContainer from './Core/DefaultServiceContainer'; 
 import EpiSpaContext from './Spa';
 import CmsSite from './Components/CmsSite';
@@ -19,10 +20,10 @@ import AppConfig from './AppConfig';
 // Episerver SPA/PWA Server Side Rendering libs
 import SSRResponse from './ServerSideRendering/Response';
 
-export default function RenderServerSide(config: AppConfig): SSRResponse {
+export default function RenderServerSide(config: AppConfig, serviceContainer?: IServiceContainer): SSRResponse {
     // Initialize Episerver Context, for Server Side Rendering
     // EpiContext.Instance = new SSRContext(new SSRPathProvider());
-    const serviceContainer = new DefaultServiceContainer();
+    serviceContainer = serviceContainer || new DefaultServiceContainer();
     config.enableSpinner = false;
     config.noAjax = true;
     config.enableDebug = true;

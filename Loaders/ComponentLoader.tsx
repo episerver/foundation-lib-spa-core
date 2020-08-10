@@ -39,7 +39,7 @@ export default class ComponentLoader
      * The list of promises currenlty being awaited by this loader, prior
      * to adding them to the cache.
      */
-    protected loading : {[component: string]: TComponentTypePromise } = {};
+    protected loading : {[component: string]: Promise<ComponentType<any>> } = {};
 
     /**
      * Create a new instance and populate the cache with the data prepared
@@ -75,10 +75,10 @@ export default class ComponentLoader
      * @param   component       The name/path of the component
      * @param   throwOnUnknown  Wether or not an error must be thrown if the component is not in the cache
      */
-    public getPreLoadedType(component: string, throwOnUnknown: boolean = true) : TComponentType | null
+    public getPreLoadedType<P = ComponentProps<IContent>>(component: string, throwOnUnknown: boolean = true) : ComponentType<P> | null
     {
         if (this.isPreLoaded(component)) {
-            let c : TComponentType = this.cache["app/Components/" + component];
+            let c : ComponentType<P> = this.cache["app/Components/" + component];
             if (!c.displayName) c.displayName = component;
             return c;
         }
@@ -97,10 +97,10 @@ export default class ComponentLoader
         throw `The component ${component} has not been pre-loaded!`;
     }
 
-    public LoadType(component: string) : TComponentTypePromise
+    public LoadType<P = ComponentProps<IContent>>(component: string) : Promise<ComponentType<P>>
     {
         if (this.isPreLoaded(component)) {
-            return Promise.resolve<TComponentType>(this.getPreLoadedType(component) as TComponentType);
+            return Promise.resolve<ComponentType<P>>(this.getPreLoadedType(component) as ComponentType<P>);
         }
         try {
             if (this.loading[component]) {
@@ -142,9 +142,9 @@ export default class ComponentLoader
         return type;
     }
 
-    public async LoadComponent(component: string, props: ComponentProps<IContent>): Promise<ReactNode>
+    public async LoadComponent<P = ComponentProps<IContent>>(component: string, props: P): Promise<React.ReactElement<P, any>>
     {
-        let type = await this.LoadType(component);
+        let type = await this.LoadType<P>(component);
         return React.createElement(type, props);
     }
 };

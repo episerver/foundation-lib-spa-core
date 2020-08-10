@@ -1,23 +1,21 @@
 // Import libraries
-import React, {ReactNode, ReactNodeArray, Component} from 'react';
+import React, {ReactNode, Component, PropsWithChildren} from 'react';
 import {Helmet} from 'react-helmet';
 import { Provider, connect } from 'react-redux';
+//import { BrowserRouter as Router } from 'react-router-dom';
 
 // Import Episerver CMS
 import Layout, { LayoutComponent, LayoutProps } from './Layout';
 import IContent from '../Models/IContent';
 import ContentLink from '../Models/ContentLink';
-import Website from '../Models/Website';
 import IEpiserverContext from '../Core/IEpiserverContext';
-import IContentRepository, { IContentRepoState, IContentActionFactory } from '../Repository/IContent';
-import ServerContext, { isSerializedIContent, isSerializedWebsite, isSerializedContentLink } from '../ServerSideRendering/ServerContext';
+import { IContentActionFactory } from '../Repository/IContent';
+import ServerContext from '../ServerSideRendering/ServerContext';
 import Spinner from './Spinner';
+import { DefaultServices } from '../Core/IServiceContainer';
+import * as EpiSpaRouter from '../Routing/EpiSpaRouter';
+import AppConfig from '../AppConfig';
 
-/**
- * Declare the context created by the Episerver Javascript ViewEngine, for both
- * initial data as well as server side rendering.
- */
-declare let __INITIAL__DATA__ : ServerContext;
 
 /**
  * Define the property structure for the CmsSite component
@@ -25,42 +23,31 @@ declare let __INITIAL__DATA__ : ServerContext;
 interface CmsSiteProps {
     context: IEpiserverContext
     path?: string
-    pageData?: ServerContext
+    serverContext?: ServerContext
 }
 
-/**
- * The current state of the CmsSite
- */
 interface CmsSiteState {
-    isStateLoading: boolean;
+    isInitializing: boolean
 }
 
 /**
  * CmsSite Container component
  */
-export default class CmsSite extends Component<CmsSiteProps, CmsSiteState>
+export default class CmsSite extends Component<PropsWithChildren<CmsSiteProps>, CmsSiteState>
 {
-    private _myInitialData ?: ServerContext = undefined;
-
-    constructor(props: CmsSiteProps) {
+    constructor(props: PropsWithChildren<CmsSiteProps>) {
         super(props);
-        if (this.props.pageData) {
-            this._myInitialData = this.props.pageData;
-        } else {
-            try {
-                this._myInitialData = __INITIAL__DATA__;
-            } catch (e) { /* Ignored on purpose */ }
+        this.state = {
+            isInitializing: false
         }
-
-        this.state = { isStateLoading: false }
     }
 
     public componentDidMount() : void
     {
-        const me : CmsSite = this;
-        this.setState({isStateLoading: true});
+        if (this.isStateValid()) return;
+        this.setState({isInitializing: true});
         this.initializeWebsiteAndPage().finally(() => {
-            me.setState({isStateLoading: false});
+            this.setState({isInitializing: false});
         });
     }
 
@@ -86,38 +73,35 @@ export default class CmsSite extends Component<CmsSiteProps, CmsSiteState>
     }
 
     public render() : ReactNode {
-        if (this.props.context.isServerSideRendering()) {
-            if (this.props.context.isDebugActive()) console.log(' - Rendering disconnected layout');
-            return this.renderDisconnected();
-        } else {
-            return this.renderConnected();
-        }
-    }
-
-    protected renderDisconnected() : ReactNodeArray
-    {
-        const MyLayout = this.getLayout();
-        const myStartPage : IContent = this.getInitialStartPage();
-        const myContentLink : ContentLink = this.getInitialContentLink();
-        const myContent : IContent = this.getInitialIContent();
-        const myPath : string = this.getInitialPath();
-        return [
-            <Helmet   key="main-helmet" />,
-            <MyLayout key="main-layout" context={ this.props.context } path={ myPath } page={ myContentLink } expandedValue={ myContent } startPage={ myStartPage } />
-        ]
-    }
-
-    /**
-     * Render the entire site using a layout connected to the Redux store
-     */
-    protected renderConnected() : ReactNode
-    {
-        if (this.isStateValid()) {
-            const ConnectedLayout = connect(this.buildLayoutPropsFromState.bind(this))(this.getLayout());
-            return <Provider store={ this.props.context.getStore() }><Helmet/><ConnectedLayout context={this.props.context} /></Provider>;
-        } else {
+        if (!this.isStateValid()) {
             return Spinner.CreateInstance({});
         }
+        const config = this.props.context.serviceContainer.getService<AppConfig>(DefaultServices.Config);
+        let props : LayoutProps = { context: this.props.context };
+        let MyLayout : LayoutComponent = this.getLayout();
+        if (this.props.context.isServerSideRendering()) {
+            if (this.props.context.isDebugActive()) console.log(' - Server side: building layout props');
+            props = {
+                ...props,
+                path: this.props.context.getCurrentPath(),
+                page: this.props.context.getRoutedContent().contentLink,
+                expandedValue: this.props.context.getRoutedContent(),
+                startPage: this.props.context.getContentByRef('startPage') as IContent
+            }
+        } else {
+            if (this.props.context.isDebugActive()) console.log(' - Browser side: connecting layout');
+            MyLayout = connect(this.buildLayoutPropsFromState.bind(this))(MyLayout) as unknown as LayoutComponent;
+        }
+
+        return <Provider store={ this.props.context.getStore() }>
+            <EpiSpaRouter.Router>
+                <Helmet />
+                <MyLayout { ...props }>
+                    <EpiSpaRouter.RoutedContent config={ config.routes || [] } keyPrefix="CmsSite-RoutedContent" />
+                    { this.props.children }
+                </MyLayout>
+            </EpiSpaRouter.Router>
+        </Provider>
     }
 
     protected buildLayoutPropsFromState(state: any, ownProps: LayoutProps) : LayoutProps
@@ -153,29 +137,29 @@ export default class CmsSite extends Component<CmsSiteProps, CmsSiteState>
 
     protected isStateValid() : boolean
     {
-        return this.hasWebsite() && this.hasStartPage();
+        return this.state.isInitializing === false && this.hasWebsite() && this.hasStartPage();
     }
 
     protected hasStartPage() : boolean
     {
-        const totalState = this.props.context.getStore().getState();
-        const iContentState : IContentRepoState = totalState[IContentRepository.StateKey];
-
-        const spId = iContentState.refs.startPage;
-        if (spId && iContentState.items[spId]) {
-            return true;
-        }
-        return false;
+        return this.props.context.getContentByRef('startPage') ? true : false;
     }
 
     protected hasWebsite() : boolean
     {
-        const totalState = this.props.context.getStore().getState();
-        const iContentState : IContentRepoState = totalState[IContentRepository.StateKey];
-        
-        if (!iContentState.website) return false;
+        return this.props.context.getCurrentWebsite() ? true : false;
+    }
 
-        return true;
+    protected hasPath() : boolean
+    {
+        let isPath : boolean = false;
+        try {
+            const p = this.props.context.getCurrentPath();
+            isPath = typeof(p) === "string" && p.length >= 0;
+        } catch (e) {
+            return false;
+        }
+        return isPath;
     }
 
     /**
@@ -187,57 +171,5 @@ export default class CmsSite extends Component<CmsSiteProps, CmsSiteState>
             return this.props.context.config().layout;
         }
         return Layout;
-    }
-
-    protected getInitialIContent() : IContent
-    {
-        if (!this._myInitialData) {
-            throw 'No initial data found';
-        }
-        if (isSerializedIContent(this._myInitialData.IContent)) {
-            return JSON.parse(this._myInitialData.IContent);
-        }
-        return this._myInitialData.IContent;
-    }
-
-    protected getInitialStartPage() : IContent
-    {
-        if (!this._myInitialData) {
-            throw 'No initial data found';
-        }
-        if (isSerializedIContent(this._myInitialData.StartPageData)) {
-            return JSON.parse(this._myInitialData.StartPageData);
-        }
-        return this._myInitialData.StartPageData;
-    }
-
-    protected getInitialWebsite() : Website
-    {
-        if (!this._myInitialData) {
-            throw 'No initial data found';
-        }
-        if (isSerializedWebsite(this._myInitialData.Website)) {
-            return JSON.parse(this._myInitialData.Website);
-        }
-        return this._myInitialData.Website;
-    }
-
-    protected getInitialContentLink() : ContentLink
-    {
-        if (!this._myInitialData) {
-            throw 'No initial data found';
-        }
-        if (isSerializedContentLink(this._myInitialData.ContentLink)) {
-            return JSON.parse(this._myInitialData.ContentLink);
-        }
-        return this._myInitialData.ContentLink;
-    }
-
-    protected getInitialPath() : string
-    {
-        if (!this._myInitialData) {
-            throw 'No initial data found';
-        }
-        return this._myInitialData.Path;
     }
 }

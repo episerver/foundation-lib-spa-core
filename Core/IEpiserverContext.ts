@@ -18,6 +18,11 @@ import Website from '../Models/Website';
  * The context for an Episerver SPA, enabling access to the core logic of the SPA.
  */
 export default interface IEpiserverContext {
+
+    readonly serviceContainer: IServiceContainer;
+
+    readonly contentStorage : ContentDeliveryAPI;
+
     /**
      * Perform the initialization of the context from the configuration of the application
      *
@@ -82,17 +87,33 @@ export default interface IEpiserverContext {
     /**
      * Navigate to a specific item
      *
+     * @deprecated
      * @param item
      */
     navigateTo(item: ContentReference): void;
   
     /**
-     * Transform a path to a full URL that can be used as href parameter for a
-     * link tag.
+     * Transform a path to a full URL that can be used to reference the Episerver instance
      *
      * @param path
      */
     getEpiserverUrl(path: ContentReference, action?: string): string;
+
+    /**
+     * Transform a content reference to a SPA Route
+     * 
+     * @param path The content to generate the route within the spa for
+     */
+    getSpaRoute(path: ContentReference) : string;
+
+    /**
+     * The path to navigate to, using the history object (using the useHistory hook of react-router)
+     * 
+     * @param {ContentReference} content The content to build the path for
+     * @param {string} action  The action to run on the content, if any
+     * @returns {string}
+     */
+    buildPath(content: ContentReference, action?: string): string;
   
     /**
      * Retrieve an item from the state based upon it's GUID, will return

@@ -1,7 +1,22 @@
+import IEpiserverContext from './IEpiserverContext';
+
 export enum DefaultServices
 {
     ContentDeliveryApi = 'ContentDeliveryAPI',
-    EventEngine = 'EventEngine'
+    ExecutionContext = 'ExecutionContext',
+    EventEngine = 'EventEngine',
+    Router = 'Router',
+    Config = 'Config',
+    Context = 'Context',
+    ComponentLoader = 'ComponentLoader'
+}
+
+export interface IContainerAwareService {
+    setServiceContainer(container: IServiceContainer) : void;
+}
+
+export interface IContextAwareService {
+    setContext(container: IEpiserverContext) : void;
 }
 
 export default interface IServiceContainer

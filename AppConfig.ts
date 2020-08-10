@@ -3,6 +3,7 @@ import { LayoutComponent } from './Components/Layout';
 import { ContentAreaSiteConfig } from './Components/ContentArea';
 import { IComponentPreloadList } from './Loaders/ComponentPreLoader';
 import IInitializableModule from './Core/IInitializableModule';
+import IRouteConfig from './Routing/IRouteConfig';
 
 export default interface AppConfig {
   /**
@@ -79,4 +80,9 @@ export default interface AppConfig {
    * The list of module initializers to included into the bootstrapping process
    */
   modules ?: IInitializableModule[];
+
+  /**
+   * The list of routes to be pre-pended to the Episerver route-handler (e.g. the * handler)
+   */
+  routes ?: IRouteConfig
 }

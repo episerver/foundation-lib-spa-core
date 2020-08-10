@@ -19,7 +19,7 @@ interface EpiComponentState {
 	componentIsUpdating: boolean
 }
 
-interface EpiComponentProps {
+export interface EpiComponentProps {
 	/**
 	 * The link to the content to be rendered in this component
 	 */
@@ -67,7 +67,7 @@ interface EpiComponentProps {
 	path?: string
 };
 
-export type EpiComponentType = new (props : EpiComponentProps) => EpiComponent
+export type EpiComponentType<P extends EpiComponentProps = EpiComponentProps> = ComponentType<P>
 
 /**
  * The CMS Component provides the asynchronous loading of content and components needed to render an IContent

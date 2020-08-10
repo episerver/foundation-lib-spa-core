@@ -99,8 +99,8 @@ export abstract class BaseEpiComponent<P extends ComponentProps<IContent>, S = {
         super(props);
         this.currentComponentId = this.props.data.contentLink.id;
         this.currentComponentGuid = this.props.data.contentLink.guidValue;
-        if (this.getInitialState) this.state = this.getInitialState();
         if (this.componentInitialize) this.componentInitialize();
+        if (this.getInitialState) this.state = this.getInitialState();
     }
 
     protected getInitialState?(): S;

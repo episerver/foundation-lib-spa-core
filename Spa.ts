@@ -15,13 +15,15 @@ import ComponentLoader from './Loaders/ComponentLoader';
 import AppConfig from './AppConfig';
 import getGlobal from './AppGlobal';
 import PathProvider from './PathProvider';
+import IExecutionContext from './Core/IExecutionContext';
+import RoutingModule from './Routing/RoutingModule';
 
 // Taxonomy
 import IContent from './Models/IContent';
 import ErrorPage from './Models/ErrorPage';
 import Website from './Models/Website';
-import History from './Routing/History';
 import StringUtils from './Util/StringUtils';
+import IInitializableModule from './Core/IInitializableModule';
 
 // Create context
 const ctx : any = getGlobal();
@@ -58,6 +60,17 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
     protected _isServerSideRendering!: boolean;
     protected _componentLoader!: ComponentLoader;
     protected _serviceContainer!: IServiceContainer;
+    protected _modules: IInitializableModule[] = [];
+
+    public get serviceContainer() : IServiceContainer
+    {
+        return this._serviceContainer;
+    }
+
+    public get contentStorage() : ContentDeliveryAPI
+    {
+        return this.serviceContainer.getService<ContentDeliveryAPI>(DefaultServices.ContentDeliveryApi);
+    }
 
     public init(config: AppConfig, serviceContainer: IServiceContainer, isServerSideRendering: boolean = false): void {
         // Generic init
@@ -65,15 +78,27 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
         this._isServerSideRendering = isServerSideRendering;
         this._serviceContainer = serviceContainer;
         this._config = config;
+        const executionContext : IExecutionContext = {
+          isServerSideRendering: isServerSideRendering
+        }
+
+        //Create module list
+        this._modules.push(new RoutingModule());
+        if (this._config.modules) {
+          this._modules = this._modules.concat(this._config.modules);
+        }
+        console.debug('Spa modules:', this._modules.map((m) => m.GetName()));
 
         // Register core services
+        this._serviceContainer.addService(DefaultServices.Context, this);
+        this._serviceContainer.addService(DefaultServices.Config, this._config);
+        this._serviceContainer.addService(DefaultServices.ExecutionContext, executionContext);
         this._serviceContainer.addService(DefaultServices.ContentDeliveryApi, new ContentDeliveryAPI(this, this._config));
         this._serviceContainer.addService(DefaultServices.EventEngine, new DefaultEventEngine());
+        this._serviceContainer.addService(DefaultServices.ComponentLoader, new ComponentLoader());
 
         // Have modules add services of their own
-        if (this._config.modules) {
-            this._config.modules.forEach(x => x.ConfigureContainer(this._serviceContainer));
-        }
+        this._modules.forEach(x => x.ConfigureContainer(this._serviceContainer));
 
         // Redux init
         this._initRedux();
@@ -82,10 +107,7 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
         this._initEditMode();
 
         // Run module startup logic
-        if (this._config.modules) {
-            const me = this;
-            this._config.modules.forEach(x => x.StartModule(me));
-        }
+        this._modules.forEach(x => x.StartModule(this));
 
         this._initialized = InitStatus.Initialized;
     }
@@ -97,9 +119,7 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
         IContentRepository.ContentDeliveryAPI = this.contentDeliveryApi();
         reducers[IContentRepository.StateKey] = IContentRepository.reducer.bind(IContentRepository);
         reducers[ViewContext.StateKey] = ViewContext.reducer.bind(ViewContext);
-        if (this._config.modules) {
-            this._config.modules.forEach(x => { const ri = x.GetStateReducer(); if (ri) { reducers[ri.stateKey] = ri.reducer }});
-        }
+        this._modules.forEach(x => { const ri = x.GetStateReducer(); if (ri) { reducers[ri.stateKey] = ri.reducer }});
         this._state = configureStore({ reducer: reducers });
         const initAction: Action<RepositoryActions> = { type: RepositoryActions.INIT };
         this._state.dispatch(initAction);
@@ -107,7 +127,10 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
 
     private _initEditMode() : void
     {
-        if (!this._isServerSideRendering) {
+        if (this.isDebugActive()) console.debug(`Initializing edit mode in ${ this.initialEditMode() ? 'enabled' : 'disabled'} state`);
+        if (!this._isServerSideRendering && this.initialEditMode()) {
+            if (this.isDebugActive()) console.debug('Adding edit mode event handlers');
+            this.contentDeliveryApi().setInEditMode(true);
             this.events().addListener('beta/epiReady', 'BetaEpiReady', this.onEpiReady.bind(this), true);
             this.events().addListener('beta/contentSaved', 'BetaEpiContentSaved', this.onEpiContentSaved.bind(this), true);
             this.events().addListener('epiReady', 'EpiReady', this.onEpiReady.bind(this), true);
@@ -123,14 +146,13 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
             const baseContent = this.getContentById(baseId);
             if (baseContent) {
                 event.properties.forEach((prop) => {
-                    this.dispatch(
-                        IContentActionFactory.updateContentProperty(baseContent as IContent, prop.name, prop.value),
-                    );
+                    if (prop.successful) {
+                      this.dispatch(
+                          IContentActionFactory.updateContentProperty(baseContent as IContent, prop.name, prop.value),
+                      );
+                    }
                 });
             }
-
-            // Full refresh as we don't support partials yet....
-            this.loadContentById(event.savedContentLink);
         }
     }
 
@@ -196,10 +218,7 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
   }
 
   public componentLoader(): ComponentLoader {
-    if (!this._componentLoader) {
-      this._componentLoader = new ComponentLoader();
-    }
-    return this._componentLoader;
+    return this._serviceContainer.getService(DefaultServices.ComponentLoader);
   }
 
   public contentDeliveryApi<API extends ContentDeliveryAPI = ContentDeliveryAPI>(): API {
@@ -273,23 +292,62 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
     this.dispatch(IContentActionFactory.addOrUpdateItem(iContent));
   }
 
-  public isInEditMode(): boolean {
-    try {
-      return ctx.epi && ctx.epi.beta ? ctx.epi.beta.inEditMode === true : false;
-    } catch (e) {
-      return false; // Asume not
+    /**
+     * Check whether or not we're in edit mode by looking at the URL. This
+     * yields the correct result prior to the onEpiReady event has fired
+     * 
+     * @return {boolean}
+     */
+    public initialEditMode(): boolean {
+        try {
+            const testA = (new URLSearchParams(window.location.search)).get('epieditmode')?.toLowerCase() === 'true';
+            const testB = this.isInEditMode();
+            return testA || testB;
+        } catch (e) {
+            return false;
+        }
     }
-  }
+
+    /**
+     * Determine the edit mode by following a sequence of steps, from most
+     * reliable to most unreliable.
+     * 
+     * @returns {boolean}
+     */
+    public isInEditMode(): boolean {
+        try {
+            return ctx.epi && ctx.epi.inEditMode !== undefined ? ctx.epi.inEditMode === true : false;
+        } catch (e) {
+            // Ignore errors on purpose to go to next test
+        }
+        try {
+            return ctx.epi && ctx.epi.beta && ctx.epi.beta.inEditMode !== undefined ? ctx.epi.beta.inEditMode === true : false;
+        } catch (e) {
+            // Ignore errors on purpose to go to next test
+        }
+        try {
+            return (new URLSearchParams(window.location.search)).get('epieditmode')?.toLowerCase() === 'true';
+        } catch (e) {
+            // Ignore error on purpose to go to next test
+        }
+        return false;
+    }
 
   public isEditable(): boolean {
     try {
+      return ctx.epi ? ctx.epi.isEditable === true : false;
+    } catch (e) {
+      // Ignore errors on purpose to go to next test;
+    }
+    try {
       return ctx.epi && ctx.epi.beta ? ctx.epi.beta.isEditable === true : false;
     } catch (e) {
-      return false;
+      // Ignore errors on purpose to go to next test
     }
+    return false;
   }
 
-  public getEpiserverUrl(path: ContentReference, action?: string): string {
+  public getEpiserverUrl(path: ContentReference = '', action?: string): string {
     let itemPath: string = '';
     if (ContentLinkService.referenceIsString(path)) {
       itemPath = path;
@@ -303,8 +361,50 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
       itemPath += itemPath.length ? '/' + action : action;
     }
 
-    return this._config.epiBaseUrl + itemPath;
+    return StringUtils.TrimRight('/', this._config.epiBaseUrl + itemPath);
   }
+
+    public getSpaRoute(path: ContentReference) : string
+    {
+        let newPath: string = '';
+        if (ContentLinkService.referenceIsString(path)) {
+            newPath = path;
+        } else if (ContentLinkService.referenceIsIContent(path)) {
+            newPath = path.contentLink.url;
+        } else if (ContentLinkService.referenceIsContentLink(path)) {
+            newPath = path.url;
+        }
+
+        return '/' + StringUtils.TrimLeft('/',this.config().basePath + newPath)
+    }
+
+    /**
+     * 
+     * @param content   The content item load, by path, content link or IContent
+     * @param action    The action to invoke on the content controller
+     */
+    public buildPath(content: ContentReference, action: string = "") : string
+    {
+        let newPath: string = '';
+        if (ContentLinkService.referenceIsString(content)) {
+            newPath = content;
+        } else if (ContentLinkService.referenceIsIContent(content)) {
+            newPath = content.contentLink.url;
+        } else if (ContentLinkService.referenceIsContentLink(content)) {
+            newPath = content.url;
+        }
+
+        if (!newPath) {
+            if (this.isDebugActive()) console.log('The navigation target does not include a path.', content);
+            newPath = '/';
+        }
+
+        if (action) {
+            newPath = newPath.substr(-1,1) === "/" ? newPath + action + "/" : newPath + "/" + action + "/";
+        }
+
+        return newPath;
+    }
 
   public navigateTo(path: ContentReference, noHistory: boolean = false): void {
     let newPath: string = '';
@@ -320,13 +420,8 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
       if (this.isDebugActive()) console.log('The navigation target does not include a path.', path);
       newPath = '/';
     }
-    const me = this;
-    this.loadContentByPath(newPath).then(() => {
-      me.getStore().dispatch(ViewContext.updateCurrentPath(newPath));
-      if (!noHistory) {
-        History.pushPath(newPath);
-      }
-    });
+
+    window.location.href = newPath;
   }
 
   public getCurrentWebsite(): Website {
@@ -400,8 +495,7 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
    * Get the location where Episerver is running, whithout a trailing slash.
    */
   public getEpiserverURL(): string {
-    const epiUrl = this.config().epiBaseUrl;
-    return StringUtils.TrimRight('/', epiUrl);
+    return this.getEpiserverUrl();
   }
 }
 

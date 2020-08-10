@@ -1,11 +1,11 @@
-import React, { Component, ReactNode, ReactNodeArray } from 'react';
+import React, { Component, ReactNode, ReactNodeArray, ComponentType } from 'react';
 import IContent from '../Models/IContent';
 import ContentLink from '../Models/ContentLink';
 import EpiComponent, { EpiComponentType } from './EpiComponent';
 import Spinner, { SpinnerProps } from './Spinner';
 import IEpiserverContext from '../Core/IEpiserverContext';
 
-export interface LayoutProps {
+export type LayoutProps = React.PropsWithChildren<{
     page?: ContentLink
     expandedValue?: IContent
     actionName?: string
@@ -13,13 +13,13 @@ export interface LayoutProps {
     path?: string
     context: IEpiserverContext
     startPage?: IContent
-}
+}>;
 
 export interface LayoutState {
     isContextLoading: boolean
 }
 
-export type LayoutComponent = new (props: LayoutProps) => Layout
+export type LayoutComponent<P extends LayoutProps = LayoutProps> = ComponentType<P>
 
 export interface EpiserverLayout {
     componentDidMount() : void
