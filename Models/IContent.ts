@@ -44,28 +44,29 @@ export interface IContentData extends IContent {
   [name: string]: GenericProperty;
 }
 
-export abstract class BaseIContent<T extends IContent> implements IContent {
-  public contentLink!: ContentLink;
-  public name!: NameProperty;
-  public language?: Language;
-  public existingLanguages?: LanguageList;
-  public masterLanguage?: Language;
-  public contentType!: ContentTypePath;
-  public parentLink?: ContentLink;
-  public routeSegment?: string | null;
-  public url?: string | null;
-  public changed?: string | null;
-  public created?: string | null;
-  public startPublish?: string | null;
-  public stopPublish?: string | null;
-  public saved?: string | null;
-  public status?: string | null;
+export abstract class BaseIContent<T extends IContent = IContent> implements IContent {
+  public get contentLink() : T["contentLink"] { return this.getProperty("contentLink"); }
+  public get name() : T["name"] { return this.getProperty("name"); }
+  public get language() : T["language"] { return this.getProperty("language"); }
+  public get existingLanguages() : T["existingLanguages"] { return this.getProperty("existingLanguages"); }
+  public get masterLanguage() : T["masterLanguage"] { return this.getProperty("masterLanguage"); }
+  public get contentType() : T["contentType"] { return this.getProperty("contentType"); }
+  public get parentLink() : T["parentLink"] { return this.getProperty("parentLink"); }
+  public get routeSegment() : T["routeSegment"] { return this.getProperty("routeSegment"); }
+  public get url() : T["url"] { return this.getProperty("url"); }
+  public get changed() : T["changed"] { return this.getProperty("changed"); }
+  public get created() : T["created"] { return this.getProperty("created"); }
+  public get startPublish() : T["startPublish"] { return this.getProperty("startPublish"); }
+  public get stopPublish() : T["stopPublish"] { return this.getProperty("stopPublish"); }
+  public get saved() : T["saved"] { return this.getProperty("saved"); }
+  public get status() : T["status"] { return this.getProperty("status"); }
 
   protected abstract _typeName: string;
   protected abstract _propertyMap: { [propName: string]: string };
+  protected _serverData : T;
 
   public constructor(baseData: T) {
-    Object.assign(this, baseData);
+    this._serverData = baseData;
   }
 
   public get typeName(): string {
@@ -77,8 +78,7 @@ export abstract class BaseIContent<T extends IContent> implements IContent {
   }
 
   public getProperty<K extends keyof T>(prop: K): T[K] {
-    let data = (this as unknown) as T;
-    return data[prop];
+    return this._serverData[prop];
   }
 
   public getPropertyType<K extends keyof T>(prop: K): string {
@@ -90,6 +90,4 @@ export abstract class BaseIContent<T extends IContent> implements IContent {
  * Static definition for the IContent instance class, so that
  * it can be autoloaded using strong typing using TypeScript.
  */
-export interface IContentType {
-  new <T extends IContent>(baseData: T): BaseIContent<T>;
-}
+export type IContentType = new <T extends IContent>(baseData: T) => BaseIContent<T>;

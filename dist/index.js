@@ -36,6 +36,9 @@ exports.Routing = __importStar(require("./Library/Routing"));
 exports.Taxonomy = __importStar(require("./Library/Taxonomy"));
 exports.Services = __importStar(require("./Library/Services"));
 exports.Components = __importStar(require("./Library/Components"));
+exports.ComponentTypes = __importStar(require("./Library/ComponentTypes"));
+exports.ServerSideRendering = __importStar(require("./Library/ServerSideRendering"));
+exports.Tracking = __importStar(require("./Library/Tracking"));
 /**
  * Generic initialization function, usable for both Browser & Server side rendering
  *

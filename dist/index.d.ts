@@ -7,6 +7,9 @@ export * as Routing from './Library/Routing';
 export * as Taxonomy from './Library/Taxonomy';
 export * as Services from './Library/Services';
 export * as Components from './Library/Components';
+export * as ComponentTypes from './Library/ComponentTypes';
+export * as ServerSideRendering from './Library/ServerSideRendering';
+export * as Tracking from './Library/Tracking';
 /**
  * Generic initialization function, usable for both Browser & Server side rendering
  *

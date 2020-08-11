@@ -1,5 +1,5 @@
 {
-  "files": ["index.ts"],
+  "files": ["index.ts", "bin/epi_sync_models.ts"],
   "compilerOptions": {
     "target": "ES5",
     "jsx": "react",

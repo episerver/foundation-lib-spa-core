@@ -1,19 +1,33 @@
 #!/usr/bin/env node
+import fs from 'fs';
+import path from 'path';
+import dotenv from 'dotenv';
+import axios, { AxiosResponse } from 'axios';
 
-const fs = require('fs');
-const path = require("path");
-const StringUtils = require('@episerver/spa-core/Util/StringUtils');
-const dotenv = require('dotenv');
-const axios = require('axios');
+import StringUtils from '../Util/StringUtils';
+
+type TypeOverviewResponse = TypeDefinitionData[];
+type TypeDefinitionData = {
+    Name: string,
+    DisplayName: string,
+    Description: string,
+    GUID: string
+    Properties: {
+        Name: string,
+        DisplayName: string,
+        Description: string,
+        Type: string
+    }[]
+}
 
 /**
  * Episerver Model Synchronization Job
  */
 class EpiModelSync {
-    _servicePath = 'api/episerver/v3/model'
-    _rootDir = null
-    _config = null
-    _iContentProps = ["contentLink"];
+    protected _servicePath : string = 'api/episerver/v3/model'
+    protected _rootDir : string
+    protected _config : dotenv.DotenvParseOutput
+    protected _iContentProps : string[] = ["contentLink"]
 
     /**
      * Create a new instance of the job
@@ -21,9 +35,9 @@ class EpiModelSync {
      * @param {string} spaDir       The directory where the SPA is located 
      * @param {string} envFile      The environment file to use as configuration source
      */
-    constructor(spaDir, envFile) {
-        if (!fs.existsSync(spaDir))  throw "SPA Directory not found";
-        if (!fs.existsSync(envFile)) throw ".env File not found";
+    public constructor(spaDir: string, envFile: string) {
+        if (!fs.existsSync(spaDir))  throw new Error("SPA Directory not found");
+        if (!fs.existsSync(envFile)) throw new Error(".env File not found");
 
         this._rootDir = spaDir;
         this._config = dotenv.parse(fs.readFileSync(envFile));
@@ -32,13 +46,14 @@ class EpiModelSync {
     /**
      * Run the configuration job
      */
-    run() {
+    public run(): void {
         console.log('***** Start: Episerver IContent Model Synchronization *****')
         console.log(' - Using Episerver installed at: ' + this._config.EPI_URL);
         console.log(' - Ensuring models directory exists ('+ this.getModelPath() +')');
         console.log(' - Retrieving content types')
         const me = this;
-        this._doRequest(this.getServiceUrl()).then(r => {
+        this._doRequest<TypeOverviewResponse>(this.getServiceUrl()).then(r => {
+            if (!r) return;
             const modelNames = r.map(x => x.Name);
             me.clearModels(modelNames.map(x => me.getModelInterfaceName(x)));
             console.log(' - Start creating/updating model definitions');
@@ -50,13 +65,15 @@ class EpiModelSync {
     /**
      * Generate a TypeMapper component which enables loading of the types from Episerver
      * 
+     * @protected
      * @param {string[]} allItemNames The model names fetched from Episerver
+     * @returns {void}
      */
-    createAsyncTypeMapper(allItemNames) {
+    protected createAsyncTypeMapper(allItemNames: string[]): void {
         const mapperFile = path.join(this.getModelPath(), 'TypeMapper.ts');
         let mapper = "import { IContentType } from '@episerver/spa-core/Models/IContent';\nimport EpiserverSpaContext from '@episerver/spa-core/Spa';\n";
         mapper += "import BaseTypeMapper, { TypeMapperTypeInfo } from '@episerver/spa-core/Loaders/BaseTypeMapper'\n;"
-        //allItemNames.forEach(x => mapper += "import {"+this.getModelInstanceName(x)+"} from './"+ this.getModelInterfaceName(x)+"';\n")
+        // allItemNames.forEach(x => mapper += "import {"+this.getModelInstanceName(x)+"} from './"+ this.getModelInterfaceName(x)+"';\n")
         mapper += "\nexport default class TypeMapper extends BaseTypeMapper {\n";
         mapper += "  protected map : { [type: string]: TypeMapperTypeInfo } = {\n";
         allItemNames.forEach(x => mapper += "    '" + x + "': {dataModel: '"+this.getModelInterfaceName(x)+"',instanceModel: '" + this.getModelInstanceName(x) + "'},\n");
@@ -92,30 +109,29 @@ class EpiModelSync {
      * 
      * @protected
      * @param {string}      typeName 
-     * @param {string[]}    allItemNames 
+     * @param {string[]}    allItemNames
+     * @param {void}
      */
-    createModelFile(typeName, allItemNames) {
-        //console.log('   - Fetching model definition for '+typeName);
+    protected createModelFile(typeName: string, allItemNames: string[]) : void {
+        // console.log('   - Fetching model definition for '+typeName);
         const me = this;
-        this._doRequest(this.getServiceUrl(typeName)).then(info => {
+        this._doRequest<TypeDefinitionData>(this.getServiceUrl(typeName)).then(info => {
+            if (!info) return;
             const interfaceName = me.getModelInterfaceName(info.Name);
             const propsInterfaceName = me.getComponentPropertiesInterfaceName(info.Name);
             const instanceName = me.getModelInstanceName(info.Name);
             const fileName = interfaceName + ".ts";
 
-            //Imports
-            let iface = "import Property, {StringProperty, NumberProperty, BooleanProperty, ContentReferenceProperty, ContentAreaProperty, LinkListProperty, LinkProperty} from '@episerver/spa-core/Property'\n";
-            iface += "import IContent, { BaseIContent } from '@episerver/spa-core/Models/IContent'\n";
-            iface += "import ContentLink from '@episerver/spa-core/Models/ContentLink'\n";
-            iface += "import { ComponentProps } from '@episerver/spa-core/EpiComponent'\n\n"
+            // Imports
+            let iface = "import { ContentDelivery, Taxonomy, ComponentTypes } from '@episerver/spa-core'\n";
 
-            //Heading
+            // Heading
             iface += "/**\n * "+(info.DisplayName ? info.DisplayName : info.Name)+"\n *\n * "+(info.Description ? info.Description : "No Description available.")+"\n *\n * @GUID "+info.GUID+"\n */\n";
 
-            //Actual interface
-            iface += "export default interface "+interfaceName+" extends IContent {\n";
+            // Actual interface
+            iface += "export default interface "+interfaceName+" extends Taxonomy.IContent {\n";
             info.Properties.forEach(prop => {
-                let propName = me.processFieldName(prop.Name);
+                const propName = me.processFieldName(prop.Name);
                 if (!me._iContentProps.includes(propName)) {
                     iface += "    /**\n     * "+(prop.DisplayName ? prop.DisplayName : prop.Name)+"\n     *\n     * "+(prop.Description ? prop.Description : "No description available")+"\n     */\n";
                     iface += "    " + propName + ": " + me.ConvertTypeToSpaProperty(prop.Type, allItemNames) + "\n\n";
@@ -127,30 +143,30 @@ class EpiModelSync {
             });
             iface += "}\n\n";
 
-            //Convenience interface
+            // Convenience interface
             iface += "/**\n * Convenience interface for componentDidUpdate & componentDidMount methods.\n */\n";
-            iface += "export interface " + propsInterfaceName + " extends ComponentProps<"+interfaceName+"> {}\n\n";
+            iface += "export interface " + propsInterfaceName + " extends ComponentTypes.AbstractComponentProps<"+interfaceName+"> {}\n\n";
 
-            //Instance type
-            iface += "export class " + instanceName + " extends BaseIContent<" + interfaceName + "> implements " + interfaceName + " {\n";
+            // Instance type
+            iface += "export class " + instanceName + " extends Taxonomy.AbstractIContent<" + interfaceName + "> implements " + interfaceName + " {\n";
             iface += "    protected _typeName : string = \""+info.Name+"\";\n"
             iface += "    /**\n     * Map of all property types within this content type.\n     */\n"
             iface += "    protected _propertyMap : { [propName: string]: string } = {\n";
             info.Properties.forEach(prop => {
-                let propName = me.processFieldName(prop.Name);
+                const propName = me.processFieldName(prop.Name);
                 iface += "        '"+propName+"': '"+prop.Type+"',\n"
             });
             iface += "    }\n\n"
             info.Properties.forEach(prop => {
-                let propName = me.processFieldName(prop.Name);
+                const propName = me.processFieldName(prop.Name);
                 if (!me._iContentProps.includes(propName)) {
                     iface += "    /**\n     * "+(prop.DisplayName ? prop.DisplayName : prop.Name)+"\n     *\n     * "+(prop.Description ? prop.Description : "No description available")+"\n     */\n";
-                    iface += "    public " + propName + ": " + me.ConvertTypeToSpaProperty(prop.Type, allItemNames) + ";\n\n";
+                    iface += `    public get ${propName}() : ${interfaceName}["${propName}"] { return this.getProperty("${propName}"); }\n\n`;
                 }
             });
             iface += "}\n";
 
-            //Write interface
+            // Write interface
             const fullTarget = path.join(me.getModelPath(), fileName);
             fs.writeFile(fullTarget, iface, () => {
                 console.log("   - " + interfaceName + " written to " + fullTarget);
@@ -164,36 +180,37 @@ class EpiModelSync {
      * @protected
      * @param {string}      typeName        The name of the type
      * @param {string[]}    allItemNames    The list of types in Episerver (for property blocks)
+     * @returns {string}
      */
-    ConvertTypeToSpaProperty(typeName, allItemNames)
+    protected ConvertTypeToSpaProperty(typeName: string, allItemNames: string[]) : string
     {
         switch (typeName) {
             case "Boolean":
-                return "BooleanProperty";
+                return "ContentDelivery.BooleanProperty";
             case "Decimal":
             case "Number":
             case "FloatNumber":
-                return "NumberProperty";
+                return "ContentDelivery.NumberProperty";
             case "String":
             case "string":
             case "LongString":
             case "XhtmlString":
             case "Url":
-                return "StringProperty";
+                return "ContentDelivery.StringProperty";
             case "ContentReference":
             case "PageReference":
-                return "ContentReferenceProperty";
+                return "ContentDelivery.ContentReferenceProperty";
             case "ContentReferenceList":
-                return "Property<Array<ContentLink>>";
+                return "ContentDelivery.ContentReferenceListProperty";
             case "ContentArea":
-                return "ContentAreaProperty";
+                return "ContentDelivery.ContentAreaProperty";
             case "LinkCollection":
-                return "LinkListProperty";
+                return "ContentDelivery.LinkListProperty";
             default:
                 if (allItemNames.includes(typeName)) {
                     return typeName+"Data";
                 }
-                return "Property<any> // Original type: "+typeName;
+                return "ContentDelivery.Property<any> // Original type: "+typeName;
         }
     }
 
@@ -203,13 +220,13 @@ class EpiModelSync {
      * @protected
      * @param {string[]} keep The model names to keep in the output folder
      */
-    clearModels(keep) {
+    protected clearModels(keep: string[]) : void {
         console.log(' - Cleaning model directory');
         const modelPath = this.getModelPath();
         const files = fs.readdirSync(modelPath);
         files.forEach(file => {
             const name = path.parse(file).name;
-            if (name != "TypeMapper" && keep && !keep.includes(name)) {
+            if (name !== "TypeMapper" && keep && !keep.includes(name)) {
                 console.log('  - Removing old model: ', name)
                 fs.unlinkSync(path.join(modelPath, file));
             }
@@ -223,7 +240,7 @@ class EpiModelSync {
      * @param {string} modelName The name of the model
      * @returns {string}
      */
-    getServiceUrl(modelName) {
+    protected getServiceUrl(modelName?: string): string {
         return this._servicePath + (modelName ? '/'+modelName : '');
     }
 
@@ -233,9 +250,9 @@ class EpiModelSync {
      * @protected
      * @returns {string}
      */
-    getModelPath() {
+    protected getModelPath(): string {
         if (!this._config.EPI_MODEL_PATH) {
-            throw new 'Episerver models directory not set';
+            throw new Error('Episerver models directory not set');
         }
         const modelPath = path.join(this._rootDir, this._config.EPI_MODEL_PATH);
         if (!fs.existsSync(modelPath)) {
@@ -251,11 +268,18 @@ class EpiModelSync {
      * @param {string} modelName    The name of the model in Episerver
      * @returns {string}
      */
-    getModelInterfaceName(modelName) {
+    protected getModelInterfaceName(modelName: string): string {
         return StringUtils.SafeModelName(modelName) + 'Data';
     }
 
-    getModelInstanceName(modelName) {
+    /**
+     * Generate the TypeScript instance name
+     * 
+     * @protected
+     * @param {string} modelName    The name of the model in Episerver
+     * @returns {string}
+     */
+    protected getModelInstanceName(modelName: string): string {
         return StringUtils.SafeModelName(modelName) + 'Type';
     }
 
@@ -266,40 +290,41 @@ class EpiModelSync {
      * @param {string} modelName    The name of the model in Episerver
      * @return {string}
      */
-    getComponentPropertiesInterfaceName(modelName) {
+    protected getComponentPropertiesInterfaceName(modelName: string): string {
         return StringUtils.SafeModelName(modelName) + 'Props';
     }
 
 
-    processFieldName(originalName)
+    protected processFieldName(originalName : string) : string
     {
         let processedName = originalName;
         processedName = processedName.charAt(0).toLowerCase() + processedName.slice(1);
         return processedName;
     }
 
-    _doRequest(url) {
-        return axios.request({
-            method: 'get',
-            baseURL: this._config.EPI_URL,
-            url: url,
-            headers: {
-                Authorization: 'Bearer '+(this._config.EPI_MODEL_DEV_KEY ? this._config.EPI_MODEL_DEV_KEY : '-'),
-                Accept: 'application/json'
-            }
-        }).catch(reason => {
+    protected async _doRequest<T = any>(url: string) : Promise<T | null> {
+        let response: AxiosResponse<T>;
+        try {
+            response = await axios.request({
+                method: 'get',
+                baseURL: this._config.EPI_URL,
+                url,
+                headers: {
+                    Authorization: 'Bearer ' + (this._config.EPI_MODEL_DEV_KEY ? this._config.EPI_MODEL_DEV_KEY : '-'),
+                    Accept: 'application/json'
+                }
+            });
+        }
+        catch (reason) {
             console.log('Error while fetching (url, reason)', url, reason);
             return null;
-        }).then(response => {
-            return response.data;
-        });
+        }
+        return response.data;
     }
 }
 
 
-let cwd = process.cwd();
-let configFile = path.join(cwd, ".env");
+const cwd = process.cwd();
+const configFile = path.join(cwd, ".env");
 const sync = new EpiModelSync(cwd, configFile)
 sync.run();
-
-

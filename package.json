@@ -3,7 +3,7 @@
     "name": "Episerver SA Team"
   },
   "bin": {
-    "epi-sync-models": "bin/epi_sync_models.js"
+    "epi-sync-models": "dist/bin/epi_sync_models.js"
   },
   "bugs": {
     "url": "https://github.com/episerver/foundation-lib-spa-core/issues"
@@ -43,7 +43,7 @@
     "typescript": "^3.9.7"
   },
   "directories": {
-    "bin": "./bin/"
+    "bin": "./dist/bin/"
   },
   "homepage": "https://github.com/episerver/foundation-lib-spa-core",
   "license": "Apache-2.0",
@@ -66,7 +66,7 @@
   },
   "private": true,
   "scripts": {
-    "build": "tsc && cpy ./Util/* ./dist/ --parents && cpy ./bin/* ./dist/ --parents",
+    "build": "tsc && cpy ./Util/* ./dist/ --parents",
     "format": "prettier --write \"src/**/*.ts\" \"src/**/*.js\"",
     "lint": "tslint -p tsconfig.json"
   },
