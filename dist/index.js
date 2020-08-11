@@ -35,7 +35,7 @@ exports.Layout = __importStar(require("./Library/Layout"));
 exports.Routing = __importStar(require("./Library/Routing"));
 exports.Taxonomy = __importStar(require("./Library/Taxonomy"));
 exports.Services = __importStar(require("./Library/Services"));
-exports.Comments = __importStar(require("./Library/Components"));
+exports.Components = __importStar(require("./Library/Components"));
 /**
  * Generic initialization function, usable for both Browser & Server side rendering
  *
