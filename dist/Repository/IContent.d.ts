@@ -4,11 +4,14 @@ import ContentDeliveryAPI from '../ContentDeliveryAPI';
 import Website from '../Models/Website';
 import IContent from '../Models/IContent';
 import WebsiteList from '../Models/WebsiteList';
+export declare type PartialStateWithIContentRepoState = {
+    iContentRepo: IContentRepoState;
+};
 /**
  * Descriptor of the state tree managed by this reducer
  */
-export interface IContentRepoState {
-    ids: Array<string>;
+export declare type IContentRepoState = {
+    ids: string[];
     paths: IContentRepoItemIdByReference;
     items: IContentRepoItemById;
     refs: IContentRepoItemIdByReference;
@@ -17,7 +20,7 @@ export interface IContentRepoState {
     error: string | null;
     website: Website | null;
     websites: WebsiteList;
-}
+};
 /**
  * Descriptor af an data entry in the tree of this reducer
  */
@@ -71,7 +74,7 @@ export declare class IContentActionFactory {
     static fetchError(error: any): IContentAction;
     static replaceWebsites(websites: WebsiteList): WebsiteListAction;
     static setCurrentWebsite(website: Website): WebsiteAction;
-    static registerPaths(content: IContent, paths: Array<string>): IContentAction;
+    static registerPaths(content: IContent, paths: string[]): IContentAction;
     static updateContentProperty(content: IContent, property: string, value: any): IContentAction;
 }
 export default class IContentRepository {
@@ -100,7 +103,7 @@ export default class IContentRepository {
      * @param   state       The current store
      * @returns The mutated copy of the store
      */
-    protected static addIContentToState(iContent: IContentModel, state: Readonly<IContentRepoState>, ref?: string, paths?: Array<string>): IContentRepoState;
+    protected static addIContentToState(iContent: IContentModel, state: Readonly<IContentRepoState>, ref?: string, paths?: string[]): IContentRepoState;
     /**
      * Generate the initial context, loading & merging data from the various available sources.
      */

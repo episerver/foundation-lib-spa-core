@@ -12,11 +12,16 @@ import merge from 'lodash/merge';
 
 declare var __INITIAL__DATA__: ServerContext;
 
+export type PartialStateWithIContentRepoState =
+{
+  iContentRepo: IContentRepoState;
+}
+
 /**
  * Descriptor of the state tree managed by this reducer
  */
-export interface IContentRepoState {
-  ids: Array<string>;
+export type IContentRepoState = {
+  ids: string[];
   paths: IContentRepoItemIdByReference;
   items: IContentRepoItemById;
   refs: IContentRepoItemIdByReference;
@@ -75,28 +80,28 @@ export class IContentActionFactory {
   public static addItem(item: IContentModel): IContentAction {
     return {
       type: IContentRepoActions.ADD_ITEM,
-      item: item,
+      item,
     };
   }
 
   public static updateItem(item: IContentModel): IContentAction {
     return {
       type: IContentRepoActions.UPDATE_ITEM,
-      item: item,
+      item,
     };
   }
 
   public static addOrUpdateItem(item: IContentModel): IContentAction {
     return {
       type: IContentRepoActions.ADD_OR_UPDATE_ITEM,
-      item: item,
+      item,
     };
   }
 
   public static removeItem(item: IContentModel): IContentAction {
     return {
       type: IContentRepoActions.REMOVE_ITEM,
-      item: item,
+      item,
     };
   }
 
@@ -132,7 +137,7 @@ export class IContentActionFactory {
     };
   }
 
-  public static registerPaths(content: IContent, paths: Array<string>): IContentAction {
+  public static registerPaths(content: IContent, paths: string[]): IContentAction {
     return {
       type: IContentRepoActions.REGISTER_PATH,
       item: content,
@@ -149,6 +154,7 @@ export class IContentActionFactory {
   }
 }
 
+// tslint:disable-next-line: max-classes-per-file
 export default class IContentRepository {
   public static StateKey: string = 'iContentRepo';
   public static ContentDeliveryAPI: ContentDeliveryAPI;
@@ -165,17 +171,17 @@ export default class IContentRepository {
    */
   public static getByPath(path: string): DispatchableMethod<Promise<IContentModel>> {
     return async (dispatch: DispatchMethod<Promise<IContentModel>>, getState: () => any): Promise<IContentModel> => {
-      //Get state & verify that we're allowed to do this
-      let state = this.getMyState(getState());
+      // Get state & verify that we're allowed to do this
+      const state = this.getMyState(getState());
       if (state.isFetching) return Promise.reject('Already fetching content');
 
-      //First check by path
+      // First check by path
       if (state.paths && state.paths[path]) {
-        let itemId = state.paths[path];
+        const itemId = state.paths[path];
         return Promise.resolve<IContentModel>(state.items[itemId].content);
       }
 
-      let iContent = await this.ContentDeliveryAPI.getContentByPath(path);
+      const iContent = await this.ContentDeliveryAPI.getContentByPath(path);
       if (PathResponseIsIContent(iContent)) {
         dispatch(IContentActionFactory.addOrUpdateItem(iContent));
         return iContent;
@@ -186,7 +192,7 @@ export default class IContentRepository {
 
   public static getByReference(ref: string): DispatchableMethod<Promise<IContentModel>> {
     return (dispatch: DispatchMethod<Promise<IContentModel>>, getState: () => any): Promise<IContentModel> => {
-      let state = this.getMyState(getState());
+      const state = this.getMyState(getState());
       if (!state.refs[ref]) {
         return Promise.reject(`Unknown reference ${ref}`);
       }
@@ -196,11 +202,11 @@ export default class IContentRepository {
 
   public static getById(id: string): DispatchableMethod<Promise<IContentModel>> {
     return async (dispatch: DispatchMethod<Promise<IContentModel>>, getState: () => any) => {
-      let state = this.getMyState(getState());
+      const state = this.getMyState(getState());
       if (state.items && state.items[id]) {
         return state.items[id].content;
       }
-      let iContent = await this.ContentDeliveryAPI.getContentByRef(id);
+      const iContent = await this.ContentDeliveryAPI.getContentByRef(id);
       dispatch(IContentActionFactory.addOrUpdateItem(iContent));
       return iContent;
     };
@@ -208,9 +214,9 @@ export default class IContentRepository {
 
   public static getCurrentWebsite(): DispatchableMethod<Promise<Website>> {
     return async (dispatch: DispatchMethod<Promise<Website>>, getState: () => any) => {
-      let websites = await this.ContentDeliveryAPI.getWebsites();
+      const websites = await this.ContentDeliveryAPI.getWebsites();
       dispatch(IContentActionFactory.replaceWebsites(websites));
-      let website = websites[0]; //@ToDo: Implement website detections
+      const website = websites[0]; // @ToDo: Implement website detections
       dispatch(IContentActionFactory.setCurrentWebsite(website));
       return website;
     };
@@ -221,7 +227,7 @@ export default class IContentRepository {
   }
 
   public static reducer(state: Readonly<IContentRepoState>, action: IContentBaseAction<any>): IContentRepoState {
-    let isSystemAction: boolean = action.type.substr(0, 2) == '@@';
+    const isSystemAction: boolean = action.type.substr(0, 2) == '@@';
     switch (action.type) {
       case IContentRepoActions.INIT:
         return this.buildInitialContext();
@@ -262,18 +268,20 @@ export default class IContentRepository {
     value: any,
   ): IContentRepoState {
     const contentId = ContentLinkService.createApiId(content.contentLink);
-    const toMerge: any = { items: {} };
+    const toMerge: any = { items: { } };
     toMerge.items[contentId] = { content: {} };
-    toMerge.items[contentId].content[property] = { value: value };
-    return merge({}, state, toMerge);
+    toMerge.items[contentId].content[property] = { value };
+    const newState = merge({}, state, toMerge) as Readonly<IContentRepoState>;
+    console.log("Updated content", property, newState.items[contentId].content);
+    return newState;
   }
 
   protected static setCurrentWebsite(website: Website, state: Readonly<IContentRepoState>): IContentRepoState {
-    let refs: IContentRepoItemIdByReference = { ...state.refs };
-    for (let name in website.contentRoots) {
+    const refs: IContentRepoItemIdByReference = { ...state.refs };
+    for (const name in website.contentRoots) {
       refs[name] = ContentLinkService.createApiId(website.contentRoots[name]);
     }
-    return { ...state, website: website, refs: refs };
+    return { ...state, website, refs };
   }
 
   /**
@@ -288,30 +296,30 @@ export default class IContentRepository {
     iContent: IContentModel,
     state: Readonly<IContentRepoState>,
     ref?: string,
-    paths?: Array<string>,
+    paths?: string[],
   ): IContentRepoState {
-    let newPartialState: Pick<IContentRepoState, 'items' | 'ids' | 'guids' | 'paths' | 'refs'> = {
+    const newPartialState: Pick<IContentRepoState, 'items' | 'ids' | 'guids' | 'paths' | 'refs'> = {
       items: Object.assign({}, state.items),
       ids: Object.assign([], state.ids),
       guids: Object.assign({}, state.guids),
       paths: Object.assign({}, state.paths),
       refs: Object.assign({}, state.refs),
     };
-    let id = this.getIContentId(iContent);
-    let path = iContent.contentLink.url;
-    let guid = iContent.contentLink.guidValue;
+    const id = this.getIContentId(iContent);
+    const path = iContent.contentLink.url;
+    const guid = iContent.contentLink.guidValue;
 
     newPartialState.items[id] = {
       content: iContent,
-      id: id,
-      path: path,
+      id,
+      path,
     };
     if (newPartialState.ids.indexOf(id) < 0) {
       newPartialState.ids.push(id);
     }
     if (path) newPartialState.paths[path] = id;
     if (paths)
-      for (let pathIdx in paths) {
+      for (const pathIdx in paths) {
         newPartialState.paths[paths[pathIdx]] = id;
       }
     if (guid) newPartialState.guids[guid] = id;
@@ -339,15 +347,15 @@ export default class IContentRepository {
     };
 
     try {
-      let initialIContent = this.getInitialIContent();
-      let initialStartPage = this.getInitialStartPage();
-      let initialWebsite = this.getInitialWebsite();
+      const initialIContent = this.getInitialIContent();
+      const initialStartPage = this.getInitialStartPage();
+      const initialWebsite = this.getInitialWebsite();
       initialContext = this.addIContentToState(initialIContent, initialContext);
       initialContext = this.addIContentToState(initialStartPage, initialContext, 'startPage', ['/']);
       initialContext.website = initialWebsite;
       initialContext.websites = [initialWebsite];
-      for (let name in initialWebsite.contentRoots) {
-        let contentLink = initialWebsite.contentRoots[name];
+      for (const name in initialWebsite.contentRoots) {
+        const contentLink = initialWebsite.contentRoots[name];
         initialContext.refs[name] = ContentLinkService.createApiId(contentLink);
       }
     } catch (ex) {

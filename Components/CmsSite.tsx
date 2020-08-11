@@ -2,7 +2,6 @@
 import React, {ReactNode, Component, PropsWithChildren} from 'react';
 import {Helmet} from 'react-helmet';
 import { Provider, connect } from 'react-redux';
-//import { BrowserRouter as Router } from 'react-router-dom';
 
 // Import Episerver CMS
 import Layout, { LayoutComponent, LayoutProps } from './Layout';

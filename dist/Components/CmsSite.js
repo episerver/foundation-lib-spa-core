@@ -86,7 +86,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var react_1 = __importStar(require("react"));
 var react_helmet_1 = require("react-helmet");
 var react_redux_1 = require("react-redux");
-//import { BrowserRouter as Router } from 'react-router-dom';
 // Import Episerver CMS
 var Layout_1 = __importDefault(require("./Layout"));
 var IContent_1 = require("../Repository/IContent");

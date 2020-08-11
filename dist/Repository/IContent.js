@@ -142,6 +142,7 @@ var IContentActionFactory = /** @class */ (function () {
     return IContentActionFactory;
 }());
 exports.IContentActionFactory = IContentActionFactory;
+// tslint:disable-next-line: max-classes-per-file
 var IContentRepository = /** @class */ (function () {
     function IContentRepository() {
     }
@@ -164,7 +165,7 @@ var IContentRepository = /** @class */ (function () {
                         state = this.getMyState(getState());
                         if (state.isFetching)
                             return [2 /*return*/, Promise.reject('Already fetching content')];
-                        //First check by path
+                        // First check by path
                         if (state.paths && state.paths[path]) {
                             itemId = state.paths[path];
                             return [2 /*return*/, Promise.resolve(state.items[itemId].content)];
@@ -265,7 +266,9 @@ var IContentRepository = /** @class */ (function () {
         var toMerge = { items: {} };
         toMerge.items[contentId] = { content: {} };
         toMerge.items[contentId].content[property] = { value: value };
-        return merge_1.default({}, state, toMerge);
+        var newState = merge_1.default({}, state, toMerge);
+        console.log("Updated content", property, newState.items[contentId].content);
+        return newState;
     };
     IContentRepository.setCurrentWebsite = function (website, state) {
         var refs = __assign({}, state.refs);
