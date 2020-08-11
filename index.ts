@@ -13,7 +13,7 @@ export * as Layout from './Library/Layout';
 export * as Routing from './Library/Routing';
 export * as Taxonomy from './Library/Taxonomy';
 export * as Services from './Library/Services';
-export * as Comments from './Library/Components';
+export * as Components from './Library/Components';
 
 /**
  * Generic initialization function, usable for both Browser & Server side rendering
