@@ -1,7 +1,6 @@
 #Ignore build artifacts
 /node_modules
 /lib
-/dist
 package-lock.json
 
 #Ensure bin folder is always included, even if it's exluded by a higher-up .gitignore
