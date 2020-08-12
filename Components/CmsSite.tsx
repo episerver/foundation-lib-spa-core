@@ -1,174 +1,135 @@
 // Import libraries
-import React, {ReactNode, Component, PropsWithChildren} from 'react';
+import React, { useState, useEffect } from 'react';
 import {Helmet} from 'react-helmet';
 import { Provider, connect } from 'react-redux';
 
-// Import Episerver CMS
-import Layout, { LayoutComponent, LayoutProps } from './Layout';
-import IContent from '../Models/IContent';
-import ContentLink from '../Models/ContentLink';
+// Import Episerver Core CMS
 import IEpiserverContext from '../Core/IEpiserverContext';
-import { IContentActionFactory } from '../Repository/IContent';
-import ServerContext from '../ServerSideRendering/ServerContext';
-import Spinner from './Spinner';
-import { DefaultServices } from '../Core/IServiceContainer';
-import * as EpiSpaRouter from '../Routing/EpiSpaRouter';
+import EpiserverContext from '../Hooks/Context';
 import AppConfig from '../AppConfig';
 
+// Import Episerver Taxonomy
+import Website from '../Models/Website';
+import IContent from '../Models/IContent';
+import Layout, { LayoutComponent, LayoutProps } from './Layout';
+import ContentLink from '../Models/ContentLink';
+
+// Import Episerver Repositories
+import { IContentActionFactory, PartialStateWithIContentRepoState } from '../Repository/IContent';
+import { PartialStateWithViewContext } from '../Repository/ViewContext';
+
+// Import Episerver Components
+import Spinner from './Spinner';
+import * as EpiSpaRouter from '../Routing/EpiSpaRouter';
 
 /**
  * Define the property structure for the CmsSite component
  */
-interface CmsSiteProps {
+export interface CmsSiteProps {
     context: IEpiserverContext
-    path?: string
-    serverContext?: ServerContext
 }
 
-interface CmsSiteState {
-    isInitializing: boolean
-}
+export const EpiserverWebsite : React.FunctionComponent<CmsSiteProps> = (props) => {
+    const [website, setWebsite] = useState<Website | null>(props.context.getCurrentWebsite());
+    const [homepage, setHomepage] = useState<IContent | null>(props.context.getContentByRef("startPage"));
+    const [path, setPath] = useState<string>(props.context.getCurrentPath());
+    const [firstpage, setFirstPage] = useState<IContent | null>(props.context.getContentByPath(path));
+    const [isInitializing, setIsInitializing] = useState<boolean>(website === null || homepage === null);
 
-/**
- * CmsSite Container component
- */
-export default class CmsSite extends Component<PropsWithChildren<CmsSiteProps>, CmsSiteState>
-{
-    constructor(props: PropsWithChildren<CmsSiteProps>) {
-        super(props);
-        this.state = {
-            isInitializing: false
-        }
-    }
+    // Load website if needed, only once!
+    useEffect(() => {
+        if (!website) props.context.loadCurrentWebsite().then(w => { if (w) {setWebsite(w); setIsInitializing( homepage === null ); } });
+    }, []);
 
-    public componentDidMount() : void
-    {
-        if (this.isStateValid()) return;
-        this.setState({isInitializing: true});
-        this.initializeWebsiteAndPage().finally(() => {
-            this.setState({isInitializing: false});
+    // Load homepage if needed, only when the website changes
+    useEffect(() => {
+        props.context.loadContentByRef("startPage").then(c => { 
+            if (c) { 
+                props.context.dispatch(IContentActionFactory.registerPaths(c, ['/'])); // Ensure the start page is bound to '/';
+                setHomepage(c); 
+                setIsInitializing( website === null ); 
+            }
         });
+    }, [ website ]);
+
+    // Load current page
+    useEffect(() => {
+        props.context.loadContentByPath(path).then(c => {
+            if (c) {
+                if (c.contentLink.url !== path)
+                    props.context.dispatch(IContentActionFactory.registerPaths(c, [ path ])); // Ensure the page is bound to the current path;
+                setFirstPage(c);
+            }
+        });
+    }, [path, website, homepage]);
+
+    // If we're initializing, return a spinner
+    if (isInitializing) {
+        return Spinner.CreateInstance({key: 'Episerver-Loading'});
     }
 
-    protected async initializeWebsiteAndPage() : Promise<boolean>
-    {
-        const me : CmsSite = this;
-        try {
-            const ws = await this.props.context.loadCurrentWebsite();
-            const c = await me.props.context.loadContentByRef("startPage");
-            me.props.context.dispatch(IContentActionFactory.registerPaths(c, ['/']));
-            const cPath = me.props.context.getCurrentPath();
-            if (!(cPath === '/' || cPath === c.contentLink.url)) {
-                const cPage = await me.props.context.loadContentByPath(cPath);
-                if (cPage.contentLink.url !== cPath) {
-                    me.props.context.dispatch(IContentActionFactory.registerPaths(cPage, [cPath]));
-                }
-            }
-            return true;
-        }
-        catch (e) {
-            return false;
-        }
-    }
-
-    public render() : ReactNode {
-        if (!this.isStateValid()) {
-            return Spinner.CreateInstance({});
-        }
-        const config = this.props.context.serviceContainer.getService<AppConfig>(DefaultServices.Config);
-        let props : LayoutProps = { context: this.props.context };
-        let MyLayout : LayoutComponent = this.getLayout();
-        if (this.props.context.isServerSideRendering()) {
-            if (this.props.context.isDebugActive()) console.log(' - Server side: building layout props');
-            props = {
-                ...props,
-                path: this.props.context.getCurrentPath(),
-                page: this.props.context.getRoutedContent().contentLink,
-                expandedValue: this.props.context.getRoutedContent(),
-                startPage: this.props.context.getContentByRef('startPage') as IContent
-            }
-        } else {
-            if (this.props.context.isDebugActive()) console.log(' - Browser side: connecting layout');
-            MyLayout = connect(this.buildLayoutPropsFromState.bind(this))(MyLayout) as unknown as LayoutComponent;
-        }
-
-        return <Provider store={ this.props.context.getStore() }>
+    // If we're server side rendering, ignore the connected components
+    if (props.context.isServerSideRendering()) {
+        const ServerLayout = getLayout(props.context.config());
+        return <EpiserverContext.Provider value={ props.context }>
             <EpiSpaRouter.Router>
                 <Helmet />
-                <MyLayout { ...props }>
-                    <EpiSpaRouter.RoutedContent config={ config.routes || [] } keyPrefix="CmsSite-RoutedContent" />
-                    { this.props.children }
-                </MyLayout>
+                <ServerLayout context={ props.context } page={ firstpage?.contentLink } expandedValue={ firstpage || undefined } path={ path } startPage={ homepage || undefined }>
+                    <EpiSpaRouter.RoutedContent config={ props.context.config().routes || [] } keyPrefix="CmsSite-RoutedContent" />
+                    { props.children }  
+                </ServerLayout>
             </EpiSpaRouter.Router>
-        </Provider>
+        </EpiserverContext.Provider>
     }
 
-    protected buildLayoutPropsFromState(state: any, ownProps: LayoutProps) : LayoutProps
-    {
-        try {
-            const path : string = state.ViewContext.currentPath;
-            const idx = state.iContentRepo.paths[path];
-            if (!idx) {
-                return {...ownProps, path, page: undefined, expandedValue: undefined, startPage: undefined};
-            }
-            let contentLink : ContentLink;
-            let contentItem : IContent;
-            let startPage : IContent | undefined;
-            contentItem = state.iContentRepo.items[idx].content;
-            contentLink = contentItem.contentLink;
-            const startIdx = state.iContentRepo.refs.startPage;
-            if (startIdx && state.iContentRepo.items[startIdx]) {
-                startPage = state.iContentRepo.items[startIdx].content;
-            }
-            const newProps : LayoutProps = { 
-                ...ownProps,
-                page: contentLink,
-                expandedValue: contentItem,
-                path,
-                startPage
-            }
-            return newProps;
-        } catch (e) {
-            // Ignore layout property building errors
-        }
-        return ownProps;
-    }
-
-    protected isStateValid() : boolean
-    {
-        return this.state.isInitializing === false && this.hasWebsite() && this.hasStartPage();
-    }
-
-    protected hasStartPage() : boolean
-    {
-        return this.props.context.getContentByRef('startPage') ? true : false;
-    }
-
-    protected hasWebsite() : boolean
-    {
-        return this.props.context.getCurrentWebsite() ? true : false;
-    }
-
-    protected hasPath() : boolean
-    {
-        let isPath : boolean = false;
-        try {
-            const p = this.props.context.getCurrentPath();
-            isPath = typeof(p) === "string" && p.length >= 0;
-        } catch (e) {
-            return false;
-        }
-        return isPath;
-    }
-
-    /**
-     * Retrieve the Layout from the the current context of the CMS Site
-     */
-    protected getLayout() : LayoutComponent
-    {
-        if (this.props.context.config().layout) {
-            return this.props.context.config().layout;
-        }
-        return Layout;
-    }
+    const BrowserLayout = connect<LayoutProps, {}, LayoutProps, PartialStateWithIContentRepoState & PartialStateWithViewContext>(buildLayoutPropsFromState)(getLayout(props.context.config()));
+    return <Provider store={ props.context.getStore() }>
+        <EpiserverContext.Provider value={ props.context }>
+            <EpiSpaRouter.Router>
+                <Helmet />
+                <BrowserLayout context={ props.context } page={ firstpage?.contentLink } expandedValue={ firstpage || undefined } path={ path } startPage={ homepage || undefined }>
+                    <EpiSpaRouter.RoutedContent config={ props.context.config().routes || [] } keyPrefix="CmsSite-RoutedContent" />
+                    { props.children }
+                </BrowserLayout>
+            </EpiSpaRouter.Router>
+        </EpiserverContext.Provider>
+    </Provider>
 }
+
+function getLayout(config: AppConfig) : LayoutComponent
+{
+    return config.layout || Layout;
+}
+
+function buildLayoutPropsFromState(state: PartialStateWithIContentRepoState & PartialStateWithViewContext, ownProps: LayoutProps) : LayoutProps
+{
+    try {
+        const path : string = state.ViewContext.currentPath || '';
+        const idx = state.iContentRepo.paths[path];
+        if (!idx) {
+            return {...ownProps, path, page: undefined, expandedValue: undefined, startPage: undefined};
+        }
+        let contentLink : ContentLink;
+        let contentItem : IContent;
+        let startPage : IContent | undefined;
+        contentItem = state.iContentRepo.items[idx].content;
+        contentLink = contentItem.contentLink;
+        const startIdx = state.iContentRepo.refs.startPage;
+        if (startIdx && state.iContentRepo.items[startIdx]) {
+            startPage = state.iContentRepo.items[startIdx].content;
+        }
+        const newProps : LayoutProps = { 
+            ...ownProps,
+            page: contentLink,
+            expandedValue: contentItem,
+            path,
+            startPage
+        }
+        return newProps;
+    } catch (e) {
+        // Ignore layout property building errors
+    }
+    return ownProps;
+}
+
+export default EpiserverWebsite;

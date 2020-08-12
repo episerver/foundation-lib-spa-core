@@ -1,10 +1,10 @@
 
 // Core SPA Libray
 import * as Core from './Library/Core';
+import * as ContextProvider from './Hooks/Context';
+import * as ServerSideRendering from './Library/ServerSideRendering';
 import initServer from './InitServer';
 import initBrowser from './InitBrowser';
-import SSRResponse from './ServerSideRendering/Response';
-import Spa from './Spa';
 
 // Namespace exports
 export * as Core from './Library/Core';
@@ -17,6 +17,7 @@ export * as Components from './Library/Components';
 export * as ComponentTypes from './Library/ComponentTypes';
 export * as ServerSideRendering from './Library/ServerSideRendering';
 export * as Tracking from './Library/Tracking';
+export * as ContextProvider from './Hooks/Context';
 
 /**
  * Generic initialization function, usable for both Browser & Server side rendering
@@ -24,12 +25,12 @@ export * as Tracking from './Library/Tracking';
  * @see     InitServer
  * @see     InitBrowser
  * @param   {Core.IConfig}         config              The main configuration object
- * @param   {ServiceContainer}  serviceContainer    The service container to use, if a specific one is desired
+ * @param   {Core.IServiceContainer}  serviceContainer    The service container to use, if a specific one is desired
  * @param   {string}            containerElementId  The element that should be populated by React-DOM on the Browser
  * @param   {boolean}           ssr                 Marker to hint Server Side rendering
- * @returns {SSRResponse|void}  The result of the initialization method invoked
+ * @returns {ServerSideRendering.Response|void}  The result of the initialization method invoked
  */
-export default function init (config: Core.IConfig, serviceContainer?: Core.IServiceContainer, containerElementId?: string, ssr: boolean = false) : SSRResponse | void
+export default function init (config: Core.IConfig, serviceContainer?: Core.IServiceContainer, containerElementId?: string, ssr: boolean = false) : ServerSideRendering.Response | void
 {
     serviceContainer = serviceContainer || new Core.DefaultServiceContainer();
     if (ssr) {
@@ -40,11 +41,17 @@ export default function init (config: Core.IConfig, serviceContainer?: Core.ISer
 }
 
 /**
- * React Hook for function components to expose the Episerver context.
+ * React Hook (for functional components) to retrieve the Episerver Context from 
+ * the nearest Provider in the virtual dom.
  * 
- * @returns {IEpiserverContext} The current context instance
+ * @returns  { Core.IEpiserverContext }
  */
-export function useEpiserver() : Core.IEpiserverContext
-{
-    return Spa;
-}
+export const useEpiserver: () => Core.IEpiserverContext = ContextProvider.useEpiserver;
+
+/**
+ * React Hook (for functional components) to retrieve the Episerver Service Container
+ * from the nearest Provider in the virtual dom.
+ * 
+ * @returns  { Core.IServiceContainer }
+ */
+export const useServiceContainer: () => Core.IServiceContainer = ContextProvider.useServiceContainer;

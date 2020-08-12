@@ -1,4 +1,7 @@
 import { Action, AnyAction } from 'redux';
+export declare type PartialStateWithViewContext = {
+    ViewContext: ViewContextState;
+};
 /**
  * The list of action keys available for the view context
  */

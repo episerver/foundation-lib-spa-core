@@ -343,10 +343,12 @@ var IContentRepository = /** @class */ (function () {
             initialContext = this.addIContentToState(initialStartPage, initialContext, 'startPage', ['/']);
             initialContext.website = initialWebsite;
             initialContext.websites = [initialWebsite];
-            for (var name_2 in initialWebsite.contentRoots) {
-                var contentLink = initialWebsite.contentRoots[name_2];
-                initialContext.refs[name_2] = ContentLink_1.ContentLinkService.createApiId(contentLink);
-            }
+            for (var name_2 in initialWebsite.contentRoots)
+                if (initialWebsite.contentRoots.hasOwnProperty(name_2)) {
+                    var contentLink = initialWebsite.contentRoots[name_2];
+                    if (!initialContext.refs[name_2])
+                        initialContext.refs[name_2] = ContentLink_1.ContentLinkService.createApiId(contentLink);
+                }
         }
         catch (ex) {
             if (Spa_1.default.isDebugActive())

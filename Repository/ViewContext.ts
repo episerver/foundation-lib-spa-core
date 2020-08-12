@@ -5,6 +5,10 @@ import getGlobal from '../AppGlobal';
 // Build context
 const ctx = getGlobal();
 
+export type PartialStateWithViewContext =
+{
+  ViewContext: ViewContextState;
+}
 /**
  * The list of action keys available for the view context
  */

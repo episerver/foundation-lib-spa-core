@@ -155,13 +155,13 @@ export default interface IEpiserverContext {
      * Retrieve the website that's currently being rendered by the system, returns null
      * if the website is not yet loaded into the state.
      */
-    getCurrentWebsite(): Website;
+    getCurrentWebsite(): Website | null;
   
     /**
      * Retrieve the website that's currently being rendered by the system, returns null
      * if the website is not yet loaded into the state.
      */
-    loadCurrentWebsite(): Promise<Website>;
+    loadCurrentWebsite(): Promise<Website | null>;
     injectContent(iContent: IContent): void;
     isInEditMode(): boolean;
     isEditable(): boolean;

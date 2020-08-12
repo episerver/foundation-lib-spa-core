@@ -353,10 +353,10 @@ export default class IContentRepository {
       initialContext = this.addIContentToState(initialIContent, initialContext);
       initialContext = this.addIContentToState(initialStartPage, initialContext, 'startPage', ['/']);
       initialContext.website = initialWebsite;
-      initialContext.websites = [initialWebsite];
-      for (const name in initialWebsite.contentRoots) {
+      initialContext.websites = [ initialWebsite ];
+      for (const name in initialWebsite.contentRoots) if (initialWebsite.contentRoots.hasOwnProperty(name)) {
         const contentLink = initialWebsite.contentRoots[name];
-        initialContext.refs[name] = ContentLinkService.createApiId(contentLink);
+        if( !initialContext.refs[name]) initialContext.refs[name] = ContentLinkService.createApiId(contentLink);
       }
     } catch (ex) {
       if (EpiserverSpaContext.isDebugActive()) console.warn('Not loading initial data', ex);
