@@ -61,7 +61,7 @@ exports.EpiserverWebsite = function (props) {
     }, []);
     // Load homepage if needed, only when the website changes
     react_1.useEffect(function () {
-        props.context.loadContentByRef("startPage").then(function (c) {
+        props.context.loadContentByRef("startPage").catch(function (c) { return undefined; }).then(function (c) {
             if (c) {
                 props.context.dispatch(IContent_1.IContentActionFactory.registerPaths(c, ['/'])); // Ensure the start page is bound to '/';
                 setHomepage(c);

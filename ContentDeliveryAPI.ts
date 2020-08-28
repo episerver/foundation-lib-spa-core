@@ -173,7 +173,7 @@ export default class ContentDeliveryAPI {
         serviceUrl = new URL(this.config.epiBaseUrl + this.componentService + ContentLinkService.createApiId(content));
       }
     }
-    serviceUrl.searchParams.append('currentPageUrl', this.pathProvider.getCurrentPath());
+    //serviceUrl.searchParams.append('currentPageUrl', this.pathProvider.getCurrentPath());
     if (this.config.autoExpandRequests) {
       serviceUrl.searchParams.append('expand', '*');
     }
@@ -211,7 +211,7 @@ export default class ContentDeliveryAPI {
     if (this.config.autoExpandRequests) {
       serviceUrl.searchParams.append('expand', '*');
     }
-    serviceUrl.searchParams.append('currentPageUrl', this.pathProvider.getCurrentPath());
+    //serviceUrl.searchParams.append('currentPageUrl', this.pathProvider.getCurrentPath());
     return this.doRequest<PathResponse>(serviceUrl.href).catch((r) => {
       return this.buildNetworkError(r, path);
     });

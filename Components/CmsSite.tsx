@@ -43,7 +43,7 @@ export const EpiserverWebsite : React.FunctionComponent<CmsSiteProps> = (props) 
 
     // Load homepage if needed, only when the website changes
     useEffect(() => {
-        props.context.loadContentByRef("startPage").then(c => { 
+        props.context.loadContentByRef("startPage").catch(c => undefined).then(c => { 
             if (c) { 
                 props.context.dispatch(IContentActionFactory.registerPaths(c, ['/'])); // Ensure the start page is bound to '/';
                 setHomepage(c); 

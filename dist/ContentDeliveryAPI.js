@@ -223,7 +223,7 @@ var ContentDeliveryAPI = /** @class */ (function () {
                         serviceUrl = new URL(this.config.epiBaseUrl + this.componentService + ContentLink_1.ContentLinkService.createApiId(content));
                     }
                 }
-                serviceUrl.searchParams.append('currentPageUrl', this.pathProvider.getCurrentPath());
+                //serviceUrl.searchParams.append('currentPageUrl', this.pathProvider.getCurrentPath());
                 if (this.config.autoExpandRequests) {
                     serviceUrl.searchParams.append('expand', '*');
                 }
@@ -275,7 +275,7 @@ var ContentDeliveryAPI = /** @class */ (function () {
                 if (this.config.autoExpandRequests) {
                     serviceUrl.searchParams.append('expand', '*');
                 }
-                serviceUrl.searchParams.append('currentPageUrl', this.pathProvider.getCurrentPath());
+                //serviceUrl.searchParams.append('currentPageUrl', this.pathProvider.getCurrentPath());
                 return [2 /*return*/, this.doRequest(serviceUrl.href).catch(function (r) {
                         return _this.buildNetworkError(r, path);
                     })];
