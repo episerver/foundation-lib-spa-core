@@ -24,20 +24,26 @@ var RoutingModule = /** @class */ (function (_super) {
     __extends(RoutingModule, _super);
     function RoutingModule() {
         var _this = _super !== null && _super.apply(this, arguments) || this;
-        _this.name = "Episerver Routing";
+        _this.name = "Episerver CMS Routing";
         return _this;
     }
+    /**
+     * Ensure the configuration object within the service container contains a "*" route. If
+     * this "*" route is not claimed by the implementation, it will be added as fall-back to
+     * Episerver CMS based routing.
+     *
+     * @param container The Service Container to update
+     */
     RoutingModule.prototype.ConfigureContainer = function (container) {
-        var _a;
         var config = container.getService(IServiceContainer_1.DefaultServices.Config);
         var haveStar = false;
-        (config.routes || []).forEach(function (c) { return haveStar = haveStar || c.path === "*"; });
+        config.routes = config.routes || [];
+        config.routes.forEach(function (c) { return haveStar = haveStar || c.path === "*"; });
         if (!haveStar)
-            (_a = config.routes) === null || _a === void 0 ? void 0 : _a.push({
+            config.routes.push({
                 path: "*",
                 component: RoutedComponent_1.default
             });
-        container.setService(IServiceContainer_1.DefaultServices.Config, config);
     };
     return RoutingModule;
 }(IInitializableModule_1.BaseInitializableModule));
