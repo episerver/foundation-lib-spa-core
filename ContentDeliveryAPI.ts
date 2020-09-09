@@ -1,4 +1,4 @@
-import Axios, { AxiosRequestConfig, Method, AxiosResponse } from 'axios';
+import Axios, { AxiosRequestConfig, Method, AxiosResponse, AxiosAdapter, AxiosPromise } from 'axios';
 import AppConfig from './AppConfig';
 import IContent from './Models/IContent';
 import ContentLink, { ContentReference, ContentLinkService } from './Models/ContentLink';
@@ -7,6 +7,7 @@ import WebsiteList from './Models/WebsiteList';
 import Website from './Models/Website';
 import PathProvider from './PathProvider';
 import Property from './Property';
+import FetchAdapter from './FetchAdapter';
 
 export type PathResponse = IContent | ActionResponse<any>;
 
@@ -285,11 +286,13 @@ export default class ContentDeliveryAPI {
    * @param verb The verb for the generated configuration
    */
   protected getRequestSettings(verb?: Method): AxiosRequestConfig {
+
     let options: AxiosRequestConfig = {
       method: verb ? verb : 'get',
       baseURL: this.config.epiBaseUrl,
       withCredentials: true,
       headers: { ...this.getHeaders() },
+      adapter: FetchAdapter,
       transformRequest: [
         (data: any, headers: any) => {
           if (data) {

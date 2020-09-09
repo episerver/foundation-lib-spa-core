@@ -13,7 +13,7 @@ export default class RoutingModule extends BaseInitializableModule implements II
      * this "*" route is not claimed by the implementation, it will be added as fall-back to
      * Episerver CMS based routing.
      * 
-     * @param container The Service Container to update
+     * @param {IServiceContainer} container The Service Container to update
      */
     public ConfigureContainer(container: IServiceContainer) : void
     {

@@ -32,7 +32,7 @@ var RoutingModule = /** @class */ (function (_super) {
      * this "*" route is not claimed by the implementation, it will be added as fall-back to
      * Episerver CMS based routing.
      *
-     * @param container The Service Container to update
+     * @param {IServiceContainer} container The Service Container to update
      */
     RoutingModule.prototype.ConfigureContainer = function (container) {
         var config = container.getService(IServiceContainer_1.DefaultServices.Config);
