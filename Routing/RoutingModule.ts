@@ -17,5 +17,6 @@ export default class RoutingModule extends BaseInitializableModule implements II
             path: "*",
             component: RoutedComponent
         });
+        container.setService(DefaultServices.Config, config);
     }
 }

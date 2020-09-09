@@ -37,6 +37,7 @@ var RoutingModule = /** @class */ (function (_super) {
                 path: "*",
                 component: RoutedComponent_1.default
             });
+        container.setService(IServiceContainer_1.DefaultServices.Config, config);
     };
     return RoutingModule;
 }(IInitializableModule_1.BaseInitializableModule));
