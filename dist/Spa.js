@@ -81,7 +81,7 @@ var EpiserverSpaContext = /** @class */ (function () {
         if (config.modules) {
             this._modules = this._modules.concat(config.modules);
         }
-        if (this.isDebugActive())
+        if (config.enableDebug)
             console.debug('Spa modules:', this._modules.map(function (m) { return m.GetName(); }));
         // Register core services
         this._serviceContainer.addService(IServiceContainer_1.DefaultServices.Context, this);

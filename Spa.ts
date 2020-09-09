@@ -85,7 +85,7 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
         if (config.modules) {
           this._modules = this._modules.concat(config.modules);
         }
-        if (this.isDebugActive()) console.debug('Spa modules:', this._modules.map((m) => m.GetName()));
+        if (config.enableDebug) console.debug('Spa modules:', this._modules.map((m) => m.GetName()));
 
         // Register core services
         this._serviceContainer.addService(DefaultServices.Context, this);
