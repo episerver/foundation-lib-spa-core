@@ -18,8 +18,13 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.DefaultAPI = exports.PathResponseIsIContent = void 0;
+exports.DefaultAPI = exports.FetchAdapter = exports.PathResponseIsIContent = void 0;
 var ContentDeliveryAPI_1 = __importStar(require("../ContentDeliveryAPI"));
+var FetchAdapter_1 = __importDefault(require("../FetchAdapter"));
 exports.PathResponseIsIContent = ContentDeliveryAPI_1.PathResponseIsIContent;
+exports.FetchAdapter = FetchAdapter_1.default;
 exports.DefaultAPI = ContentDeliveryAPI_1.default;

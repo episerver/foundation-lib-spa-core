@@ -2,6 +2,7 @@ import ContentDeliveryAPI, { PathResponse as BasePathResponse, NetworkErrorData 
 import _Property, { StringProperty as _StringProperty, NumberProperty as _NumberProperty, BooleanProperty as _BooleanProperty, ContentReferenceProperty as _ContentReferenceProperty, ContentAreaProperty as _ContentAreaProperty, LinkListProperty as _LinkListProperty, LinkProperty as _LinkProperty } from '../Property';
 import ContentLink from '../Models/ContentLink';
 export declare const PathResponseIsIContent: typeof BasePathResponseIsIContent;
+export declare const FetchAdapter: import("axios").AxiosAdapter;
 export declare const DefaultAPI: typeof ContentDeliveryAPI;
 export declare type API = ContentDeliveryAPI;
 export declare type NetworkErrorData = BaseNetworkErrorData;

@@ -1,8 +1,7 @@
 import Axios, { AxiosRequestConfig, Method, AxiosResponse, AxiosAdapter, AxiosPromise } from 'axios';
 
-export const FetchAdapter : AxiosAdapter = async (config) => {
-
-    console.log(config.baseURL, config.url);
+export const FetchAdapter : AxiosAdapter = async (config) => 
+{
     const requestUrl : URL = new URL(config.url || '', config.baseURL);
     if (config.auth) {
         requestUrl.username = config.auth.username

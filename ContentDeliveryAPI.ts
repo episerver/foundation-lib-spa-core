@@ -7,7 +7,6 @@ import WebsiteList from './Models/WebsiteList';
 import Website from './Models/Website';
 import PathProvider from './PathProvider';
 import Property from './Property';
-import FetchAdapter from './FetchAdapter';
 
 export type PathResponse = IContent | ActionResponse<any>;
 
@@ -292,7 +291,6 @@ export default class ContentDeliveryAPI {
       baseURL: this.config.epiBaseUrl,
       withCredentials: true,
       headers: { ...this.getHeaders() },
-      adapter: FetchAdapter,
       transformRequest: [
         (data: any, headers: any) => {
           if (data) {
@@ -304,6 +302,9 @@ export default class ContentDeliveryAPI {
       ],
       responseType: 'json',
     };
+    if (this.config.networkAdapter) {
+      options.adapter = this.config.networkAdapter;
+    }
     return options;
   }
 

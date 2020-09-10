@@ -1,6 +1,5 @@
 
 import ContentDeliveryAPI, { PathResponse as BasePathResponse, NetworkErrorData as BaseNetworkErrorData, PathResponseIsIContent as BasePathResponseIsIContent } from '../ContentDeliveryAPI';
-
 import _Property, {
     StringProperty as _StringProperty, 
     NumberProperty as _NumberProperty, 
@@ -11,9 +10,11 @@ import _Property, {
     LinkProperty as _LinkProperty
 } from '../Property';
 import ContentLink from '../Models/ContentLink';
+import _FetchAdapter from '../FetchAdapter';
 
 
 export const PathResponseIsIContent = BasePathResponseIsIContent;
+export const FetchAdapter = _FetchAdapter;
 export const DefaultAPI = ContentDeliveryAPI;
 export type API = ContentDeliveryAPI;
 export type NetworkErrorData = BaseNetworkErrorData;

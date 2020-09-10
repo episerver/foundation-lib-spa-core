@@ -53,7 +53,6 @@ exports.FetchAdapter = function (config) { return __awaiter(void 0, void 0, void
     return __generator(this, function (_d) {
         switch (_d.label) {
             case 0:
-                console.log(config.baseURL, config.url);
                 requestUrl = new URL(config.url || '', config.baseURL);
                 if (config.auth) {
                     requestUrl.username = config.auth.username;

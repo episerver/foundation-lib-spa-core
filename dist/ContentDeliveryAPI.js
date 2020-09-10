@@ -54,7 +54,6 @@ exports.PathResponseIsActionResponse = exports.PathResponseIsIContent = void 0;
 var axios_1 = __importDefault(require("axios"));
 var ContentLink_1 = require("./Models/ContentLink");
 var ActionResponse_1 = require("./Models/ActionResponse");
-var FetchAdapter_1 = __importDefault(require("./FetchAdapter"));
 function PathResponseIsIContent(iContent) {
     if (iContent.actionName) {
         return false;
@@ -370,7 +369,6 @@ var ContentDeliveryAPI = /** @class */ (function () {
             baseURL: this.config.epiBaseUrl,
             withCredentials: true,
             headers: __assign({}, this.getHeaders()),
-            adapter: FetchAdapter_1.default,
             transformRequest: [
                 function (data, headers) {
                     if (data) {
@@ -382,6 +380,9 @@ var ContentDeliveryAPI = /** @class */ (function () {
             ],
             responseType: 'json',
         };
+        if (this.config.networkAdapter) {
+            options.adapter = this.config.networkAdapter;
+        }
         return options;
     };
     ContentDeliveryAPI.prototype.getHeaders = function (customHeaders) {
