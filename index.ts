@@ -5,6 +5,7 @@ import * as ContextProvider from './Hooks/Context';
 import * as ServerSideRendering from './Library/ServerSideRendering';
 import initServer from './InitServer';
 import initBrowser from './InitBrowser';
+import AppGlobal from './AppGlobal';
 
 // Namespace exports
 export * as Core from './Library/Core';
@@ -30,7 +31,7 @@ export * as ContextProvider from './Hooks/Context';
  * @param   {boolean}           ssr                 Marker to hint Server Side rendering
  * @returns {ServerSideRendering.Response|void}  The result of the initialization method invoked
  */
-export default function init (config: Core.IConfig, serviceContainer?: Core.IServiceContainer, containerElementId?: string, ssr: boolean = false) : ServerSideRendering.Response | void
+export function init (config: Core.IConfig, serviceContainer?: Core.IServiceContainer, containerElementId?: string, ssr: boolean = false) : ServerSideRendering.Response | void
 {
     serviceContainer = serviceContainer || new Core.DefaultServiceContainer();
     if (ssr) {
@@ -39,6 +40,7 @@ export default function init (config: Core.IConfig, serviceContainer?: Core.ISer
         return initBrowser(config, containerElementId, serviceContainer);
     }
 }
+export default init;
 
 /**
  * React Hook (for functional components) to retrieve the Episerver Context from 
@@ -55,3 +57,11 @@ export const useEpiserver: () => Core.IEpiserverContext = ContextProvider.useEpi
  * @returns  { Core.IServiceContainer }
  */
 export const useServiceContainer: () => Core.IServiceContainer = ContextProvider.useServiceContainer;
+
+/**
+ * Helper method to get the global scope at any location within the SPA, this is either
+ * the 'window' or 'global' variable, depending on execution context.
+ * 
+ * @return { Window|any }
+ */
+export const getGlobalScope: () => any = AppGlobal;

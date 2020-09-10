@@ -22,7 +22,8 @@ export * as ContextProvider from './Hooks/Context';
  * @param   {boolean}           ssr                 Marker to hint Server Side rendering
  * @returns {ServerSideRendering.Response|void}  The result of the initialization method invoked
  */
-export default function init(config: Core.IConfig, serviceContainer?: Core.IServiceContainer, containerElementId?: string, ssr?: boolean): ServerSideRendering.Response | void;
+export declare function init(config: Core.IConfig, serviceContainer?: Core.IServiceContainer, containerElementId?: string, ssr?: boolean): ServerSideRendering.Response | void;
+export default init;
 /**
  * React Hook (for functional components) to retrieve the Episerver Context from
  * the nearest Provider in the virtual dom.
@@ -37,3 +38,10 @@ export declare const useEpiserver: () => Core.IEpiserverContext;
  * @returns  { Core.IServiceContainer }
  */
 export declare const useServiceContainer: () => Core.IServiceContainer;
+/**
+ * Helper method to get the global scope at any location within the SPA, this is either
+ * the 'window' or 'global' variable, depending on execution context.
+ *
+ * @return { Window|any }
+ */
+export declare const getGlobalScope: () => any;
