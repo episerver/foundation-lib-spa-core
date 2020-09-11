@@ -8,10 +8,10 @@ import Website from './Models/Website';
 import PathProvider from './PathProvider';
 import Property from './Property';
 
-export type PathResponse = IContent | ActionResponse<any>;
+export type PathResponse<T = any, C extends IContent = IContent> = C | ActionResponse<T, C>;
 
-export interface NetworkErrorData extends IContent {
-  error: Property<any>;
+export interface NetworkErrorData<T = any> extends IContent {
+  error: Property<T>;
 }
 
 export function PathResponseIsIContent(iContent: PathResponse): iContent is IContent {
@@ -27,7 +27,7 @@ export function PathResponseIsActionResponse<P extends any = any>(actionResponse
   }
   return false;
 }
-function getIContentFromPathResponse(response: PathResponse) : IContent | null
+export function getIContentFromPathResponse(response: PathResponse) : IContent | null
 {
   if (PathResponseIsActionResponse(response)) {
     return response.currentContent;

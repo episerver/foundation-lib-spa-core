@@ -50,7 +50,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.PathResponseIsActionResponse = exports.PathResponseIsIContent = void 0;
+exports.getIContentFromPathResponse = exports.PathResponseIsActionResponse = exports.PathResponseIsIContent = void 0;
 var axios_1 = __importDefault(require("axios"));
 var ContentLink_1 = require("./Models/ContentLink");
 var ActionResponse_1 = require("./Models/ActionResponse");
@@ -77,6 +77,7 @@ function getIContentFromPathResponse(response) {
     }
     return null;
 }
+exports.getIContentFromPathResponse = getIContentFromPathResponse;
 var ContentDeliveryAPI = /** @class */ (function () {
     function ContentDeliveryAPI(pathProvider, config) {
         this.componentService = '/api/episerver/v2.0/content/';

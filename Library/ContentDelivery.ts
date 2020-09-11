@@ -1,5 +1,6 @@
 
 import ContentDeliveryAPI, { PathResponse as BasePathResponse, NetworkErrorData as BaseNetworkErrorData, PathResponseIsIContent as BasePathResponseIsIContent } from '../ContentDeliveryAPI';
+import BaseActionResponse from '../Models/ActionResponse';
 import _Property, {
     StringProperty as _StringProperty, 
     NumberProperty as _NumberProperty, 
@@ -11,6 +12,7 @@ import _Property, {
 } from '../Property';
 import ContentLink from '../Models/ContentLink';
 import _FetchAdapter from '../FetchAdapter';
+import { IContent } from './Taxonomy';
 
 
 export const PathResponseIsIContent = BasePathResponseIsIContent;
@@ -18,7 +20,8 @@ export const FetchAdapter = _FetchAdapter;
 export const DefaultAPI = ContentDeliveryAPI;
 export type API = ContentDeliveryAPI;
 export type NetworkErrorData = BaseNetworkErrorData;
-export type PathResponse = BasePathResponse;
+export type PathResponse<T = any, C extends IContent = IContent> = BasePathResponse<T, C>;
+export type ActionResponse<T = any, C extends IContent = IContent> = BaseActionResponse<T, C>
 
 // Content delivery response modelling
 export type Property<T = any> = _Property<T>;

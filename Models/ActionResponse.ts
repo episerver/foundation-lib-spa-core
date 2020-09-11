@@ -9,7 +9,7 @@ export enum ResponseType {
  * The ActionResponse is the main response type for invoking action
  * methods.
  */
-export default interface ActionResponse<T> {
+export default interface ActionResponse<T, C extends IContent = IContent> {
   /**
    * The name of the invoked action
    */
@@ -43,7 +43,7 @@ export default interface ActionResponse<T> {
   /**
    * The full content object
    */
-  currentContent: IContent;
+  currentContent: C;
 
   /**
    * The current language
