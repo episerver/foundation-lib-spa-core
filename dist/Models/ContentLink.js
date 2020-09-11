@@ -10,24 +10,14 @@ var ContentLinkService = /** @class */ (function () {
         //Just here to prevent instances
     }
     ContentLinkService.referenceIsIContent = function (ref) {
-        if (ref && ref.contentType && ref.name) {
-            return true;
-        }
-        return false;
+        return (ref && ref.contentType && ref.name) ? true : false;
     };
     ContentLinkService.referenceIsContentLink = function (ref) {
-        if (ref &&
-            /*(ref as ContentLink).guidValue &&*/ ref.id &&
-            typeof ref.id == 'number') {
-            return true;
-        }
-        return false;
+        return ref && ((ref.guidValue && typeof ref.guidValue === 'string') ||
+            (ref.id && typeof ref.id === 'number')) ? true : false;
     };
     ContentLinkService.referenceIsString = function (ref) {
-        if (ref && ref.trim) {
-            return true;
-        }
-        return false;
+        return ref && ref.trim ? true : false;
     };
     /**
      *
@@ -46,7 +36,7 @@ var ContentLinkService = /** @class */ (function () {
             link = ref;
         }
         if (link) {
-            if (preferGuid && link.guidValue) {
+            if ((preferGuid && link.guidValue) || !link.id) {
                 return link.guidValue;
             }
             else {

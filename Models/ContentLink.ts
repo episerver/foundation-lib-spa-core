@@ -10,28 +10,18 @@ export class ContentLinkService {
   }
 
   public static referenceIsIContent(ref: ContentReference): ref is IContent {
-    if (ref && (ref as IContent).contentType && (ref as IContent).name) {
-      return true;
-    }
-    return false;
+    return (ref && (ref as IContent).contentType && (ref as IContent).name) ? true : false;
   }
 
   public static referenceIsContentLink(ref: ContentReference): ref is ContentLink {
-    if (
-      ref &&
-      /*(ref as ContentLink).guidValue &&*/ (ref as ContentLink).id &&
-      typeof (ref as ContentLink).id == 'number'
-    ) {
-      return true;
-    }
-    return false;
+    return ref && (
+        ((ref as ContentLink).guidValue && typeof (ref as ContentLink).guidValue === 'string') ||
+        ((ref as ContentLink).id        && typeof (ref as ContentLink).id === 'number')
+      ) ? true : false;
   }
 
   public static referenceIsString(ref: ContentReference): ref is string {
-    if (ref && (ref as string).trim) {
-      return true;
-    }
-    return false;
+    return ref && (ref as string).trim ? true : false;
   }
 
   /**
@@ -50,7 +40,7 @@ export class ContentLinkService {
       link = ref;
     }
     if (link) {
-      if (preferGuid && link.guidValue) {
+      if ((preferGuid && link.guidValue) || !link.id) {
         return link.guidValue
       } else {
         let out: string = link.id.toString();
@@ -98,9 +88,9 @@ export class ContentLinkService {
  */
 export default interface ContentLink {
   id: number;
-  workId: number;
+  workId?: number;
   guidValue: string;
-  providerName: string;
+  providerName?: string;
   url: string;
   expanded?: IContent;
 }

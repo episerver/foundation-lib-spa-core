@@ -20,9 +20,9 @@ export declare class ContentLinkService {
  */
 export default interface ContentLink {
     id: number;
-    workId: number;
+    workId?: number;
     guidValue: string;
-    providerName: string;
+    providerName?: string;
     url: string;
     expanded?: IContent;
 }
