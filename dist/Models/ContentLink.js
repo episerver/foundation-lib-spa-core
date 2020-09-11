@@ -33,7 +33,8 @@ var ContentLinkService = /** @class */ (function () {
      *
      * @param ref The content reference to generate the API-ID for.
      */
-    ContentLinkService.createApiId = function (ref) {
+    ContentLinkService.createApiId = function (ref, preferGuid) {
+        if (preferGuid === void 0) { preferGuid = false; }
         if (this.referenceIsString(ref)) {
             return ref;
         }
@@ -45,11 +46,16 @@ var ContentLinkService = /** @class */ (function () {
             link = ref;
         }
         if (link) {
-            var out = link.id.toString();
-            if (link.providerName) {
-                out = out + "__" + link.providerName;
+            if (preferGuid && link.guidValue) {
+                return link.guidValue;
             }
-            return out;
+            else {
+                var out = link.id.toString();
+                if (link.providerName) {
+                    out = out + "__" + link.providerName;
+                }
+                return out;
+            }
         }
         throw 'Unable to generate an Episerver API ID';
     };

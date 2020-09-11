@@ -38,7 +38,7 @@ export class ContentLinkService {
    *
    * @param ref The content reference to generate the API-ID for.
    */
-  public static createApiId(ref: ContentReference): ContentApiId {
+  public static createApiId(ref: ContentReference, preferGuid: boolean = false): ContentApiId {
     if (this.referenceIsString(ref)) {
       return ref;
     }
@@ -50,11 +50,15 @@ export class ContentLinkService {
       link = ref;
     }
     if (link) {
-      let out: string = link.id.toString();
-      if (link.providerName) {
-        out = `${out}__${link.providerName}`;
+      if (preferGuid && link.guidValue) {
+        return link.guidValue
+      } else {
+        let out: string = link.id.toString();
+        if (link.providerName) {
+          out = `${out}__${link.providerName}`;
+        }
+        return out;
       }
-      return out;
     }
     throw 'Unable to generate an Episerver API ID';
   }
