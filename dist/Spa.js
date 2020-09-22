@@ -14,7 +14,7 @@ var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (
 var __importStar = (this && this.__importStar) || function (mod) {
     if (mod && mod.__esModule) return mod;
     var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
     __setModuleDefault(result, mod);
     return result;
 };
@@ -24,21 +24,21 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.EpiserverSpaContext = exports.InitStatus = void 0;
 // Redux & Redux setup
-var toolkit_1 = require("@reduxjs/toolkit");
-var AbstractRepostory_1 = require("./Repository/AbstractRepostory");
-var IContent_1 = __importStar(require("./Repository/IContent"));
-var ViewContext_1 = __importDefault(require("./Repository/ViewContext"));
-var IServiceContainer_1 = require("./Core/IServiceContainer");
-var ContentDeliveryAPI_1 = __importDefault(require("./ContentDeliveryAPI"));
-var DefaultEventEngine_1 = __importDefault(require("./Core/DefaultEventEngine"));
-var ContentLink_1 = require("./Models/ContentLink");
-var ComponentLoader_1 = __importDefault(require("./Loaders/ComponentLoader"));
-var AppGlobal_1 = __importDefault(require("./AppGlobal"));
-var RoutingModule_1 = __importDefault(require("./Routing/RoutingModule"));
-var ErrorPage_1 = __importDefault(require("./Models/ErrorPage"));
-var StringUtils_1 = __importDefault(require("./Util/StringUtils"));
+const toolkit_1 = require("@reduxjs/toolkit");
+const AbstractRepostory_1 = require("./Repository/AbstractRepostory");
+const IContent_1 = __importStar(require("./Repository/IContent"));
+const ViewContext_1 = __importDefault(require("./Repository/ViewContext"));
+const IServiceContainer_1 = require("./Core/IServiceContainer");
+const ContentDeliveryAPI_1 = __importDefault(require("./ContentDeliveryAPI"));
+const DefaultEventEngine_1 = __importDefault(require("./Core/DefaultEventEngine"));
+const ContentLink_1 = require("./Models/ContentLink");
+const ComponentLoader_1 = __importDefault(require("./Loaders/ComponentLoader"));
+const AppGlobal_1 = __importDefault(require("./AppGlobal"));
+const RoutingModule_1 = __importDefault(require("./Routing/RoutingModule"));
+const ErrorPage_1 = __importDefault(require("./Models/ErrorPage"));
+const StringUtils_1 = __importDefault(require("./Util/StringUtils"));
 // Create context
-var ctx = AppGlobal_1.default();
+const ctx = AppGlobal_1.default();
 ctx.EpiserverSpa = ctx.EpiserverSpa || {};
 ctx.epi = ctx.epi || {};
 var InitStatus;
@@ -47,33 +47,23 @@ var InitStatus;
     InitStatus[InitStatus["Initializing"] = 1] = "Initializing";
     InitStatus[InitStatus["Initialized"] = 2] = "Initialized";
 })(InitStatus = exports.InitStatus || (exports.InitStatus = {}));
-var EpiserverSpaContext = /** @class */ (function () {
-    function EpiserverSpaContext() {
+class EpiserverSpaContext {
+    constructor() {
         this._initialized = InitStatus.NotInitialized;
         this._modules = [];
     }
-    Object.defineProperty(EpiserverSpaContext.prototype, "serviceContainer", {
-        get: function () {
-            return this._serviceContainer;
-        },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(EpiserverSpaContext.prototype, "contentStorage", {
-        get: function () {
-            return this.serviceContainer.getService(IServiceContainer_1.DefaultServices.ContentDeliveryApi);
-        },
-        enumerable: false,
-        configurable: true
-    });
-    EpiserverSpaContext.prototype.init = function (config, serviceContainer, isServerSideRendering) {
-        var _this = this;
-        if (isServerSideRendering === void 0) { isServerSideRendering = false; }
+    get serviceContainer() {
+        return this._serviceContainer;
+    }
+    get contentStorage() {
+        return this.serviceContainer.getService(IServiceContainer_1.DefaultServices.ContentDeliveryApi);
+    }
+    init(config, serviceContainer, isServerSideRendering = false) {
         // Generic init
         this._initialized = InitStatus.Initializing;
         this._isServerSideRendering = isServerSideRendering;
         this._serviceContainer = serviceContainer;
-        var executionContext = {
+        const executionContext = {
             isServerSideRendering: isServerSideRendering
         };
         //Create module list
@@ -82,7 +72,7 @@ var EpiserverSpaContext = /** @class */ (function () {
             this._modules = this._modules.concat(config.modules);
         }
         if (config.enableDebug)
-            console.debug('Spa modules:', this._modules.map(function (m) { return m.GetName(); }));
+            console.debug('Spa modules:', this._modules.map((m) => m.GetName()));
         // Register core services
         this._serviceContainer.addService(IServiceContainer_1.DefaultServices.Context, this);
         this._serviceContainer.addService(IServiceContainer_1.DefaultServices.Config, config);
@@ -91,30 +81,30 @@ var EpiserverSpaContext = /** @class */ (function () {
         this._serviceContainer.addService(IServiceContainer_1.DefaultServices.EventEngine, new DefaultEventEngine_1.default());
         this._serviceContainer.addService(IServiceContainer_1.DefaultServices.ComponentLoader, new ComponentLoader_1.default());
         // Have modules add services of their own
-        this._modules.forEach(function (x) { return x.ConfigureContainer(_this._serviceContainer); });
+        this._modules.forEach(x => x.ConfigureContainer(this._serviceContainer));
         // Redux init
         this._initRedux();
         // EpiEditMode init
         this._initEditMode();
         // Run module startup logic
-        this._modules.forEach(function (x) { return x.StartModule(_this); });
+        this._modules.forEach(x => x.StartModule(this));
         this._initialized = InitStatus.Initialized;
-    };
-    EpiserverSpaContext.prototype._initRedux = function () {
-        var reducers = {};
+    }
+    _initRedux() {
+        const reducers = {};
         IContent_1.default.ContentDeliveryAPI = this.contentDeliveryApi();
         reducers[IContent_1.default.StateKey] = IContent_1.default.reducer.bind(IContent_1.default);
         reducers[ViewContext_1.default.StateKey] = ViewContext_1.default.reducer.bind(ViewContext_1.default);
-        this._modules.forEach(function (x) { var ri = x.GetStateReducer(); if (ri) {
+        this._modules.forEach(x => { const ri = x.GetStateReducer(); if (ri) {
             reducers[ri.stateKey] = ri.reducer;
         } });
         this._state = toolkit_1.configureStore({ reducer: reducers });
-        var initAction = { type: AbstractRepostory_1.RepositoryActions.INIT };
+        const initAction = { type: AbstractRepostory_1.RepositoryActions.INIT };
         this._state.dispatch(initAction);
-    };
-    EpiserverSpaContext.prototype._initEditMode = function () {
+    }
+    _initEditMode() {
         if (this.isDebugActive())
-            console.debug("Initializing edit mode in " + (this.initialEditMode() ? 'enabled' : 'disabled') + " state");
+            console.debug(`Initializing edit mode in ${this.initialEditMode() ? 'enabled' : 'disabled'} state`);
         if (!this._isServerSideRendering && this.initialEditMode()) {
             if (this.isDebugActive())
                 console.debug('Adding edit mode event handlers');
@@ -124,41 +114,40 @@ var EpiserverSpaContext = /** @class */ (function () {
             this.events().addListener('epiReady', 'EpiReady', this.onEpiReady.bind(this), true);
             this.events().addListener('contentSaved', 'EpiContentSaved', this.onEpiContentSaved.bind(this), true);
         }
-    };
-    EpiserverSpaContext.prototype.onEpiContentSaved = function (event) {
-        var _this = this;
+    }
+    onEpiContentSaved(event) {
         if (this.isDebugActive())
             console.info('Received updated content from the Episerver Shell', event);
         if (event.successful) {
-            var baseId = event.savedContentLink.split('_')[0];
-            var baseContent_1 = this.getContentById(baseId);
-            if (baseContent_1) {
-                event.properties.forEach(function (prop) {
+            const baseId = event.savedContentLink.split('_')[0];
+            const baseContent = this.getContentById(baseId);
+            if (baseContent) {
+                event.properties.forEach((prop) => {
                     if (prop.successful) {
-                        _this.dispatch(IContent_1.IContentActionFactory.updateContentProperty(baseContent_1, prop.name, prop.value));
+                        this.dispatch(IContent_1.IContentActionFactory.updateContentProperty(baseContent, prop.name, prop.value));
                     }
                 });
             }
         }
-    };
+    }
     /**
      * Handler for the postdata message sent by the Epishell to indicate that the environment is now ready
      * and the edit mode can be detected.
      */
-    EpiserverSpaContext.prototype.onEpiReady = function () {
+    onEpiReady() {
         if (this.isDebugActive())
             console.info('Episerver Ready, setting edit mode to', this.isInEditMode() ? 'true' : 'false');
         this.contentDeliveryApi().setInEditMode(this.isInEditMode());
-    };
-    EpiserverSpaContext.prototype.isInitialized = function () {
+    }
+    isInitialized() {
         return this._initialized === InitStatus.Initialized;
-    };
-    EpiserverSpaContext.prototype.isDebugActive = function () {
+    }
+    isDebugActive() {
         var _a;
         this.enforceInitialized();
         return ((_a = this.config()) === null || _a === void 0 ? void 0 : _a.enableDebug) || false;
-    };
-    EpiserverSpaContext.prototype.isServerSideRendering = function () {
+    }
+    isServerSideRendering() {
         if (this._isServerSideRendering == null) {
             try {
                 this._isServerSideRendering = ctx.epi.isServerSideRendering === true;
@@ -168,119 +157,119 @@ var EpiserverSpaContext = /** @class */ (function () {
             }
         }
         return this._isServerSideRendering;
-    };
-    EpiserverSpaContext.prototype.enforceInitialized = function () {
+    }
+    enforceInitialized() {
         if (!this._initialized) {
             throw new Error('The Episerver SPA Context has not yet been initialized');
         }
-    };
-    EpiserverSpaContext.prototype.dispatch = function (action) {
+    }
+    dispatch(action) {
         this.enforceInitialized();
         return this._state.dispatch(action);
-    };
-    EpiserverSpaContext.prototype.invoke = function (action) {
+    }
+    invoke(action) {
         this.enforceInitialized();
         return this._state.dispatch(action);
-    };
-    EpiserverSpaContext.prototype.getStore = function () {
+    }
+    getStore() {
         this.enforceInitialized();
         return this._state;
-    };
-    EpiserverSpaContext.prototype.events = function () {
+    }
+    events() {
         return this._serviceContainer.getService(IServiceContainer_1.DefaultServices.EventEngine);
-    };
-    EpiserverSpaContext.prototype.config = function () {
+    }
+    config() {
         this.enforceInitialized();
         return this._serviceContainer.getService(IServiceContainer_1.DefaultServices.Config);
-    };
-    EpiserverSpaContext.prototype.componentLoader = function () {
+    }
+    componentLoader() {
         return this._serviceContainer.getService(IServiceContainer_1.DefaultServices.ComponentLoader);
-    };
-    EpiserverSpaContext.prototype.contentDeliveryApi = function () {
+    }
+    contentDeliveryApi() {
         this.enforceInitialized();
         return this._serviceContainer.getService(IServiceContainer_1.DefaultServices.ContentDeliveryApi);
-    };
-    EpiserverSpaContext.prototype.getContentByGuid = function (guid) {
+    }
+    getContentByGuid(guid) {
         if (this._state.getState().iContentRepo.guids[guid]) {
-            var id = this._state.getState().iContentRepo.guids[guid];
+            const id = this._state.getState().iContentRepo.guids[guid];
             return this.getContentById(id);
         }
         return null;
-    };
-    EpiserverSpaContext.prototype.loadContentByGuid = function (id) {
-        var c = this.getContentByGuid(id);
+    }
+    loadContentByGuid(id) {
+        const c = this.getContentByGuid(id);
         if (c) {
             return Promise.resolve(c);
         }
         return this.invoke(IContent_1.default.getById(id));
-    };
-    EpiserverSpaContext.prototype.getContentById = function (id) {
+    }
+    getContentById(id) {
         if (this._state.getState().iContentRepo.items && this._state.getState().iContentRepo.items[id]) {
             return this._state.getState().iContentRepo.items[id].content;
         }
         return null;
-    };
-    EpiserverSpaContext.prototype.loadContentById = function (id) {
-        var c = this.getContentById(id);
+    }
+    loadContentById(id) {
+        const c = this.getContentById(id);
         if (c) {
             return Promise.resolve(c);
         }
         return this.invoke(IContent_1.default.getById(id));
-    };
-    EpiserverSpaContext.prototype.getContentByRef = function (ref) {
+    }
+    getContentByRef(ref) {
         if (this._state.getState().iContentRepo.refs[ref]) {
-            var id = this._state.getState().iContentRepo.refs[ref];
+            const id = this._state.getState().iContentRepo.refs[ref];
             return this.getContentById(id);
         }
         return null;
-    };
-    EpiserverSpaContext.prototype.loadContentByRef = function (ref) {
-        var item = this.getContentByRef(ref);
+    }
+    loadContentByRef(ref) {
+        const item = this.getContentByRef(ref);
         if (item)
             return Promise.resolve(item);
         return this.invoke(IContent_1.default.getByReference(ref));
-    };
-    EpiserverSpaContext.prototype.getContentByPath = function (path) {
+    }
+    getContentByPath(path) {
         if (this._state.getState().iContentRepo.paths[path]) {
-            var id = this._state.getState().iContentRepo.paths[path];
+            const id = this._state.getState().iContentRepo.paths[path];
             return this.getContentById(id);
         }
         return null;
-    };
-    EpiserverSpaContext.prototype.loadContentByPath = function (path) {
-        var c = this.getContentByPath(path);
+    }
+    loadContentByPath(path) {
+        const c = this.getContentByPath(path);
         if (c) {
             return Promise.resolve(c);
         }
         return this.invoke(IContent_1.default.getByPath(path));
-    };
-    EpiserverSpaContext.prototype.injectContent = function (iContent) {
+    }
+    injectContent(iContent) {
         this.dispatch(IContent_1.IContentActionFactory.addOrUpdateItem(iContent));
-    };
+    }
     /**
      * Check whether or not we're in edit mode by looking at the URL. This
      * yields the correct result prior to the onEpiReady event has fired
      *
      * @return {boolean}
      */
-    EpiserverSpaContext.prototype.initialEditMode = function () {
+    initialEditMode() {
         var _a;
         try {
-            var testA = ((_a = (new URLSearchParams(window.location.search)).get('epieditmode')) === null || _a === void 0 ? void 0 : _a.toLowerCase()) === 'true';
-            var testB = this.isInEditMode();
+            const testA = ((_a = (new URLSearchParams(window.location.search)).get('epieditmode')) === null || _a === void 0 ? void 0 : _a.toLowerCase()) === 'true';
+            const testB = this.isInEditMode();
             return testA || testB;
         }
         catch (e) {
             return false;
         }
-    };
+    }
     /**
      * Determine the edit mode by following a sequence of steps, from most
      * reliable to most unreliable.
      *
      * @returns {boolean}
      */
-    EpiserverSpaContext.prototype.isInEditMode = function () {
+    isInEditMode() {
         var _a;
         try {
             return ctx.epi && ctx.epi.inEditMode !== undefined ? ctx.epi.inEditMode === true : false;
@@ -301,8 +290,8 @@ var EpiserverSpaContext = /** @class */ (function () {
             // Ignore error on purpose to go to next test
         }
         return false;
-    };
-    EpiserverSpaContext.prototype.isEditable = function () {
+    }
+    isEditable() {
         try {
             return ctx.epi ? ctx.epi.isEditable === true : false;
         }
@@ -316,11 +305,10 @@ var EpiserverSpaContext = /** @class */ (function () {
             // Ignore errors on purpose to go to next test
         }
         return false;
-    };
-    EpiserverSpaContext.prototype.getEpiserverUrl = function (path, action) {
+    }
+    getEpiserverUrl(path = '', action) {
         var _a;
-        if (path === void 0) { path = ''; }
-        var itemPath = '';
+        let itemPath = '';
         if (ContentLink_1.ContentLinkService.referenceIsString(path)) {
             itemPath = path;
         }
@@ -334,9 +322,9 @@ var EpiserverSpaContext = /** @class */ (function () {
             itemPath += itemPath.length ? '/' + action : action;
         }
         return StringUtils_1.default.TrimRight('/', ((_a = this.config()) === null || _a === void 0 ? void 0 : _a.epiBaseUrl) + itemPath);
-    };
-    EpiserverSpaContext.prototype.getSpaRoute = function (path) {
-        var newPath = '';
+    }
+    getSpaRoute(path) {
+        let newPath = '';
         if (ContentLink_1.ContentLinkService.referenceIsString(path)) {
             newPath = path;
         }
@@ -347,15 +335,14 @@ var EpiserverSpaContext = /** @class */ (function () {
             newPath = path.url;
         }
         return '/' + StringUtils_1.default.TrimLeft('/', this.config().basePath + newPath);
-    };
+    }
     /**
      *
      * @param content   The content item load, by path, content link or IContent
      * @param action    The action to invoke on the content controller
      */
-    EpiserverSpaContext.prototype.buildPath = function (content, action) {
-        if (action === void 0) { action = ""; }
-        var newPath = '';
+    buildPath(content, action = "") {
+        let newPath = '';
         if (ContentLink_1.ContentLinkService.referenceIsString(content)) {
             newPath = content;
         }
@@ -374,10 +361,9 @@ var EpiserverSpaContext = /** @class */ (function () {
             newPath = newPath.substr(-1, 1) === "/" ? newPath + action + "/" : newPath + "/" + action + "/";
         }
         return newPath;
-    };
-    EpiserverSpaContext.prototype.navigateTo = function (path, noHistory) {
-        if (noHistory === void 0) { noHistory = false; }
-        var newPath = '';
+    }
+    navigateTo(path, noHistory = false) {
+        let newPath = '';
         if (ContentLink_1.ContentLinkService.referenceIsString(path)) {
             newPath = path;
         }
@@ -393,36 +379,36 @@ var EpiserverSpaContext = /** @class */ (function () {
             newPath = '/';
         }
         window.location.href = newPath;
-    };
-    EpiserverSpaContext.prototype.getCurrentWebsite = function () {
+    }
+    getCurrentWebsite() {
         var _a;
         return (_a = this._state.getState().iContentRepo) === null || _a === void 0 ? void 0 : _a.website;
-    };
-    EpiserverSpaContext.prototype.loadCurrentWebsite = function () {
-        var website = this.getCurrentWebsite();
+    }
+    loadCurrentWebsite() {
+        const website = this.getCurrentWebsite();
         if (website) {
             return Promise.resolve(website);
         }
         return this.invoke(IContent_1.default.getCurrentWebsite());
-    };
-    EpiserverSpaContext.prototype.getCurrentPath = function () {
-        var state = this._state.getState();
+    }
+    getCurrentPath() {
+        const state = this._state.getState();
         return state.ViewContext.currentPath;
-    };
-    EpiserverSpaContext.prototype.getRoutedContent = function () {
+    }
+    getRoutedContent() {
         if (this.isServerSideRendering()) {
             return ErrorPage_1.default.Error404;
         }
-        var c = this.getContentByPath(this.getCurrentPath());
+        const c = this.getContentByPath(this.getCurrentPath());
         if (!c) {
             throw new Error("There's no currently routed content");
         }
         return c;
-    };
-    EpiserverSpaContext.prototype.getContentByContentRef = function (ref) {
-        var id = ContentLink_1.ContentLinkService.createApiId(ref);
+    }
+    getContentByContentRef(ref) {
+        const id = ContentLink_1.ContentLinkService.createApiId(ref);
         return id ? this.getContentById(id) : null;
-    };
+    }
     /**
      * Get the base path where the SPA is running. If it's configured to be
      * running at https://example.com/spa/, this method returns /spa. If it's
@@ -434,34 +420,33 @@ var EpiserverSpaContext = /** @class */ (function () {
      *
      * @returns {string}    The base path of the SPA
      */
-    EpiserverSpaContext.prototype.getSpaBasePath = function () {
+    getSpaBasePath() {
         var _a;
         if (typeof this._sanitizedSpaBasePath === 'string') {
             return this._sanitizedSpaBasePath;
         }
-        var configBasePath = ((_a = this.config()) === null || _a === void 0 ? void 0 : _a.basePath) || '';
+        let configBasePath = ((_a = this.config()) === null || _a === void 0 ? void 0 : _a.basePath) || '';
         if (configBasePath.length > 0) {
             configBasePath = StringUtils_1.default.TrimRight('/', StringUtils_1.default.TrimLeft('/', configBasePath));
             configBasePath = configBasePath.length > 0 ? '/' + configBasePath : '';
         }
         this._sanitizedSpaBasePath = configBasePath;
         return this._sanitizedSpaBasePath;
-    };
+    }
     /**
      * Get the domain where the SPA is running. If it's configured to be
      * running at https://example.com/spa/, this method returns: https://example.com
      */
-    EpiserverSpaContext.prototype.getSpaDomain = function () {
+    getSpaDomain() {
         return window.location.protocol + '//' + window.location.hostname;
-    };
+    }
     /**
      * Get the location where Episerver is running, whithout a trailing slash.
      */
-    EpiserverSpaContext.prototype.getEpiserverURL = function () {
+    getEpiserverURL() {
         return this.getEpiserverUrl();
-    };
-    return EpiserverSpaContext;
-}());
+    }
+}
 exports.EpiserverSpaContext = EpiserverSpaContext;
 ctx.EpiserverSpa.Context = ctx.EpiserverSpa.Context || new EpiserverSpaContext();
 exports.default = ctx.EpiserverSpa.Context;

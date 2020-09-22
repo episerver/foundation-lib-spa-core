@@ -14,7 +14,7 @@ var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (
 var __importStar = (this && this.__importStar) || function (mod) {
     if (mod && mod.__esModule) return mod;
     var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
     __setModuleDefault(result, mod);
     return result;
 };
@@ -22,13 +22,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getGlobalScope = exports.useServiceContainer = exports.useEpiserver = exports.init = void 0;
+exports.getGlobalScope = exports.useServiceContainer = exports.useEpiserver = exports.init = exports.ContextProvider = exports.Tracking = exports.ServerSideRendering = exports.ComponentTypes = exports.Components = exports.Services = exports.Taxonomy = exports.Routing = exports.Layout = exports.ContentDelivery = exports.Core = void 0;
 // Core SPA Libray
-var Core = __importStar(require("./Library/Core"));
-var ContextProvider = __importStar(require("./Hooks/Context"));
-var InitServer_1 = __importDefault(require("./InitServer"));
-var InitBrowser_1 = __importDefault(require("./InitBrowser"));
-var AppGlobal_1 = __importDefault(require("./AppGlobal"));
+const Core = __importStar(require("./Library/Core"));
+const ContextProvider = __importStar(require("./Hooks/Context"));
+const InitServer_1 = __importDefault(require("./InitServer"));
+const InitBrowser_1 = __importDefault(require("./InitBrowser"));
+const AppGlobal_1 = __importDefault(require("./AppGlobal"));
 // Namespace exports
 exports.Core = __importStar(require("./Library/Core"));
 exports.ContentDelivery = __importStar(require("./Library/ContentDelivery"));
@@ -52,8 +52,7 @@ exports.ContextProvider = __importStar(require("./Hooks/Context"));
  * @param   {boolean}           ssr                 Marker to hint Server Side rendering
  * @returns {ServerSideRendering.Response|void}  The result of the initialization method invoked
  */
-function init(config, serviceContainer, containerElementId, ssr) {
-    if (ssr === void 0) { ssr = false; }
+function init(config, serviceContainer, containerElementId, ssr = false) {
     serviceContainer = serviceContainer || new Core.DefaultServiceContainer();
     if (ssr) {
         return InitServer_1.default(config, serviceContainer);

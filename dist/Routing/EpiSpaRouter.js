@@ -1,15 +1,4 @@
 "use strict";
-var __assign = (this && this.__assign) || function () {
-    __assign = Object.assign || function(t) {
-        for (var s, i = 1, n = arguments.length; i < n; i++) {
-            s = arguments[i];
-            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
-                t[p] = s[p];
-        }
-        return t;
-    };
-    return __assign.apply(this, arguments);
-};
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
@@ -25,7 +14,7 @@ var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (
 var __importStar = (this && this.__importStar) || function (mod) {
     if (mod && mod.__esModule) return mod;
     var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
     __setModuleDefault(result, mod);
     return result;
 };
@@ -34,53 +23,53 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RoutedContent = exports.Router = void 0;
-var react_1 = __importStar(require("react"));
-var jQuery_1 = __importDefault(require("jQuery"));
-var react_router_1 = require("react-router");
-var react_router_dom_1 = require("react-router-dom");
-var index_1 = require("../index");
-exports.Router = function (props) {
-    var epi = index_1.useEpiserver();
+const react_1 = __importStar(require("react"));
+const jQuery_1 = __importDefault(require("jQuery"));
+const react_router_1 = require("react-router");
+const react_router_dom_1 = require("react-router-dom");
+const index_1 = require("../index");
+exports.Router = (props) => {
+    const epi = index_1.useEpiserver();
     if (epi.isServerSideRendering()) {
-        var RouterProps_1 = {
+        const RouterProps = {
             basename: props.basename,
             context: props.context,
             location: props.location
         };
-        return react_1.default.createElement(react_router_1.StaticRouter, __assign({}, RouterProps_1), props.children);
+        return react_1.default.createElement(react_router_1.StaticRouter, Object.assign({}, RouterProps), props.children);
     }
-    var RouterProps = {
+    const RouterProps = {
         basename: props.basename,
         forceRefresh: props.forceRefresh,
         getUserConfirmation: props.getUserConfirmation,
         keyLength: props.keyLength
     };
-    return react_1.default.createElement(react_router_dom_1.BrowserRouter, __assign({}, RouterProps),
+    return react_1.default.createElement(react_router_dom_1.BrowserRouter, Object.assign({}, RouterProps),
         react_1.default.createElement(ElementNavigation, null, props.children));
 };
 exports.default = exports.Router;
 ;
-var ElementNavigation = function (props) {
-    var history = react_router_1.useHistory();
-    var location = react_router_1.useLocation();
-    var epi = index_1.useEpiserver();
-    var config = epi.config();
+const ElementNavigation = (props) => {
+    const history = react_router_1.useHistory();
+    const location = react_router_1.useLocation();
+    const epi = index_1.useEpiserver();
+    const config = epi.config();
     if (!(epi.isInEditMode() || epi.isServerSideRendering()))
-        react_1.useEffect(function () {
-            var onWindowClick = function (event) {
-                var target = event.target;
-                var currentUrl = new URL(window.location.href);
-                var link;
-                var newPath = '';
+        react_1.useEffect(() => {
+            const onWindowClick = (event) => {
+                const target = event.target;
+                const currentUrl = new URL(window.location.href);
+                let link;
+                let newPath = '';
                 if (target.tagName.toLowerCase() == 'a') {
-                    var targetUrl = new URL(target.href);
+                    const targetUrl = new URL(target.href);
                     // Only act if we remain on the same domain
                     if (targetUrl.origin === currentUrl.origin) {
                         newPath = targetUrl.pathname;
                     }
                 }
                 else if ((link = jQuery_1.default(target).parents('a').first()).length) {
-                    var targetUrl = new URL(link.get(0).href);
+                    const targetUrl = new URL(link.get(0).href);
                     // Only act if we remain on the same domain
                     if (targetUrl.origin === currentUrl.origin) {
                         newPath = targetUrl.pathname;
@@ -104,41 +93,40 @@ var ElementNavigation = function (props) {
                 }
             };
             jQuery_1.default(window).on('click', onWindowClick);
-            return function () {
+            return () => {
                 jQuery_1.default(window).off('click', onWindowClick);
             };
         });
     return props.children;
 };
-exports.RoutedContent = function (props) {
-    var switchProps = {
+exports.RoutedContent = (props) => {
+    const switchProps = {
         location: props.location
     };
-    return react_1.default.createElement(react_router_1.Switch, __assign({}, switchProps),
+    return react_1.default.createElement(react_router_1.Switch, Object.assign({}, switchProps),
         props.children,
-        (props.config || []).map(function (item, idx) { return createRouteNode(item, props.basePath, props.keyPrefix + "-route-" + idx); }));
+        (props.config || []).map((item, idx) => createRouteNode(item, props.basePath, `${props.keyPrefix}-route-${idx}`)));
 };
-function createRouteNode(route, basePath, key) {
-    if (basePath === void 0) { basePath = ""; }
-    var createdRoute = basePath ? (basePath.substr(-1) === "/" ? basePath.substr(0, -1) : basePath) : "";
+function createRouteNode(route, basePath = "", key) {
+    let createdRoute = basePath ? (basePath.substr(-1) === "/" ? basePath.substr(0, -1) : basePath) : "";
     createdRoute = createdRoute + "/" + (route.path ? (route.path.substr(0, 1) === "/" ? route.path.substr(1) : route.path) : "");
     console.log('Generating Route Virtual DOM Node', createdRoute, route, key);
-    var newRouteProps = {
+    const newRouteProps = {
         children: route.children,
         exact: route.exact,
         location: route.location,
         path: createdRoute,
         sensitive: route.sensitive,
         strict: route.strict,
-        render: function (props) {
+        render: (props) => {
             console.log('Executing Route Node', route, key, props);
             if (route.render)
-                return route.render(__assign(__assign({}, props), { routes: route.routes, path: route.path }));
+                return route.render(Object.assign(Object.assign({}, props), { routes: route.routes, path: route.path }));
             if (route.component) {
-                var RouteComponent = route.component;
-                return react_1.default.createElement(RouteComponent, __assign({}, props, { routes: route.routes, path: route.path }));
+                const RouteComponent = route.component;
+                return react_1.default.createElement(RouteComponent, Object.assign({}, props, { routes: route.routes, path: route.path }));
             }
         }
     };
-    return react_1.default.createElement(react_router_1.Route, __assign({}, newRouteProps, { key: key }));
+    return react_1.default.createElement(react_router_1.Route, Object.assign({}, newRouteProps, { key: key }));
 }

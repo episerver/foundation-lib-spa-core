@@ -8,101 +8,36 @@ function namePropertyIsString(prop) {
     return false;
 }
 exports.namePropertyIsString = namePropertyIsString;
-var BaseIContent = /** @class */ (function () {
-    function BaseIContent(baseData) {
+class BaseIContent {
+    constructor(baseData) {
         this._serverData = baseData;
     }
-    Object.defineProperty(BaseIContent.prototype, "contentLink", {
-        get: function () { return this.getProperty("contentLink"); },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(BaseIContent.prototype, "name", {
-        get: function () { return this.getProperty("name"); },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(BaseIContent.prototype, "language", {
-        get: function () { return this.getProperty("language"); },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(BaseIContent.prototype, "existingLanguages", {
-        get: function () { return this.getProperty("existingLanguages"); },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(BaseIContent.prototype, "masterLanguage", {
-        get: function () { return this.getProperty("masterLanguage"); },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(BaseIContent.prototype, "contentType", {
-        get: function () { return this.getProperty("contentType"); },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(BaseIContent.prototype, "parentLink", {
-        get: function () { return this.getProperty("parentLink"); },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(BaseIContent.prototype, "routeSegment", {
-        get: function () { return this.getProperty("routeSegment"); },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(BaseIContent.prototype, "url", {
-        get: function () { return this.getProperty("url"); },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(BaseIContent.prototype, "changed", {
-        get: function () { return this.getProperty("changed"); },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(BaseIContent.prototype, "created", {
-        get: function () { return this.getProperty("created"); },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(BaseIContent.prototype, "startPublish", {
-        get: function () { return this.getProperty("startPublish"); },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(BaseIContent.prototype, "stopPublish", {
-        get: function () { return this.getProperty("stopPublish"); },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(BaseIContent.prototype, "saved", {
-        get: function () { return this.getProperty("saved"); },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(BaseIContent.prototype, "status", {
-        get: function () { return this.getProperty("status"); },
-        enumerable: false,
-        configurable: true
-    });
-    Object.defineProperty(BaseIContent.prototype, "typeName", {
-        get: function () {
-            return this._typeName;
-        },
-        enumerable: false,
-        configurable: true
-    });
-    BaseIContent.prototype.getTypeName = function () {
+    get contentLink() { return this.getProperty("contentLink"); }
+    get name() { return this.getProperty("name"); }
+    get language() { return this.getProperty("language"); }
+    get existingLanguages() { return this.getProperty("existingLanguages"); }
+    get masterLanguage() { return this.getProperty("masterLanguage"); }
+    get contentType() { return this.getProperty("contentType"); }
+    get parentLink() { return this.getProperty("parentLink"); }
+    get routeSegment() { return this.getProperty("routeSegment"); }
+    get url() { return this.getProperty("url"); }
+    get changed() { return this.getProperty("changed"); }
+    get created() { return this.getProperty("created"); }
+    get startPublish() { return this.getProperty("startPublish"); }
+    get stopPublish() { return this.getProperty("stopPublish"); }
+    get saved() { return this.getProperty("saved"); }
+    get status() { return this.getProperty("status"); }
+    get typeName() {
         return this._typeName;
-    };
-    BaseIContent.prototype.getProperty = function (prop) {
+    }
+    getTypeName() {
+        return this._typeName;
+    }
+    getProperty(prop) {
         return this._serverData[prop];
-    };
-    BaseIContent.prototype.getPropertyType = function (prop) {
+    }
+    getPropertyType(prop) {
         return this._propertyMap[prop.toString()];
-    };
-    return BaseIContent;
-}());
+    }
+}
 exports.BaseIContent = BaseIContent;

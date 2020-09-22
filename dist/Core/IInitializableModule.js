@@ -1,24 +1,23 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.BaseInitializableModule = void 0;
-var BaseInitializableModule = /** @class */ (function () {
-    function BaseInitializableModule() {
+class BaseInitializableModule {
+    constructor() {
         this.name = "Unnamed module";
     }
-    BaseInitializableModule.prototype.GetName = function () {
+    GetName() {
         return this.name;
-    };
-    BaseInitializableModule.prototype.ConfigureContainer = function (container) {
+    }
+    ConfigureContainer(container) {
         //No action taken by default
-    };
-    BaseInitializableModule.prototype.StartModule = function (context) {
+    }
+    StartModule(context) {
         if (context.isDebugActive()) {
-            console.debug("Starting " + this.GetName());
+            console.debug(`Starting ${this.GetName()}`);
         }
-    };
-    BaseInitializableModule.prototype.GetStateReducer = function () {
+    }
+    GetStateReducer() {
         return null;
-    };
-    return BaseInitializableModule;
-}());
+    }
+}
 exports.BaseInitializableModule = BaseInitializableModule;

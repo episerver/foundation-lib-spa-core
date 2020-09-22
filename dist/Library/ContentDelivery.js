@@ -14,7 +14,7 @@ var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (
 var __importStar = (this && this.__importStar) || function (mod) {
     if (mod && mod.__esModule) return mod;
     var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
     __setModuleDefault(result, mod);
     return result;
 };
@@ -23,8 +23,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DefaultAPI = exports.FetchAdapter = exports.PathResponseIsIContent = void 0;
-var ContentDeliveryAPI_1 = __importStar(require("../ContentDeliveryAPI"));
-var FetchAdapter_1 = __importDefault(require("../FetchAdapter"));
+const ContentDeliveryAPI_1 = __importStar(require("../ContentDeliveryAPI"));
+const FetchAdapter_1 = __importDefault(require("../FetchAdapter"));
 exports.PathResponseIsIContent = ContentDeliveryAPI_1.PathResponseIsIContent;
 exports.FetchAdapter = FetchAdapter_1.default;
 exports.DefaultAPI = ContentDeliveryAPI_1.default;

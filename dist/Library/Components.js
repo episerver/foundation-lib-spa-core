@@ -5,14 +5,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Page = exports.Spinner = exports.Site = exports.EpiserverContent = exports.ContentArea = exports.LazyComponent = exports.Link = exports.Property = void 0;
 // Components
-var Property_1 = __importDefault(require("../Components/Property"));
-var Link_1 = __importDefault(require("../Components/Link"));
-var LazyComponent_1 = __importDefault(require("../Components/LazyComponent"));
-var ContentArea_1 = __importDefault(require("../Components/ContentArea"));
-var EpiComponent_1 = __importDefault(require("../Components/EpiComponent"));
-var CmsSite_1 = __importDefault(require("../Components/CmsSite"));
-var Spinner_1 = __importDefault(require("../Components/Spinner"));
-var Page_1 = __importDefault(require("../Page"));
+const Property_1 = __importDefault(require("../Components/Property"));
+const Link_1 = __importDefault(require("../Components/Link"));
+const LazyComponent_1 = __importDefault(require("../Components/LazyComponent"));
+const ContentArea_1 = __importDefault(require("../Components/ContentArea"));
+const EpiComponent_1 = __importDefault(require("../Components/EpiComponent"));
+const CmsSite_1 = __importDefault(require("../Components/CmsSite"));
+const Spinner_1 = __importDefault(require("../Components/Spinner"));
+const Page_1 = __importDefault(require("../Page"));
 exports.Property = Property_1.default;
 exports.Link = Link_1.default;
 exports.LazyComponent = LazyComponent_1.default;

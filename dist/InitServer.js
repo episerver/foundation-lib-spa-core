@@ -4,18 +4,18 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 // Set SSR
-var AppGlobal_1 = __importDefault(require("./AppGlobal"));
-var ctx = AppGlobal_1.default();
+const AppGlobal_1 = __importDefault(require("./AppGlobal"));
+const ctx = AppGlobal_1.default();
 ctx.epi = ctx.epi || {};
 ctx.epi.isServerSideRendering = true;
 // Global Libraries && Poly-fills
 require("core-js");
-var server_1 = __importDefault(require("react-dom/server"));
-var react_helmet_1 = require("react-helmet");
-var react_1 = __importDefault(require("react"));
-var DefaultServiceContainer_1 = __importDefault(require("./Core/DefaultServiceContainer"));
-var Spa_1 = __importDefault(require("./Spa"));
-var CmsSite_1 = __importDefault(require("./Components/CmsSite"));
+const server_1 = __importDefault(require("react-dom/server"));
+const react_helmet_1 = require("react-helmet");
+const react_1 = __importDefault(require("react"));
+const DefaultServiceContainer_1 = __importDefault(require("./Core/DefaultServiceContainer"));
+const Spa_1 = __importDefault(require("./Spa"));
+const CmsSite_1 = __importDefault(require("./Components/CmsSite"));
 function RenderServerSide(config, serviceContainer) {
     // Initialize Episerver Context, for Server Side Rendering
     // EpiContext.Instance = new SSRContext(new SSRPathProvider());
@@ -24,8 +24,8 @@ function RenderServerSide(config, serviceContainer) {
     config.noAjax = true;
     config.enableDebug = true;
     Spa_1.default.init(config, serviceContainer, true);
-    var body = server_1.default.renderToString(react_1.default.createElement(CmsSite_1.default, { context: Spa_1.default }));
-    var meta = react_helmet_1.Helmet.renderStatic();
+    const body = server_1.default.renderToString(react_1.default.createElement(CmsSite_1.default, { context: Spa_1.default }));
+    const meta = react_helmet_1.Helmet.renderStatic();
     return {
         Body: body,
         HtmlAttributes: meta.htmlAttributes.toString(),

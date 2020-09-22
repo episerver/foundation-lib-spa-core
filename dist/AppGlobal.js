@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var fallback = {};
+const fallback = {};
 /**
  * Get the global variable for the current environment, this method will
  * return:
@@ -9,7 +9,7 @@ var fallback = {};
  * - If unknown: a fallback object
  */
 function default_1() {
-    var ctx = null;
+    let ctx = null;
     if (!ctx)
         try {
             ctx = window;
