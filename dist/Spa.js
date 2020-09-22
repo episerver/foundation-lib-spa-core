@@ -73,21 +73,21 @@ var EpiserverSpaContext = /** @class */ (function () {
         this._initialized = InitStatus.Initializing;
         this._isServerSideRendering = isServerSideRendering;
         this._serviceContainer = serviceContainer;
-        this._config = config;
         var executionContext = {
             isServerSideRendering: isServerSideRendering
         };
         //Create module list
         this._modules.push(new RoutingModule_1.default());
-        if (this._config.modules) {
-            this._modules = this._modules.concat(this._config.modules);
+        if (config.modules) {
+            this._modules = this._modules.concat(config.modules);
         }
-        console.debug('Spa modules:', this._modules.map(function (m) { return m.GetName(); }));
+        if (config.enableDebug)
+            console.debug('Spa modules:', this._modules.map(function (m) { return m.GetName(); }));
         // Register core services
         this._serviceContainer.addService(IServiceContainer_1.DefaultServices.Context, this);
-        this._serviceContainer.addService(IServiceContainer_1.DefaultServices.Config, this._config);
+        this._serviceContainer.addService(IServiceContainer_1.DefaultServices.Config, config);
         this._serviceContainer.addService(IServiceContainer_1.DefaultServices.ExecutionContext, executionContext);
-        this._serviceContainer.addService(IServiceContainer_1.DefaultServices.ContentDeliveryApi, new ContentDeliveryAPI_1.default(this, this._config));
+        this._serviceContainer.addService(IServiceContainer_1.DefaultServices.ContentDeliveryApi, new ContentDeliveryAPI_1.default(this, config));
         this._serviceContainer.addService(IServiceContainer_1.DefaultServices.EventEngine, new DefaultEventEngine_1.default());
         this._serviceContainer.addService(IServiceContainer_1.DefaultServices.ComponentLoader, new ComponentLoader_1.default());
         // Have modules add services of their own
@@ -156,7 +156,7 @@ var EpiserverSpaContext = /** @class */ (function () {
     EpiserverSpaContext.prototype.isDebugActive = function () {
         var _a;
         this.enforceInitialized();
-        return ((_a = this._config) === null || _a === void 0 ? void 0 : _a.enableDebug) || false;
+        return ((_a = this.config()) === null || _a === void 0 ? void 0 : _a.enableDebug) || false;
     };
     EpiserverSpaContext.prototype.isServerSideRendering = function () {
         if (this._isServerSideRendering == null) {
@@ -191,7 +191,7 @@ var EpiserverSpaContext = /** @class */ (function () {
     };
     EpiserverSpaContext.prototype.config = function () {
         this.enforceInitialized();
-        return this._config;
+        return this._serviceContainer.getService(IServiceContainer_1.DefaultServices.Config);
     };
     EpiserverSpaContext.prototype.componentLoader = function () {
         return this._serviceContainer.getService(IServiceContainer_1.DefaultServices.ComponentLoader);
@@ -318,6 +318,7 @@ var EpiserverSpaContext = /** @class */ (function () {
         return false;
     };
     EpiserverSpaContext.prototype.getEpiserverUrl = function (path, action) {
+        var _a;
         if (path === void 0) { path = ''; }
         var itemPath = '';
         if (ContentLink_1.ContentLinkService.referenceIsString(path)) {
@@ -332,7 +333,7 @@ var EpiserverSpaContext = /** @class */ (function () {
         if (action) {
             itemPath += itemPath.length ? '/' + action : action;
         }
-        return StringUtils_1.default.TrimRight('/', this._config.epiBaseUrl + itemPath);
+        return StringUtils_1.default.TrimRight('/', ((_a = this.config()) === null || _a === void 0 ? void 0 : _a.epiBaseUrl) + itemPath);
     };
     EpiserverSpaContext.prototype.getSpaRoute = function (path) {
         var newPath = '';

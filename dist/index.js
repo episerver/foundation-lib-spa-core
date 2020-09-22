@@ -22,12 +22,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.useServiceContainer = exports.useEpiserver = void 0;
+exports.getGlobalScope = exports.useServiceContainer = exports.useEpiserver = exports.init = void 0;
 // Core SPA Libray
 var Core = __importStar(require("./Library/Core"));
 var ContextProvider = __importStar(require("./Hooks/Context"));
 var InitServer_1 = __importDefault(require("./InitServer"));
 var InitBrowser_1 = __importDefault(require("./InitBrowser"));
+var AppGlobal_1 = __importDefault(require("./AppGlobal"));
 // Namespace exports
 exports.Core = __importStar(require("./Library/Core"));
 exports.ContentDelivery = __importStar(require("./Library/ContentDelivery"));
@@ -61,6 +62,7 @@ function init(config, serviceContainer, containerElementId, ssr) {
         return InitBrowser_1.default(config, containerElementId, serviceContainer);
     }
 }
+exports.init = init;
 exports.default = init;
 /**
  * React Hook (for functional components) to retrieve the Episerver Context from
@@ -76,3 +78,10 @@ exports.useEpiserver = ContextProvider.useEpiserver;
  * @returns  { Core.IServiceContainer }
  */
 exports.useServiceContainer = ContextProvider.useServiceContainer;
+/**
+ * Helper method to get the global scope at any location within the SPA, this is either
+ * the 'window' or 'global' variable, depending on execution context.
+ *
+ * @return { Window|any }
+ */
+exports.getGlobalScope = AppGlobal_1.default;

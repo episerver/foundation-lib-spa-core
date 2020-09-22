@@ -4,6 +4,7 @@ import { ContentAreaSiteConfig } from './Components/ContentArea';
 import { IComponentPreloadList } from './Loaders/ComponentPreLoader';
 import IInitializableModule from './Core/IInitializableModule';
 import IRouteConfig from './Routing/IRouteConfig';
+import { AxiosAdapter } from 'axios';
 export default interface AppConfig {
     /**
      * Enable debug logging to the console
@@ -70,4 +71,8 @@ export default interface AppConfig {
      * The list of routes to be pre-pended to the Episerver route-handler (e.g. the * handler)
      */
     routes?: IRouteConfig;
+    /**
+     * Override the standard adapter used by Axios to connect to the ContentDelivery API.
+     */
+    networkAdapter?: AxiosAdapter;
 }

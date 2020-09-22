@@ -9,6 +9,7 @@ import IInitializableModuleBase, { BaseInitializableModule as CoreBaseInitializa
 import IStateReducerInfoBase from '../Core/IStateReducerInfo';
 export declare const DefaultEventEngine: typeof DefaultEventEngineBase;
 export declare const DefaultServiceContainer: typeof DefaultServiceContainerBase;
+export declare const DefaultContext: IEpiserverContextBase;
 export declare const DefaultServices: typeof DefaultServicesBase;
 export declare const BaseInitializableModule: typeof CoreBaseInitializableModule;
 export declare type IEpiserverContext = IEpiserverContextBase;

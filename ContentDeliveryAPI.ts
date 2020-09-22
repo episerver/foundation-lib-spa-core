@@ -1,4 +1,4 @@
-import Axios, { AxiosRequestConfig, Method, AxiosResponse } from 'axios';
+import Axios, { AxiosRequestConfig, Method, AxiosResponse, AxiosAdapter, AxiosPromise } from 'axios';
 import AppConfig from './AppConfig';
 import IContent from './Models/IContent';
 import ContentLink, { ContentReference, ContentLinkService } from './Models/ContentLink';
@@ -8,10 +8,10 @@ import Website from './Models/Website';
 import PathProvider from './PathProvider';
 import Property from './Property';
 
-export type PathResponse = IContent | ActionResponse<any>;
+export type PathResponse<T = any, C extends IContent = IContent> = C | ActionResponse<T, C>;
 
-export interface NetworkErrorData extends IContent {
-  error: Property<any>;
+export interface NetworkErrorData<T = any> extends IContent {
+  error: Property<T>;
 }
 
 export function PathResponseIsIContent(iContent: PathResponse): iContent is IContent {
@@ -27,7 +27,7 @@ export function PathResponseIsActionResponse<P extends any = any>(actionResponse
   }
   return false;
 }
-function getIContentFromPathResponse(response: PathResponse) : IContent | null
+export function getIContentFromPathResponse(response: PathResponse) : IContent | null
 {
   if (PathResponseIsActionResponse(response)) {
     return response.currentContent;
@@ -173,7 +173,7 @@ export default class ContentDeliveryAPI {
         serviceUrl = new URL(this.config.epiBaseUrl + this.componentService + ContentLinkService.createApiId(content));
       }
     }
-    serviceUrl.searchParams.append('currentPageUrl', this.pathProvider.getCurrentPath());
+    //serviceUrl.searchParams.append('currentPageUrl', this.pathProvider.getCurrentPath());
     if (this.config.autoExpandRequests) {
       serviceUrl.searchParams.append('expand', '*');
     }
@@ -211,7 +211,7 @@ export default class ContentDeliveryAPI {
     if (this.config.autoExpandRequests) {
       serviceUrl.searchParams.append('expand', '*');
     }
-    serviceUrl.searchParams.append('currentPageUrl', this.pathProvider.getCurrentPath());
+    //serviceUrl.searchParams.append('currentPageUrl', this.pathProvider.getCurrentPath());
     return this.doRequest<PathResponse>(serviceUrl.href).catch((r) => {
       return this.buildNetworkError(r, path);
     });
@@ -285,6 +285,7 @@ export default class ContentDeliveryAPI {
    * @param verb The verb for the generated configuration
    */
   protected getRequestSettings(verb?: Method): AxiosRequestConfig {
+
     let options: AxiosRequestConfig = {
       method: verb ? verb : 'get',
       baseURL: this.config.epiBaseUrl,
@@ -301,6 +302,9 @@ export default class ContentDeliveryAPI {
       ],
       responseType: 'json',
     };
+    if (this.config.networkAdapter) {
+      options.adapter = this.config.networkAdapter;
+    }
     return options;
   }
 

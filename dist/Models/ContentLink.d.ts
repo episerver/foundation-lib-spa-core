@@ -10,7 +10,7 @@ export declare class ContentLinkService {
      *
      * @param ref The content reference to generate the API-ID for.
      */
-    static createApiId(ref: ContentReference): ContentApiId;
+    static createApiId(ref: ContentReference, preferGuid?: boolean): ContentApiId;
     static createHref(ref: ContentReference): string | null;
     protected static getUrlFromLink(link: ContentLink): string;
 }
@@ -20,9 +20,9 @@ export declare class ContentLinkService {
  */
 export default interface ContentLink {
     id: number;
-    workId: number;
+    workId?: number;
     guidValue: string;
-    providerName: string;
+    providerName?: string;
     url: string;
     expanded?: IContent;
 }

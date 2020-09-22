@@ -50,7 +50,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.PathResponseIsActionResponse = exports.PathResponseIsIContent = void 0;
+exports.getIContentFromPathResponse = exports.PathResponseIsActionResponse = exports.PathResponseIsIContent = void 0;
 var axios_1 = __importDefault(require("axios"));
 var ContentLink_1 = require("./Models/ContentLink");
 var ActionResponse_1 = require("./Models/ActionResponse");
@@ -77,6 +77,7 @@ function getIContentFromPathResponse(response) {
     }
     return null;
 }
+exports.getIContentFromPathResponse = getIContentFromPathResponse;
 var ContentDeliveryAPI = /** @class */ (function () {
     function ContentDeliveryAPI(pathProvider, config) {
         this.componentService = '/api/episerver/v2.0/content/';
@@ -223,7 +224,7 @@ var ContentDeliveryAPI = /** @class */ (function () {
                         serviceUrl = new URL(this.config.epiBaseUrl + this.componentService + ContentLink_1.ContentLinkService.createApiId(content));
                     }
                 }
-                serviceUrl.searchParams.append('currentPageUrl', this.pathProvider.getCurrentPath());
+                //serviceUrl.searchParams.append('currentPageUrl', this.pathProvider.getCurrentPath());
                 if (this.config.autoExpandRequests) {
                     serviceUrl.searchParams.append('expand', '*');
                 }
@@ -275,7 +276,7 @@ var ContentDeliveryAPI = /** @class */ (function () {
                 if (this.config.autoExpandRequests) {
                     serviceUrl.searchParams.append('expand', '*');
                 }
-                serviceUrl.searchParams.append('currentPageUrl', this.pathProvider.getCurrentPath());
+                //serviceUrl.searchParams.append('currentPageUrl', this.pathProvider.getCurrentPath());
                 return [2 /*return*/, this.doRequest(serviceUrl.href).catch(function (r) {
                         return _this.buildNetworkError(r, path);
                     })];
@@ -380,6 +381,9 @@ var ContentDeliveryAPI = /** @class */ (function () {
             ],
             responseType: 'json',
         };
+        if (this.config.networkAdapter) {
+            options.adapter = this.config.networkAdapter;
+        }
         return options;
     };
     ContentDeliveryAPI.prototype.getHeaders = function (customHeaders) {

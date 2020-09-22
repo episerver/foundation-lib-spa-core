@@ -54,7 +54,6 @@ export enum InitStatus
 }
 
 export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
-    protected _config!: AppConfig;
     protected _initialized: InitStatus = InitStatus.NotInitialized;
     protected _state!: EnhancedStore;
     protected _isServerSideRendering!: boolean;
@@ -77,23 +76,22 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
         this._initialized = InitStatus.Initializing;
         this._isServerSideRendering = isServerSideRendering;
         this._serviceContainer = serviceContainer;
-        this._config = config;
         const executionContext : IExecutionContext = {
           isServerSideRendering: isServerSideRendering
         }
 
         //Create module list
         this._modules.push(new RoutingModule());
-        if (this._config.modules) {
-          this._modules = this._modules.concat(this._config.modules);
+        if (config.modules) {
+          this._modules = this._modules.concat(config.modules);
         }
-        console.debug('Spa modules:', this._modules.map((m) => m.GetName()));
+        if (config.enableDebug) console.debug('Spa modules:', this._modules.map((m) => m.GetName()));
 
         // Register core services
         this._serviceContainer.addService(DefaultServices.Context, this);
-        this._serviceContainer.addService(DefaultServices.Config, this._config);
+        this._serviceContainer.addService(DefaultServices.Config, config);
         this._serviceContainer.addService(DefaultServices.ExecutionContext, executionContext);
-        this._serviceContainer.addService(DefaultServices.ContentDeliveryApi, new ContentDeliveryAPI(this, this._config));
+        this._serviceContainer.addService(DefaultServices.ContentDeliveryApi, new ContentDeliveryAPI(this, config));
         this._serviceContainer.addService(DefaultServices.EventEngine, new DefaultEventEngine());
         this._serviceContainer.addService(DefaultServices.ComponentLoader, new ComponentLoader());
 
@@ -173,7 +171,7 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
 
   public isDebugActive(): boolean {
     this.enforceInitialized();
-    return this._config?.enableDebug || false;
+    return this.config()?.enableDebug || false;
   }
 
   public isServerSideRendering(): boolean {
@@ -214,7 +212,7 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
 
   public config(): Readonly<AppConfig> {
     this.enforceInitialized();
-    return this._config;
+    return this._serviceContainer.getService(DefaultServices.Config);
   }
 
   public componentLoader(): ComponentLoader {
@@ -361,7 +359,7 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
       itemPath += itemPath.length ? '/' + action : action;
     }
 
-    return StringUtils.TrimRight('/', this._config.epiBaseUrl + itemPath);
+    return StringUtils.TrimRight('/', this.config()?.epiBaseUrl + itemPath);
   }
 
     public getSpaRoute(path: ContentReference) : string

@@ -6,14 +6,22 @@ import RoutedComponent from '../Components/RoutedComponent';
 
 export default class RoutingModule extends BaseInitializableModule implements IInitializableModule
 {
-    protected name : string = "Episerver Routing";
+    protected name : string = "Episerver CMS Routing";
     
+    /**
+     * Ensure the configuration object within the service container contains a "*" route. If
+     * this "*" route is not claimed by the implementation, it will be added as fall-back to
+     * Episerver CMS based routing.
+     * 
+     * @param {IServiceContainer} container The Service Container to update
+     */
     public ConfigureContainer(container: IServiceContainer) : void
     {
         const config = container.getService<AppConfig>(DefaultServices.Config);
         let haveStar : boolean = false;
-        (config.routes || []).forEach(c => haveStar = haveStar || c.path === "*");
-        if (!haveStar) config.routes?.push({
+        config.routes = config.routes || [];
+        config.routes.forEach(c => haveStar = haveStar || c.path === "*");
+        if (!haveStar) config.routes.push({
             path: "*",
             component: RoutedComponent
         });

@@ -17,7 +17,6 @@ export declare enum InitStatus {
     Initialized = 2
 }
 export declare class EpiserverSpaContext implements IEpiserverContext, PathProvider {
-    protected _config: AppConfig;
     protected _initialized: InitStatus;
     protected _state: EnhancedStore;
     protected _isServerSideRendering: boolean;

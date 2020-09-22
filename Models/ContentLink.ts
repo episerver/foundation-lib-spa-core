@@ -10,35 +10,25 @@ export class ContentLinkService {
   }
 
   public static referenceIsIContent(ref: ContentReference): ref is IContent {
-    if (ref && (ref as IContent).contentType && (ref as IContent).name) {
-      return true;
-    }
-    return false;
+    return (ref && (ref as IContent).contentType && (ref as IContent).name) ? true : false;
   }
 
   public static referenceIsContentLink(ref: ContentReference): ref is ContentLink {
-    if (
-      ref &&
-      /*(ref as ContentLink).guidValue &&*/ (ref as ContentLink).id &&
-      typeof (ref as ContentLink).id == 'number'
-    ) {
-      return true;
-    }
-    return false;
+    return ref && (
+        ((ref as ContentLink).guidValue && typeof (ref as ContentLink).guidValue === 'string') ||
+        ((ref as ContentLink).id        && typeof (ref as ContentLink).id === 'number')
+      ) ? true : false;
   }
 
   public static referenceIsString(ref: ContentReference): ref is string {
-    if (ref && (ref as string).trim) {
-      return true;
-    }
-    return false;
+    return ref && (ref as string).trim ? true : false;
   }
 
   /**
    *
    * @param ref The content reference to generate the API-ID for.
    */
-  public static createApiId(ref: ContentReference): ContentApiId {
+  public static createApiId(ref: ContentReference, preferGuid: boolean = false): ContentApiId {
     if (this.referenceIsString(ref)) {
       return ref;
     }
@@ -50,11 +40,15 @@ export class ContentLinkService {
       link = ref;
     }
     if (link) {
-      let out: string = link.id.toString();
-      if (link.providerName) {
-        out = `${out}__${link.providerName}`;
+      if ((preferGuid && link.guidValue) || !link.id) {
+        return link.guidValue
+      } else {
+        let out: string = link.id.toString();
+        if (link.providerName) {
+          out = `${out}__${link.providerName}`;
+        }
+        return out;
       }
-      return out;
     }
     throw 'Unable to generate an Episerver API ID';
   }
@@ -94,9 +88,9 @@ export class ContentLinkService {
  */
 export default interface ContentLink {
   id: number;
-  workId: number;
+  workId?: number;
   guidValue: string;
-  providerName: string;
+  providerName?: string;
   url: string;
   expanded?: IContent;
 }

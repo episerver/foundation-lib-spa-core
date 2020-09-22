@@ -3,6 +3,7 @@ import { Action, AnyAction } from '@reduxjs/toolkit';
 
 // Import from source files
 import AppConfig from '../AppConfig';
+import DefaultContextBase from '../Spa';
 import IServiceContainerBase, { DefaultServices as DefaultServicesBase } from '../Core/IServiceContainer';
 import DefaultServiceContainerBase from '../Core/DefaultServiceContainer';
 import IEpiserverContextBase from '../Core/IEpiserverContext';
@@ -14,6 +15,7 @@ import IStateReducerInfoBase from '../Core/IStateReducerInfo';
 // Re-export Core namespace
 export const DefaultEventEngine = DefaultEventEngineBase;
 export const DefaultServiceContainer = DefaultServiceContainerBase;
+export const DefaultContext = DefaultContextBase;
 export const DefaultServices = DefaultServicesBase;
 export const BaseInitializableModule = CoreBaseInitializableModule;
 export type IEpiserverContext = IEpiserverContextBase;
