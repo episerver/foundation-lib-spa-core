@@ -24,7 +24,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RoutedContent = exports.Router = void 0;
 const react_1 = __importStar(require("react"));
-const jQuery_1 = __importDefault(require("jQuery"));
+const jquery_1 = __importDefault(require("jquery"));
 const react_router_1 = require("react-router");
 const react_router_dom_1 = require("react-router-dom");
 const index_1 = require("../index");
@@ -68,7 +68,7 @@ const ElementNavigation = (props) => {
                         newPath = targetUrl.pathname;
                     }
                 }
-                else if ((link = jQuery_1.default(target).parents('a').first()).length) {
+                else if ((link = jquery_1.default(target).parents('a').first()).length) {
                     const targetUrl = new URL(link.get(0).href);
                     // Only act if we remain on the same domain
                     if (targetUrl.origin === currentUrl.origin) {
@@ -92,9 +92,9 @@ const ElementNavigation = (props) => {
                     return false;
                 }
             };
-            jQuery_1.default(window).on('click', onWindowClick);
+            jquery_1.default(window).on('click', onWindowClick);
             return () => {
-                jQuery_1.default(window).off('click', onWindowClick);
+                jquery_1.default(window).off('click', onWindowClick);
             };
         });
     return props.children;

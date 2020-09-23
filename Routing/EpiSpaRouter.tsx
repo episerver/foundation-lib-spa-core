@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import jQuery from 'jQuery';
+import jQuery from 'jquery';
 import { StaticRouter, StaticRouterProps, useHistory, useLocation, Switch, SwitchProps, Route, RouteProps, RouteComponentProps } from 'react-router';
 import { BrowserRouter, BrowserRouterProps } from 'react-router-dom';
 import IRouteConfig, { IRouteConfigItem } from './IRouteConfig';
