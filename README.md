@@ -28,7 +28,7 @@ This library contains the core functionality for the Episerver Foundation React 
 
 ## 2. Installation
 ```
-npm install --save-prod git+https://github.com/episerver/foundation-lib-spa-core.git
+npm install --save git+https://github.com/episerver/foundation-lib-spa-core.git
 ```
 
 The library has been optimized for usage with Webpack and the Webpack companion scripts. Although strictly spoken optional it's highly recommended to use Webpack for build and delivery.
@@ -37,16 +37,25 @@ Make sure that your project provides the required peer dependencies for the libr
 
 | Dependency | Version | Installation |
 | --- | --- | --- |
-|@reduxjs/toolkit|^1.3.6|`npm install --save-prod @reduxjs/toolkit`|
-|axios|^0.19.2|`npm install --save-prod axios`|
+|@reduxjs/toolkit|^1.3.6|`npm install --save @reduxjs/toolkit`|
+|axios|^0.20.0|`npm install --save axios`|
 |core-js|^3.6.5|`npm install --save-prod core-js`<br>`npm install --save-dev @types/core-js`|
-|dotenv|^8.2.0|`npm install --save-prod dotenv`|
-|lodash|^4.17.15|`npm install --save-prod lodash`<br>`npm install --save-dev @types/lodash`|
-|react|^16.13.1|`npm install --save-prod react`<br>`npm install --save-dev @types/react`|
-|react-dom|^16.13.1|`npm install --save-prod react-dom`<br>`npm install --save-dev @types/react-dom`|
-|react-helmet|^6.0.0|`npm install --save-prod react-helmet`<br>`npm install --save-dev @types/react-helmet`|
-|react-redux|^7.2.0|`npm install --save-prod react-redux`<br>`npm install --save-dev @types/react-redux`|
-|redux|^4.0.5|`npm install --save-prod redux`|
+|dotenv|^8.2.0|`npm install --save dotenv`|
+|lodash|^4.17.19|`npm install --save lodash`<br>`npm install --save-dev @types/lodash`|
+|jquery|^3.5.1|`npm install --save jquery`<br>`npm install --save-dev @types/jquery`|
+|react|^16.13.1|`npm install --save react`<br>`npm install --save-dev @types/react`|
+|react-dom|^16.13.1|`npm install --save react-dom`<br>`npm install --save-dev @types/react-dom`|
+|react-helmet|^6.0.0|`npm install --save react-helmet`<br>`npm install --save-dev @types/react-helmet`|
+|react-redux|^7.2.1|`npm install --save react-redux`<br>`npm install --save-dev @types/react-redux`|
+|react-router|^5.2.0|`npm install --save react-router`<br>`npm install --save-dev @types/react-router`|
+|react-router-dom|^5.2.0|`npm install --save react-router-dom`<br>`npm install --save-dev @types/react-router-dom`|
+|redux|^4.0.5|`npm install --save redux`|
+
+Or run as two commands:
+
+`npm install --save @reduxjs/toolkit axios core-js dotenv lodash jquery react react-dom react-helmet react-redux react-router react-router-dom redux`
+
+`npm install --save-dev @types/core-js @types/dotenv @types/lodash @types/jquery @types/react @types/react-dom @types/react-helment @types/react-redux @types/react-router @types/react-router-dom`
 
 ## 3. Usage
 Please check [Foundation Spa React](https://github.com/episerver/Foundation-spa-react) to see a full example implementation using this library.
