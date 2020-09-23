@@ -27,13 +27,33 @@ This library contains the core functionality for the Episerver Foundation React 
 - Episerver Model synchronization
 
 ## 2. Installation
+**The TL;DR:**
+
+Install latest master version from GitHub
+```
+npm install --save @reduxjs/toolkit axios core-js dotenv lodash jquery react react-dom react-helmet react-redux react-router react-router-dom redux
+
+npm install --save-dev @types/core-js @types/lodash @types/jquery @types/react @types/react-dom @types/react-helmet @types/react-redux @types/react-router @types/react-router-dom
+
+npm install --save git+https://github.com/episerver/foundation-lib-spa-core.git
+```
+
+**Full instructions**
+
+Install the latest master version directly from GitHub:
 ```
 npm install --save git+https://github.com/episerver/foundation-lib-spa-core.git
 ```
 
+It is also possible to directly install the latest commit on a branch (e.g. Develop) or a Tag (e.g. Released version). Use the command below and replace REFID with the identifier of the Git commit that you want to use.
+```
+npm install --save git+https://github.com/episerver/foundation-lib-spa-core.git#REFID
+```
+
+
 The library has been optimized for usage with Webpack and the Webpack companion scripts. Although strictly spoken optional it's highly recommended to use Webpack for build and delivery.
 
-Make sure that your project provides the required peer dependencies for the library to work. As the library has been written in TypeScript it requires you to also install the TypeScript type definitions when these are not included in the main project.
+Make sure that your project provides the required peer dependencies for the library to work. If you're using TypeScript, make sure to install type definitions (@types/...) for the libraries as well.
 
 | Dependency | Version | Installation |
 | --- | --- | --- |
@@ -51,11 +71,18 @@ Make sure that your project provides the required peer dependencies for the libr
 |react-router-dom|^5.2.0|`npm install --save react-router-dom`<br>`npm install --save-dev @types/react-router-dom`|
 |redux|^4.0.5|`npm install --save redux`|
 
-Or run as two commands:
+Or install all dependencies in one go, using the following two commands:
 
-`npm install --save @reduxjs/toolkit axios core-js dotenv lodash jquery react react-dom react-helmet react-redux react-router react-router-dom redux`
 
-`npm install --save-dev @types/core-js @types/dotenv @types/lodash @types/jquery @types/react @types/react-dom @types/react-helment @types/react-redux @types/react-router @types/react-router-dom`
+*Install  dependencies*
+```
+npm install --save @reduxjs/toolkit axios core-js dotenv lodash jquery react react-dom react-helmet react-redux react-router react-router-dom redux
+```
+
+*Install TypeScript type definitions*
+```
+npm install --save-dev @types/core-js @types/lodash @types/jquery @types/react @types/react-dom @types/react-helmet @types/react-redux @types/react-router @types/react-router-dom
+```
 
 ## 3. Usage
 Please check [Foundation Spa React](https://github.com/episerver/Foundation-spa-react) to see a full example implementation using this library.
