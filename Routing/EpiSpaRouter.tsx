@@ -3,7 +3,7 @@ import jQuery from 'jquery';
 import { StaticRouter, StaticRouterProps, useHistory, useLocation, Switch, SwitchProps, Route, RouteProps, RouteComponentProps } from 'react-router';
 import { BrowserRouter, BrowserRouterProps } from 'react-router-dom';
 import IRouteConfig, { IRouteConfigItem } from './IRouteConfig';
-import { useEpiserver } from '../index';
+import { useEpiserver, Core } from '../index';
 
 export interface RouterProps extends StaticRouterProps, BrowserRouterProps {}
 export const Router : React.FunctionComponent<RouterProps> = (props) =>
@@ -11,26 +11,25 @@ export const Router : React.FunctionComponent<RouterProps> = (props) =>
     const epi = useEpiserver();
 
     if (epi.isServerSideRendering()) {
-        const RouterProps : StaticRouterProps = {
+        const staticRouterProps : StaticRouterProps = {
             basename: props.basename,
             context: props.context,
             location: props.location
         };
-        return <StaticRouter {...RouterProps}>{ props.children }</StaticRouter>
+        return <StaticRouter {...staticRouterProps}>{ props.children }</StaticRouter>
     }
 
-    const RouterProps : BrowserRouterProps = {
+    const browserRouterProps : BrowserRouterProps = {
         basename: props.basename,
         forceRefresh: props.forceRefresh,
         getUserConfirmation: props.getUserConfirmation,
         keyLength: props.keyLength
     };
-    return <BrowserRouter {...RouterProps}><ElementNavigation>{ props.children }</ElementNavigation></BrowserRouter>
+    return <BrowserRouter {...browserRouterProps}><ElementNavigation>{ props.children }</ElementNavigation></BrowserRouter>
 }
 export default Router;
 
-interface ElementNavigationProps {};
-const ElementNavigation : React.FunctionComponent<ElementNavigationProps> = (props) : React.ReactElement => {
+const ElementNavigation : React.FunctionComponent<{}> = (props) : React.ReactElement => {
     const history = useHistory();
     const location = useLocation();
     const epi = useEpiserver();
@@ -43,7 +42,7 @@ const ElementNavigation : React.FunctionComponent<ElementNavigationProps> = (pro
             let link: JQuery<HTMLElement>;
             let newPath: string = '';
 
-            if (target.tagName.toLowerCase() == 'a') {
+            if (target.tagName.toLowerCase() === 'a') {
                 const targetUrl: URL = new URL((target as HTMLAnchorElement).href);
 
                 // Only act if we remain on the same domain
@@ -92,21 +91,22 @@ export interface RoutedContentProps extends SwitchProps
     basePath ?:     string
 }
 export const RoutedContent : React.FunctionComponent<RoutedContentProps> = (props) => {
+    const ctx = useEpiserver();
     const switchProps : SwitchProps = {
         location: props.location
     }
     return <Switch {...switchProps}>
         { props.children }
-        { (props.config || []).map( (item, idx) => createRouteNode(item, props.basePath, `${props.keyPrefix}-route-${idx}`) ) }
+        { (props.config || []).map( (item, idx) => createRouteNode(item, props.basePath, `${props.keyPrefix}-route-${idx}`, ctx) ) }
     </Switch>
 }
 
-function createRouteNode(route: IRouteConfigItem, basePath : string = "", key ?: string) : React.ReactElement<RouteProps> {
+function createRouteNode(route: IRouteConfigItem, basePath : string = "", key ?: string, ctx ?: Core.IEpiserverContext) : React.ReactElement<RouteProps> {
     
     let createdRoute : string = basePath ? (basePath.substr(-1) === "/" ? basePath.substr(0, -1) : basePath) : "";
     createdRoute = createdRoute + "/" + (route.path ? (route.path.substr(0,1) === "/" ? route.path.substr(1) : route.path) : "")
 
-    console.log('Generating Route Virtual DOM Node', createdRoute, route, key);
+    if (ctx?.isDebugActive()) console.log('Generating Route Virtual DOM Node', createdRoute, route, key);
     const newRouteProps : RouteProps = {
         children: route.children,
         exact: route.exact,
@@ -115,7 +115,7 @@ function createRouteNode(route: IRouteConfigItem, basePath : string = "", key ?:
         sensitive: route.sensitive,
         strict: route.strict,
         render: (props: RouteComponentProps) : React.ReactNode => {
-            console.log('Executing Route Node', route, key, props);
+            if (ctx?.isDebugActive()) console.log('Executing Route Node', route, key, props);
             if (route.render) return route.render({ ...props, routes: route.routes, path: route.path });
             if (route.component) {
                 const RouteComponent = route.component;

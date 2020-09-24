@@ -31,24 +31,23 @@ const index_1 = require("../index");
 exports.Router = (props) => {
     const epi = index_1.useEpiserver();
     if (epi.isServerSideRendering()) {
-        const RouterProps = {
+        const staticRouterProps = {
             basename: props.basename,
             context: props.context,
             location: props.location
         };
-        return react_1.default.createElement(react_router_1.StaticRouter, Object.assign({}, RouterProps), props.children);
+        return react_1.default.createElement(react_router_1.StaticRouter, Object.assign({}, staticRouterProps), props.children);
     }
-    const RouterProps = {
+    const browserRouterProps = {
         basename: props.basename,
         forceRefresh: props.forceRefresh,
         getUserConfirmation: props.getUserConfirmation,
         keyLength: props.keyLength
     };
-    return react_1.default.createElement(react_router_dom_1.BrowserRouter, Object.assign({}, RouterProps),
+    return react_1.default.createElement(react_router_dom_1.BrowserRouter, Object.assign({}, browserRouterProps),
         react_1.default.createElement(ElementNavigation, null, props.children));
 };
 exports.default = exports.Router;
-;
 const ElementNavigation = (props) => {
     const history = react_router_1.useHistory();
     const location = react_router_1.useLocation();
@@ -61,7 +60,7 @@ const ElementNavigation = (props) => {
                 const currentUrl = new URL(window.location.href);
                 let link;
                 let newPath = '';
-                if (target.tagName.toLowerCase() == 'a') {
+                if (target.tagName.toLowerCase() === 'a') {
                     const targetUrl = new URL(target.href);
                     // Only act if we remain on the same domain
                     if (targetUrl.origin === currentUrl.origin) {
@@ -100,17 +99,19 @@ const ElementNavigation = (props) => {
     return props.children;
 };
 exports.RoutedContent = (props) => {
+    const ctx = index_1.useEpiserver();
     const switchProps = {
         location: props.location
     };
     return react_1.default.createElement(react_router_1.Switch, Object.assign({}, switchProps),
         props.children,
-        (props.config || []).map((item, idx) => createRouteNode(item, props.basePath, `${props.keyPrefix}-route-${idx}`)));
+        (props.config || []).map((item, idx) => createRouteNode(item, props.basePath, `${props.keyPrefix}-route-${idx}`, ctx)));
 };
-function createRouteNode(route, basePath = "", key) {
+function createRouteNode(route, basePath = "", key, ctx) {
     let createdRoute = basePath ? (basePath.substr(-1) === "/" ? basePath.substr(0, -1) : basePath) : "";
     createdRoute = createdRoute + "/" + (route.path ? (route.path.substr(0, 1) === "/" ? route.path.substr(1) : route.path) : "");
-    console.log('Generating Route Virtual DOM Node', createdRoute, route, key);
+    if (ctx === null || ctx === void 0 ? void 0 : ctx.isDebugActive())
+        console.log('Generating Route Virtual DOM Node', createdRoute, route, key);
     const newRouteProps = {
         children: route.children,
         exact: route.exact,
@@ -119,7 +120,8 @@ function createRouteNode(route, basePath = "", key) {
         sensitive: route.sensitive,
         strict: route.strict,
         render: (props) => {
-            console.log('Executing Route Node', route, key, props);
+            if (ctx === null || ctx === void 0 ? void 0 : ctx.isDebugActive())
+                console.log('Executing Route Node', route, key, props);
             if (route.render)
                 return route.render(Object.assign(Object.assign({}, props), { routes: route.routes, path: route.path }));
             if (route.component) {
