@@ -31,13 +31,13 @@ export * as ContextProvider from './Hooks/Context';
  * @param   {boolean}           ssr                 Marker to hint Server Side rendering
  * @returns {ServerSideRendering.Response|void}  The result of the initialization method invoked
  */
-export function init (config: Core.IConfig, serviceContainer?: Core.IServiceContainer, containerElementId?: string, ssr: boolean = false) : ServerSideRendering.Response | void
+export function init<B extends boolean> (config: Core.IConfig, serviceContainer?: Core.IServiceContainer, containerElementId?: string, ssr?: B) : B extends true ? ServerSideRendering.Response : void
 {
     serviceContainer = serviceContainer || new Core.DefaultServiceContainer();
     if (ssr) {
-        return initServer(config, serviceContainer);
+        return initServer(config, serviceContainer) as B extends true ? ServerSideRendering.Response : void;
     } else {
-        return initBrowser(config, containerElementId, serviceContainer);
+        return initBrowser(config, containerElementId, serviceContainer) as B extends true ? ServerSideRendering.Response : void;
     }
 }
 export default init;
