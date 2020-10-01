@@ -22,7 +22,7 @@ export * as ContextProvider from './Hooks/Context';
  * @param   {boolean}           ssr                 Marker to hint Server Side rendering
  * @returns {ServerSideRendering.Response|void}  The result of the initialization method invoked
  */
-export declare function init(config: Core.IConfig, serviceContainer?: Core.IServiceContainer, containerElementId?: string, ssr?: boolean): ServerSideRendering.Response | void;
+export declare function init<B extends boolean>(config: Core.IConfig, serviceContainer?: Core.IServiceContainer, containerElementId?: string, ssr?: B): B extends true ? ServerSideRendering.Response : void;
 export default init;
 /**
  * React Hook (for functional components) to retrieve the Episerver Context from

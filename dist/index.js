@@ -52,7 +52,7 @@ exports.ContextProvider = __importStar(require("./Hooks/Context"));
  * @param   {boolean}           ssr                 Marker to hint Server Side rendering
  * @returns {ServerSideRendering.Response|void}  The result of the initialization method invoked
  */
-function init(config, serviceContainer, containerElementId, ssr = false) {
+function init(config, serviceContainer, containerElementId, ssr) {
     serviceContainer = serviceContainer || new Core.DefaultServiceContainer();
     if (ssr) {
         return InitServer_1.default(config, serviceContainer);
