@@ -1,2 +1,2 @@
-export default interface ContentTypePath extends Array<string> {
-}
+export declare type ContentTypePath = string[];
+export default ContentTypePath;

@@ -11,7 +11,7 @@ class DefaultEventEngine {
     constructor() {
         this.listeners = {};
         this.events = [];
-        let ctx = AppGlobal_1.default();
+        const ctx = AppGlobal_1.default();
         if (ctx.addEventListener) {
             ctx.addEventListener('message', this.onPostMessageReceived.bind(this), false);
         }
@@ -24,7 +24,7 @@ class DefaultEventEngine {
         }
     }
     registerEvent(event) {
-        if (this.events.indexOf(event) == -1) {
+        if (this.events.indexOf(event) === -1) {
             this.events.push(event);
             this.listeners[event] = [];
         }
@@ -39,20 +39,20 @@ class DefaultEventEngine {
                 this.registerEvent(event);
             }
             else {
-                throw `The event ${event} has not been registered.`;
+                throw new Error(`The event ${event} has not been registered.`);
             }
         }
-        if (this.listeners[event].some(value => value.id == id)) {
-            throw `There's already a listener with id ${id} registered for the event ${event}`;
+        if (this.listeners[event].some(value => value.id === id)) {
+            throw new Error(`There's already a listener with id ${id} registered for the event ${event}`);
         }
-        this.listeners[event].push({ callback: handler, id: id });
+        this.listeners[event].push({ callback: handler, id });
         return this;
     }
     dispatch(event, ...args) {
         if (!this.hasEvent(event)) {
             this.registerEvent(event);
         }
-        let ctx = this;
+        const ctx = this;
         this.listeners[event].forEach((l) => {
             l.callback.apply(ctx, args);
         });

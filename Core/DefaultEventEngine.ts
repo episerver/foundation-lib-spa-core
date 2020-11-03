@@ -4,8 +4,8 @@ import AppGlobal from '../AppGlobal';
 /**
  * The store of registered listeners
  */
-interface IListenerStore {
-    [event: string]: Array<IListener>;
+type IListenerStore = {
+    [event: string]: IListener[];
 }
 
 /**
@@ -13,13 +13,13 @@ interface IListenerStore {
  */
 export default class DefaultEventEngine implements IEventEngine {
     protected listeners: IListenerStore;
-    protected events: Array<string>;
+    protected events: string[];
 
     public constructor() {
         this.listeners = {};
         this.events = [];
 
-        let ctx = AppGlobal();
+        const ctx = AppGlobal();
         if (ctx.addEventListener) {
           ctx.addEventListener('message', this.onPostMessageReceived.bind(this), false);
         }
@@ -34,7 +34,7 @@ export default class DefaultEventEngine implements IEventEngine {
     }
 
     public registerEvent(event: string): IEventEngine {
-        if (this.events.indexOf(event) == -1) {
+        if (this.events.indexOf(event) === -1) {
             this.events.push(event);
             this.listeners[event] = [];
         }
@@ -51,14 +51,14 @@ export default class DefaultEventEngine implements IEventEngine {
             if (autoRegister) {
                 this.registerEvent(event);
             } else {
-                throw `The event ${event} has not been registered.`;
+                throw new Error(`The event ${event} has not been registered.`);
             }
         }
-        if (this.listeners[event].some(value => value.id == id)) {
-            throw `There's already a listener with id ${id} registered for the event ${event}`;
+        if (this.listeners[event].some(value => value.id === id)) {
+            throw new Error(`There's already a listener with id ${id} registered for the event ${event}`);
         }
 
-        this.listeners[event].push({ callback: handler, id: id });
+        this.listeners[event].push({ callback: handler, id });
         return this;
     }
 
@@ -66,7 +66,7 @@ export default class DefaultEventEngine implements IEventEngine {
         if (!this.hasEvent(event)) {
             this.registerEvent(event);
         }
-        let ctx = this;
+        const ctx = this;
         this.listeners[event].forEach((l: IListener) => {
             l.callback.apply(ctx, args);
         });

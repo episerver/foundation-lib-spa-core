@@ -1,3 +1,4 @@
 import Website from './Website';
-export default interface WebsiteList extends Array<Website> {
-}
+export declare type WebsiteList = Website[];
+export declare const hostnameFilter: (website: Website, host: string, language?: string, matchWildcard?: boolean) => boolean;
+export default WebsiteList;

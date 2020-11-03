@@ -7,7 +7,7 @@ exports.ContentLinkService = void 0;
 const Spa_1 = __importDefault(require("../Spa"));
 class ContentLinkService {
     constructor() {
-        //Just here to prevent instances
+        // Just here to prevent instances
     }
     static referenceIsIContent(ref) {
         return (ref && ref.contentType && ref.name) ? true : false;
@@ -46,11 +46,23 @@ class ContentLinkService {
                 return out;
             }
         }
-        throw 'Unable to generate an Episerver API ID';
+        throw new Error('Unable to generate an Episerver API ID');
+    }
+    static createRoute(ref) {
+        let link = null;
+        if (this.referenceIsIContent(ref)) {
+            link = ref.contentLink;
+        }
+        else if (this.referenceIsContentLink(ref)) {
+            link = ref;
+        }
+        if (!link)
+            return null;
+        return link.url || null;
     }
     static createHref(ref) {
         if (this.referenceIsIContent(ref)) {
-            let path = this.getUrlFromLink(ref.contentLink);
+            const path = this.getUrlFromLink(ref.contentLink);
             if (!path && ref.url) {
                 return ref.url;
             }
@@ -63,11 +75,11 @@ class ContentLinkService {
     }
     static getUrlFromLink(link) {
         let linkUrl = link.url || '';
-        if (linkUrl.substr(0, 1) == '/') {
-            //Absolute URL
+        if (linkUrl.substr(0, 1) === '/') {
+            // Absolute URL
             const basePath = Spa_1.default.config().basePath;
             linkUrl = linkUrl.substr(1);
-            return basePath.substr(-1) == '/' ? basePath + linkUrl : basePath + '/' + linkUrl;
+            return basePath.substr(-1) === '/' ? basePath + linkUrl : basePath + '/' + linkUrl;
         }
         else {
             return linkUrl;

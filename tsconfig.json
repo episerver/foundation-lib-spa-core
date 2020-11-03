@@ -10,7 +10,8 @@
     "strict": true,
     "moduleResolution": "node",
     "esModuleInterop": true,
-    "lib": ["ES6", "DOM", "DOM.Iterable"]
+    "lib": ["ES6", "DOM", "DOM.Iterable"],
+    "removeComments": false
   },
   "exclude": ["node_modules", "tests", "dist"]
 }

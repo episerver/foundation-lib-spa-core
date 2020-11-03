@@ -2,15 +2,15 @@ import IEventEngine, { IListener } from './IEventEngine';
 /**
  * The store of registered listeners
  */
-interface IListenerStore {
-    [event: string]: Array<IListener>;
-}
+declare type IListenerStore = {
+    [event: string]: IListener[];
+};
 /**
  * The default event engine for the SPA
  */
 export default class DefaultEventEngine implements IEventEngine {
     protected listeners: IListenerStore;
-    protected events: Array<string>;
+    protected events: string[];
     constructor();
     protected onPostMessageReceived(event: MessageEvent): void;
     registerEvent(event: string): IEventEngine;

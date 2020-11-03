@@ -119,6 +119,7 @@ export default interface IEpiserverContext {
      * Retrieve an item from the state based upon it's GUID, will return
      * null if the content is not in the state.
      *
+     * @deprecated  Use the get method of the IContentRepository_V2 Service instead
      * @param guid The GUID of the content to fetch
      */
     getContentByGuid(guid: string): IContent | null;
@@ -127,6 +128,7 @@ export default interface IEpiserverContext {
      * Retrieve an item from the state based upon it's GUID, will trigger async
      * fetching of the content by GUID if the content is not in the state
      *
+     * @deprecated  Use the load method of the IContentRepository_V2 Service instead
      * @param guid The GUID of the content to fetch
      */
     loadContentByGuid(guid: string): Promise<IContent>;
@@ -135,6 +137,7 @@ export default interface IEpiserverContext {
      * Retrieve an item from the state based upon it's ID, will return
      * null if the content is not in the state.
      *
+     * @deprecated  Use the getByContentId method of the IContentRepository_V2 Service instead
      * @param id The API ID (combination of ContentProvider & ID) of the content to fetch
      */
     getContentById(id: ContentApiId): IContent | null;
@@ -143,12 +146,25 @@ export default interface IEpiserverContext {
      * Retrieve an item from the state based upon it's GUID, will trigger async
      * fetching of the content by GUID if the content is not in the state
      *
+     * @deprecated  Use the getByContentId method of the IContentRepository_V2 Service instead
      * @param id The API ID (combination of ContentProvider & ID) of the content to fetch
      */
     loadContentById(id: ContentApiId): Promise<IContent>;
     getContentByRef(ref: string): IContent | null;
     loadContentByRef(ref: string): Promise<IContent>;
+
+    /**
+     * 
+     * @deprecated  Use the getByRoute method of the IContentRepository_V2 Service instead
+     * @param path 
+     */
     getContentByPath(path: string): IContent | null;
+
+    /**
+     * 
+     * @deprecated  Use the getByRoute method of the IContentRepository_V2 Service instead
+     * @param path 
+     */
     loadContentByPath(path: string): Promise<IContent>;
   
     /**

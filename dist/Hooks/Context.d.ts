@@ -1,6 +1,8 @@
 import React from 'react';
+import IContentDeliveryAPI from '../ContentDelivery/IContentDeliveryAPI';
 import IEpiserverContext from '../Core/IEpiserverContext';
 import IServiceContainer from '../Core/IServiceContainer';
+import IContentRepository from '../Repository/IContentRepository';
 /**
  * The React Context object for the Episerver context
  *
@@ -22,3 +24,17 @@ export declare function useEpiserver(): IEpiserverContext;
  * @returns  { Core.IServiceContainer }
  */
 export declare function useServiceContainer(): IServiceContainer;
+/**
+ * React Hook (for functional components) to retrieve the Episerver Content Repository
+ * from the nearest Provider in the virtual dom
+ */
+export declare function useIContentRepository(): IContentRepository;
+/**
+ * React Hook (for functional components) to retrieve the Episerver Content Delivery API
+ * from the nearest Provider in the virtual dom
+ */
+export declare function useContentDeliveryAPI(): IContentDeliveryAPI;
+/**
+ * create your forceUpdate hook
+ */
+export declare function useForceUpdate(): () => void;

@@ -20,7 +20,7 @@ export interface TypeMapperType {
  * Base implementation for the TypeMapper, which is used to dynamically load
  * the content types needed to interact with the system.
  */
-export default abstract class BaseTypeMapper {
+export abstract class BaseTypeMapper {
   private cache: { [typeName: string]: IContentType } = {};
   private loading: { [typeName: string]: Promise<IContentType> } = {};
 
@@ -104,3 +104,4 @@ export default abstract class BaseTypeMapper {
     return false;
   }
 }
+export default BaseTypeMapper;

@@ -4,13 +4,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const react_1 = __importDefault(require("react"));
-const EpiComponent_1 = require("../../EpiComponent");
+const EpiComponent_1 = __importDefault(require("../../EpiComponent"));
 const StringUtils_1 = __importDefault(require("../../Util/StringUtils"));
-;
-class ComponentNotFound extends EpiComponent_1.BaseEpiComponent {
+class ComponentNotFound extends EpiComponent_1.default {
     render() {
         let baseName = this.props.data.contentType.map((s) => { return StringUtils_1.default.SafeModelName(s); }).join("/");
-        let name = this.props.contentType || "";
+        const name = this.props.contentType || "";
         if (name && name.length > 0 && name !== this.props.data.contentType.slice(0, 1)[0]) {
             baseName = name + '/' + baseName;
         }
@@ -21,4 +20,4 @@ class ComponentNotFound extends EpiComponent_1.BaseEpiComponent {
     }
 }
 exports.default = ComponentNotFound;
-ComponentNotFound.displayName = 'Epi/ComponentNotFound';
+ComponentNotFound.displayName = 'Epi/Error/ComponentNotFound';

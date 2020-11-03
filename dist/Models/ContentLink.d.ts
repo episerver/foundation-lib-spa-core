@@ -11,6 +11,7 @@ export declare class ContentLinkService {
      * @param ref The content reference to generate the API-ID for.
      */
     static createApiId(ref: ContentReference, preferGuid?: boolean): ContentApiId;
+    static createRoute(ref: ContentReference): string | null;
     static createHref(ref: ContentReference): string | null;
     protected static getUrlFromLink(link: ContentLink): string;
 }

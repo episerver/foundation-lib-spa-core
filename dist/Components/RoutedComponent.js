@@ -24,50 +24,20 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RoutedComponent = void 0;
 const react_1 = __importStar(require("react"));
-const react_redux_1 = require("react-redux");
-const index_1 = require("../index");
-const ContentLink_1 = require("../Models/ContentLink");
+const Context_1 = require("../Hooks/Context");
 const EpiComponent_1 = __importDefault(require("./EpiComponent"));
 const Spinner_1 = __importDefault(require("./Spinner"));
-function RoutedComponent(props) {
-    const epi = index_1.useEpiserver();
+exports.RoutedComponent = (props) => {
+    const epi = Context_1.useEpiserver();
+    const repo = Context_1.useIContentRepository();
     const path = props.location.pathname;
     const [iContent, setIContent] = react_1.useState(null);
     react_1.useEffect(() => {
-        const newContent = epi.getContentByPath(path);
-        if (!newContent) {
-            epi.loadContentByPath(path).then((c) => {
-                setIContent(c);
-            });
-        }
-        else {
-            setIContent(newContent);
-        }
-    }, [props.location]);
+        repo.getByRoute(path).then(c => setIContent(c));
+    }, [path]);
     if (iContent === null) {
         return Spinner_1.default.CreateInstance({});
     }
-    else if (epi.isServerSideRendering()) {
-        return react_1.default.createElement(EpiComponent_1.default, { contentLink: iContent.contentLink, context: epi, expandedValue: iContent, path: props.location.pathname });
-    }
-    else {
-        const myProps = {
-            contentLink: iContent.contentLink,
-            context: epi,
-            expandedValue: iContent,
-            path: props.location.pathname
-        };
-        const ConnectedEpiComponent = react_redux_1.connect((state, baseProps) => {
-            const repoContentId = ContentLink_1.ContentLinkService.createApiId(baseProps.contentLink);
-            if (state.iContentRepo.items[repoContentId]) {
-                return Object.assign({}, baseProps, {
-                    expandedValue: state.iContentRepo.items[repoContentId].content
-                });
-            }
-            return baseProps;
-        })(EpiComponent_1.default);
-        return react_1.default.createElement(ConnectedEpiComponent, Object.assign({}, myProps));
-    }
-}
-exports.RoutedComponent = RoutedComponent;
-exports.default = RoutedComponent;
+    return react_1.default.createElement(EpiComponent_1.default, { contentLink: iContent.contentLink, context: epi, expandedValue: iContent, path: props.location.pathname });
+};
+exports.default = exports.RoutedComponent;

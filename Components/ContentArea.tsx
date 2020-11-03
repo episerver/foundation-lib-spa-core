@@ -7,7 +7,7 @@ import IEpiserverContext from '../Core/IEpiserverContext';
 /**
  * Definition of the ContentArea property value as used within the ContentDelivery API
  */
-export interface ContentAreaPropertyValue extends Array<ContentAreaPropertyItem> {}
+export type ContentAreaPropertyValue = ContentAreaPropertyItem[];
 
 export interface ContentAreaSiteConfig {
     /**

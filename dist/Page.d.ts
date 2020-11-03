@@ -7,7 +7,7 @@ export declare enum PageType {
     Basket = "basket",
     Other = "other"
 }
-export default abstract class Page<P extends IContent, S = {}, SS = {}> extends EpiComponent<P, S, SS> {
+export default abstract class Page<P extends IContent, S = {}> extends EpiComponent<P, S> {
     /**
      * The page type of the current page being rendered
      */

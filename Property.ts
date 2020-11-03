@@ -5,33 +5,23 @@ import { ContentAreaPropertyValue } from './Components/ContentArea';
 /**
  * Default untyped property definition
  */
-export default interface Property<T> {
+export type Property<ValueType = any, ExpandedType = any> = {
   propertyDataType: string;
-  value: T;
-  expandedValue?: any;
+  value: ValueType;
+  expandedValue?: ExpandedType;
 }
+export default Property;
 
 /**
  * String typed property definition
  */
-export interface StringProperty extends Property<string> {}
-
-export interface NumberProperty extends Property<number> {}
-
-export interface BooleanProperty extends Property<boolean> {}
-
-/**
- * Content reference typed property definition
- */
-export interface ContentReferenceProperty extends Property<ContentLink> {
-  expandedValue?: IContent;
-}
-
-export interface ContentAreaProperty extends Property<ContentAreaPropertyValue> {
-  expandedValue?: Array<IContent>;
-}
-
-export interface LinkListProperty extends Property<Array<LinkProperty>> {}
+export type StringProperty = Property<string>
+export type NumberProperty = Property<number>
+export type BooleanProperty = Property<boolean>
+export type ContentReferenceProperty = Property<ContentLink, IContent>
+export type ContentReferenceListProperty = Property<ContentLink[], IContent[]>
+export type ContentAreaProperty = Property<ContentAreaPropertyValue, IContent[]>
+export type LinkListProperty = Property<LinkProperty[]>
 
 export interface LinkProperty {
   href: string;

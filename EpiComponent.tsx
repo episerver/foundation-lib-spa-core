@@ -4,6 +4,7 @@ import IContent from './Models/IContent';
 import ActionResponse from './Models/ActionResponse';
 import ContentLink from './Models/ContentLink';
 import IEpiserverContext from './Core/IEpiserverContext';
+import CurrentContext from './Spa';
 
 /**
  * Base properties to be applied to every Episerver component
@@ -37,7 +38,7 @@ export interface ComponentProps<T extends IContent> {
     /**
      * The link to the content item shown by this component
      */
-    contentLink?: ContentLink
+    contentLink: ContentLink
 
     /**
      * The type context to be used, typical values are null, empty string or "block"
@@ -60,9 +61,12 @@ export interface ComponentProps<T extends IContent> {
     actionData?: any
 
     /**
-     * The application context to be used
+     * Legacy application context, kept as argument for now. Used when provided
+     * resolved at runtime otherwise.
+     * 
+     * @deprecated
      */
-    context: IEpiserverContext
+    context?: IEpiserverContext
 
     /**
      * The current path being rendered
@@ -78,13 +82,13 @@ export interface ComponentProps<T extends IContent> {
 /**
  * Type do describe a generic EpiComponent type
  */
-export type EpiComponentType = new ( props : ComponentProps<IContent>)  => EpiComponent<IContent>;
+export type EpiComponentType<T extends IContent = IContent> = new (props : ComponentProps<T>)  => EpiComponent<T>;
 
 /**
  * Base abstract class to be used by components representing an Episerver IContent component (e.g. Block, Page, Media, 
  * Catalog, Product, etc...)
  */
-export abstract class BaseEpiComponent<P extends ComponentProps<IContent>, S = {}, SS = {}> extends Component<P, S, SS>
+export abstract class EpiComponent<T extends IContent = IContent, S = {}> extends Component<ComponentProps<T>, S, {}>
 {
     /**
      * The component name as injected by the ComponentLoader
@@ -94,7 +98,7 @@ export abstract class BaseEpiComponent<P extends ComponentProps<IContent>, S = {
     protected currentComponentId : number;
     protected currentComponentGuid : string;
 
-    public constructor (props : P)
+    public constructor (props : ComponentProps<T>)
     {
         super(props);
         this.currentComponentId = this.props.data.contentLink.id;
@@ -139,7 +143,8 @@ export abstract class BaseEpiComponent<P extends ComponentProps<IContent>, S = {
 
     protected getContext() : IEpiserverContext
     {
-        return this.props.context;
+        const context = this.props.context || CurrentContext;
+        return context;
     }
 
     /**
@@ -175,8 +180,8 @@ export abstract class BaseEpiComponent<P extends ComponentProps<IContent>, S = {
 
     protected navigateTo(toPage: string | ContentLink)
     {
-        this.props.context.navigateTo(toPage);
+        this.getContext().navigateTo(toPage);
     }
 }
 
-export default abstract class EpiComponent<P extends IContent, S={}, SS={}> extends BaseEpiComponent<ComponentProps<P>, S, SS> {}
+export default EpiComponent;

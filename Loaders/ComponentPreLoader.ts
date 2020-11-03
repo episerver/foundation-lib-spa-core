@@ -19,7 +19,7 @@ export default class ComponentPreLoader {
    */
   public static async load(config: IComponentPreloadList, loader: ComponentLoader): Promise<boolean> {
     if (config && config.length > 0) {
-      let list = config.map((c) => loader.LoadType(c).catch((e) => e));
+      const list = config.map((c) => loader.LoadType(c).catch((e) => e));
       try {
         await Promise.all(list);
         return true;

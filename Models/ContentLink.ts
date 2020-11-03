@@ -6,7 +6,7 @@ export type ContentApiId = string;
 
 export class ContentLinkService {
   private constructor() {
-    //Just here to prevent instances
+    // Just here to prevent instances
   }
 
   public static referenceIsIContent(ref: ContentReference): ref is IContent {
@@ -50,12 +50,23 @@ export class ContentLinkService {
         return out;
       }
     }
-    throw 'Unable to generate an Episerver API ID';
+    throw new Error('Unable to generate an Episerver API ID');
   }
+
+  public static createRoute(ref: ContentReference): string | null {
+    let link : ContentLink | null = null;
+    if (this.referenceIsIContent(ref)) {
+      link = ref.contentLink;
+    } else if (this.referenceIsContentLink(ref)) {
+      link = ref;
+    }
+    if (!link) return null;
+    return link.url || null
+  } 
 
   public static createHref(ref: ContentReference): string | null {
     if (this.referenceIsIContent(ref)) {
-      let path = this.getUrlFromLink(ref.contentLink);
+      const path = this.getUrlFromLink(ref.contentLink);
       if (!path && ref.url) {
         return ref.url;
       }
@@ -71,11 +82,11 @@ export class ContentLinkService {
 
   protected static getUrlFromLink(link: ContentLink) {
     let linkUrl = link.url || '';
-    if (linkUrl.substr(0, 1) == '/') {
-      //Absolute URL
+    if (linkUrl.substr(0, 1) === '/') {
+      // Absolute URL
       const basePath: string = EpiContext.config().basePath;
       linkUrl = linkUrl.substr(1);
-      return basePath.substr(-1) == '/' ? basePath + linkUrl : basePath + '/' + linkUrl;
+      return basePath.substr(-1) === '/' ? basePath + linkUrl : basePath + '/' + linkUrl;
     } else {
       return linkUrl;
     }

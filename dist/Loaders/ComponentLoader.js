@@ -1,23 +1,4 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -33,7 +14,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const react_1 = __importDefault(require("react"));
 const ComponentNotFound_1 = __importDefault(require("../Components/Errors/ComponentNotFound"));
-const Spa_1 = __importDefault(require("../Spa"));
+const CoreIComponentLoader_1 = __importDefault(require("./CoreIComponentLoader"));
 /**
  * Helper class that ensures components can be pre-loaded for server side
  * rendering whilest loading them asynchronously in browser to minimize the
@@ -57,12 +38,39 @@ class ComponentLoader {
          * to adding them to the cache.
          */
         this.loading = {};
+        /**
+         * The list of IComponent Loaders
+         */
+        this.loaders = [];
+        /**
+         * State of the debug
+         */
+        this.debug = false;
+        this.loaders = [new CoreIComponentLoader_1.default()];
         try {
-            this.cache = PreLoad;
+            this.cache = PreLoad || {};
         }
         catch (e) {
-            //Ignore
+            this.cache = {};
         }
+    }
+    addLoader(loader) {
+        loader.setDebug(this.debug);
+        this.loaders.push(loader);
+        this.loaders.sort((a, b) => a.order - b.order);
+    }
+    addLoaders(loaders) {
+        const me = this;
+        loaders.forEach(x => { x.setDebug(me.debug); me.loaders.push(x); });
+        this.loaders.sort((a, b) => a.order - b.order);
+    }
+    createLoader(loaderType) {
+        const loader = new loaderType();
+        this.addLoader(loader);
+    }
+    setDebug(debug) {
+        this.debug = debug;
+        this.loaders.forEach(x => x.setDebug(debug));
     }
     /**
      * Verify if a component is in the cache
@@ -71,12 +79,12 @@ class ComponentLoader {
      */
     isPreLoaded(component) {
         try {
-            return this.cache["app/Components/" + component] ? true : false;
+            return this.cache[component] ? true : false;
         }
         catch (e) {
-            //Ignore exception
+            // Ignore exception
         }
-        return false; //An exception occured, so not pre-loaded
+        return false; // An exception occured, so not pre-loaded
     }
     /**
      * Load a component type synchronously from the cache
@@ -86,22 +94,22 @@ class ComponentLoader {
      */
     getPreLoadedType(component, throwOnUnknown = true) {
         if (this.isPreLoaded(component)) {
-            let c = this.cache["app/Components/" + component];
+            const c = this.cache[component];
             if (!c.displayName)
                 c.displayName = component;
             return c;
         }
         if (throwOnUnknown) {
-            throw `The component ${component} has not been pre-loaded!`;
+            throw new Error(`The component ${component} has not been pre-loaded!`);
         }
         return null;
     }
     getPreLoadedComponent(component, props) {
         if (this.isPreLoaded(component)) {
-            let type = this.getPreLoadedType(component);
+            const type = this.getPreLoadedType(component);
             return react_1.default.createElement(type, props);
         }
-        throw `The component ${component} has not been pre-loaded!`;
+        throw new Error(`The component ${component} has not been pre-loaded!`);
     }
     LoadType(component) {
         if (this.isPreLoaded(component)) {
@@ -113,44 +121,69 @@ class ComponentLoader {
             }
         }
         catch (e) {
-            //Ignored on purpose
+            // Ignored on purpose
         }
-        this.loading[component] = this.doLoadComponent(component).then(c => {
+        this.loading[component] = this.doLoadComponentType(component).then(c => {
+            this.cache[component] = c;
             delete this.loading[component];
             return c;
+        }).catch(() => {
+            this.cache[component] = ComponentNotFound_1.default;
+            delete this.loading[component];
+            return this.cache[component];
         });
         return this.loading[component];
     }
-    doLoadComponent(component) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (Spa_1.default.isDebugActive())
-                console.debug('Loading component: ' + component);
-            const type = yield (Promise.resolve().then(() => __importStar(require(
-            /* webpackInclude: /\.tsx$/ */
-            /* webpackExclude: /\.noimport\.tsx$/ */
-            /* webpackChunkName: "components" */
-            /* webpackMode: "lazy" */
-            /* webpackPrefetch: false */
-            /* webpackPreload: false */
-            "app/Components/" + component))).then(exports => {
-                let c = exports.default;
+    doLoadComponentType(component) {
+        const options = this.loaders.filter(x => x.canLoad(component));
+        if (!options || options.length === 0) {
+            return Promise.resolve(ComponentNotFound_1.default);
+        }
+        const tryOption = (idx) => new Promise((resolve, reject) => {
+            options[idx].load(component).then(c => {
                 c.displayName = component;
-                return c;
-            }).catch(reason => {
-                if (Spa_1.default.isDebugActive()) {
-                    console.error(`Error while importing ${component} due to:`, reason);
+                resolve(c);
+            }).catch(e => {
+                if (this.debug)
+                    console.debug(`CL: Error loading ${component}, resulting in error`, e);
+                if (options[idx + 1]) {
+                    tryOption(idx + 1).then(sc => resolve(sc)).catch(se => reject(se));
                 }
-                return ComponentNotFound_1.default;
-            }));
-            this.cache["app/Components/" + component] = type || ComponentNotFound_1.default;
-            if (Spa_1.default.isDebugActive())
-                console.debug('Loaded component: ' + component);
-            return type;
+                else {
+                    reject(`No loader was able to load ${component}`);
+                }
+            });
         });
+        return tryOption(0);
     }
+    /* protected async doLoadComponent(component: string) : Promise<TComponentType>
+    {
+        if (EpiserverSpaContext.isDebugActive()) console.debug('Loading component: '+component);
+        const type = await (import(
+            /* webpackInclude: /\.tsx$/ */
+    /* webpackExclude: /\.noimport\.tsx$/ */
+    /* webpackChunkName: "components" */
+    /* webpackMode: "lazy" */
+    /* webpackPrefetch: false */
+    /* webpackPreload: false */ /*
+    "app/Components/" + component)
+    .then(exports => {
+        const c = exports.default;
+        c.displayName = component;
+        return c;
+    }).catch(reason => {
+        if (EpiserverSpaContext.isDebugActive()) {
+            console.error(`Error while importing ${component} due to:`, reason);
+        }
+        return ComponentNotFound;
+    }));
+this.cache[component] = type || ComponentNotFound;
+if (EpiserverSpaContext.isDebugActive()) console.debug('Loaded component: '+component);
+return type;
+}*/
     LoadComponent(component, props) {
         return __awaiter(this, void 0, void 0, function* () {
-            let type = yield this.LoadType(component);
+            const type = yield this.LoadType(component);
             return react_1.default.createElement(type, props);
         });
     }

@@ -19,8 +19,9 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.useServiceContainer = exports.useEpiserver = exports.Episerver = void 0;
+exports.useForceUpdate = exports.useContentDeliveryAPI = exports.useIContentRepository = exports.useServiceContainer = exports.useEpiserver = exports.Episerver = void 0;
 const react_1 = __importStar(require("react"));
+const IServiceContainer_1 = require("../Core/IServiceContainer");
 /**
  * The React Context object for the Episerver context
  *
@@ -56,3 +57,35 @@ function useServiceContainer() {
     return myContext.serviceContainer;
 }
 exports.useServiceContainer = useServiceContainer;
+/**
+ * React Hook (for functional components) to retrieve the Episerver Content Repository
+ * from the nearest Provider in the virtual dom
+ */
+function useIContentRepository() {
+    const myContext = react_1.useContext(exports.Episerver);
+    if (!myContext) {
+        throw new Error('There\'s no Episerver Context provider above this component.');
+    }
+    return myContext.serviceContainer.getService(IServiceContainer_1.DefaultServices.IContentRepository_V2);
+}
+exports.useIContentRepository = useIContentRepository;
+/**
+ * React Hook (for functional components) to retrieve the Episerver Content Delivery API
+ * from the nearest Provider in the virtual dom
+ */
+function useContentDeliveryAPI() {
+    const myContext = react_1.useContext(exports.Episerver);
+    if (!myContext) {
+        throw new Error('There\'s no Episerver Context provider above this component.');
+    }
+    return myContext.serviceContainer.getService(IServiceContainer_1.DefaultServices.ContentDeliveryAPI_V2);
+}
+exports.useContentDeliveryAPI = useContentDeliveryAPI;
+/**
+ * create your forceUpdate hook
+ */
+function useForceUpdate() {
+    const [value, setValue] = react_1.useState(0); // integer state
+    return () => setValue(value + 1); // update the state to force render
+}
+exports.useForceUpdate = useForceUpdate;

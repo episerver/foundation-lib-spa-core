@@ -1,5 +1,6 @@
 import * as Core from './Library/Core';
 import * as ServerSideRendering from './Library/ServerSideRendering';
+import * as ContentDeliveryNS from './Library/ContentDelivery';
 export * as Core from './Library/Core';
 export * as ContentDelivery from './Library/ContentDelivery';
 export * as Layout from './Library/Layout';
@@ -11,6 +12,8 @@ export * as ComponentTypes from './Library/ComponentTypes';
 export * as ServerSideRendering from './Library/ServerSideRendering';
 export * as Tracking from './Library/Tracking';
 export * as ContextProvider from './Hooks/Context';
+export * as Loaders from './Library/Loaders';
+export * as IndexedDB from './Library/IndexedDB';
 /**
  * Generic initialization function, usable for both Browser & Server side rendering
  *
@@ -38,6 +41,16 @@ export declare const useEpiserver: () => Core.IEpiserverContext;
  * @returns  { Core.IServiceContainer }
  */
 export declare const useServiceContainer: () => Core.IServiceContainer;
+/**
+ * React Hook (for functional components) to retrieve the Episerver Content Repository
+ * from the nearest Provider in the virtual dom
+ */
+export declare const useIContentRepository: () => ContentDeliveryNS.IIContentRepositoryV2;
+/**
+ * React Hook (for functional components) to retrieve the Episerver Content Delivery API
+ * from the nearest Provider in the virtual dom
+ */
+export declare const useContentDeliveryAPI: () => ContentDeliveryNS.IContentDeliveryAPI_V2;
 /**
  * Helper method to get the global scope at any location within the SPA, this is either
  * the 'window' or 'global' variable, depending on execution context.

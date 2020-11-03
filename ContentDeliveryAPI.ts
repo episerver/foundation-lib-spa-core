@@ -10,7 +10,7 @@ import Property from './Property';
 
 export type PathResponse<T = any, C extends IContent = IContent> = C | ActionResponse<T, C>;
 
-export interface NetworkErrorData<T = any> extends IContent {
+export type NetworkErrorData<T = any> = IContent & {
   error: Property<T>;
 }
 

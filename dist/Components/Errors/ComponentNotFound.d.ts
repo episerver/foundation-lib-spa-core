@@ -1,9 +1,7 @@
 import { ReactNode } from 'react';
-import { BaseEpiComponent, ComponentProps } from '../../EpiComponent';
+import EpiComponent from '../../EpiComponent';
 import IContent from '../../Models/IContent';
-export interface ComponentNotFoundProps extends ComponentProps<IContent> {
-}
-export default class ComponentNotFound extends BaseEpiComponent<ComponentNotFoundProps> {
+export default class ComponentNotFound extends EpiComponent<IContent> {
     static displayName: string;
     render(): ReactNode;
 }

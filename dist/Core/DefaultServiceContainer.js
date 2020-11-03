@@ -38,7 +38,7 @@ class DefaultServiceContainer {
         }
         this.getServiceNames().forEach(key => {
             const methodName = `set${key}`;
-            if (service[methodName] && typeof (service[methodName]) == 'function') {
+            if (service[methodName] && typeof (service[methodName]) === 'function') {
                 console.debug(`Injecting service ${key} into`, service);
                 service[methodName](this.getService(key));
             }
@@ -63,11 +63,7 @@ class DefaultServiceContainer {
         return this;
     }
     getServiceNames() {
-        const services = [];
-        for (const key in this.services) {
-            services.push(key);
-        }
-        return services;
+        return Object.keys(this.services);
     }
 }
 exports.default = DefaultServiceContainer;

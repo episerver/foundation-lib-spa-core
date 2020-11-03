@@ -8,9 +8,9 @@ import Website from './Models/Website';
 import PathProvider from './PathProvider';
 import Property from './Property';
 export declare type PathResponse<T = any, C extends IContent = IContent> = C | ActionResponse<T, C>;
-export interface NetworkErrorData<T = any> extends IContent {
+export declare type NetworkErrorData<T = any> = IContent & {
     error: Property<T>;
-}
+};
 export declare function PathResponseIsIContent(iContent: PathResponse): iContent is IContent;
 export declare function PathResponseIsActionResponse<P extends any = any>(actionResponse: PathResponse): actionResponse is ActionResponse<P>;
 export declare function getIContentFromPathResponse(response: PathResponse): IContent | null;

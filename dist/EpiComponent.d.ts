@@ -31,7 +31,7 @@ export interface ComponentProps<T extends IContent> {
     /**
      * The link to the content item shown by this component
      */
-    contentLink?: ContentLink;
+    contentLink: ContentLink;
     /**
      * The type context to be used, typical values are null, empty string or "block"
      */
@@ -49,9 +49,12 @@ export interface ComponentProps<T extends IContent> {
      */
     actionData?: any;
     /**
-     * The application context to be used
+     * Legacy application context, kept as argument for now. Used when provided
+     * resolved at runtime otherwise.
+     *
+     * @deprecated
      */
-    context: IEpiserverContext;
+    context?: IEpiserverContext;
     /**
      * The current path being rendered
      */
@@ -64,19 +67,19 @@ export interface ComponentProps<T extends IContent> {
 /**
  * Type do describe a generic EpiComponent type
  */
-export declare type EpiComponentType = new (props: ComponentProps<IContent>) => EpiComponent<IContent>;
+export declare type EpiComponentType<T extends IContent = IContent> = new (props: ComponentProps<T>) => EpiComponent<T>;
 /**
  * Base abstract class to be used by components representing an Episerver IContent component (e.g. Block, Page, Media,
  * Catalog, Product, etc...)
  */
-export declare abstract class BaseEpiComponent<P extends ComponentProps<IContent>, S = {}, SS = {}> extends Component<P, S, SS> {
+export declare abstract class EpiComponent<T extends IContent = IContent, S = {}> extends Component<ComponentProps<T>, S, {}> {
     /**
      * The component name as injected by the ComponentLoader
      */
     static displayName: string;
     protected currentComponentId: number;
     protected currentComponentGuid: string;
-    constructor(props: P);
+    constructor(props: ComponentProps<T>);
     protected getInitialState?(): S;
     protected componentInitialize?(): void;
     /**
@@ -115,5 +118,4 @@ export declare abstract class BaseEpiComponent<P extends ComponentProps<IContent
     protected htmlObject(htmlValue: string): any;
     protected navigateTo(toPage: string | ContentLink): void;
 }
-export default abstract class EpiComponent<P extends IContent, S = {}, SS = {}> extends BaseEpiComponent<ComponentProps<P>, S, SS> {
-}
+export default EpiComponent;

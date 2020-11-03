@@ -1,0 +1,57 @@
+import { AxiosRequestConfig } from 'axios';
+import IContentDeliveryAPi from './IContentDeliveryAPI';
+import ContentDeliveryApiConfig from './Config';
+import Website from '../Models/Website';
+import WebsiteList from '../Models/WebsiteList';
+import IContent from '../Models/IContent';
+import { ContentReference } from '../Models/ContentLink';
+import { PathResponse, NetworkErrorData } from '../ContentDeliveryAPI';
+export declare class ContentDeliveryAPI implements IContentDeliveryAPi {
+    readonly ContentService: string;
+    readonly SiteService: string;
+    readonly MethodService: string;
+    readonly AuthService: string;
+    readonly RouteService: string;
+    readonly ModelService: string;
+    private _config;
+    constructor(config: Partial<ContentDeliveryApiConfig>);
+    CurrentWebsite?: Website;
+    get InEditMode(): boolean;
+    set InEditMode(value: boolean);
+    get Language(): string;
+    set Language(value: string);
+    get BaseURL(): string;
+    login(username: string, password: string): Promise<boolean>;
+    getWebsites(): Promise<WebsiteList>;
+    getWebsite(hostname?: string | URL): Promise<Website | undefined>;
+    resolveRoute<T = any, C extends IContent = IContent>(path: string, select?: string[], expand?: string[]): Promise<PathResponse<T, C | NetworkErrorData>>;
+    /**
+     * Retrieve a single piece of content from Episerver
+     *
+     * @param { ContentReference } id The content to fetch from Episerver
+     * @param { string[] } select The fields that are needed in the response, defaults to all if not provided
+     * @param { string[] } expand The list of fields that need to be expanded
+     */
+    getContent<C extends IContent = IContent>(id: ContentReference, select?: string[], expand?: string[]): Promise<C | NetworkErrorData>;
+    /**
+     * Retrieve a list content-items from Episerver in one round-trip
+     *
+     * @param { ContentReference[] } ids The content to fetch from Episerver
+     * @param { string[] } select The fields that are needed in the response, defaults to all if not provided
+     * @param { string[] } expand The list of fields that need to be expanded
+     */
+    getContents<C extends IContent = IContent>(ids: ContentReference[], select?: string[], expand?: string[]): Promise<C[] | NetworkErrorData[]>;
+    getAncestors(id: ContentReference, select?: string[], expand?: string[]): Promise<IContent[]>;
+    getChildren(id: ContentReference, select?: string[], expand?: string[]): Promise<IContent[]>;
+    isServiceURL(url: URL | string): boolean;
+    protected apiIdIsGuid(apiId: string): boolean;
+    protected doRequest<T>(url: string | URL, options?: Partial<AxiosRequestConfig>): Promise<T>;
+    protected getDefaultRequestConfig(): AxiosRequestConfig;
+    protected getHeaders(customHeaders?: AxiosHeaders): AxiosHeaders;
+    protected errorCounter: number;
+    protected createNetworkErrorResponse(e: any): NetworkErrorData;
+}
+export declare type AxiosHeaders = {
+    [key: string]: string;
+};
+export default ContentDeliveryAPI;

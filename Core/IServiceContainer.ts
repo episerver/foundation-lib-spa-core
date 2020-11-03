@@ -2,13 +2,26 @@ import IEpiserverContext from './IEpiserverContext';
 
 export enum DefaultServices
 {
+    // V1 Services
+    /**
+     * @deprecated Upgrade to V2 API
+     */
     ContentDeliveryApi = 'ContentDeliveryAPI',
     ExecutionContext = 'ExecutionContext',
     EventEngine = 'EventEngine',
     Router = 'Router',
     Config = 'Config',
     Context = 'Context',
-    ComponentLoader = 'ComponentLoader'
+    ComponentLoader = 'ComponentLoader',
+    
+    /**
+     * @deprecated Upgrade to V2 API
+     */
+    IContentRepository = 'IContentRepository',
+
+    // V2 Services
+    ContentDeliveryAPI_V2 = 'ContentDeliveryAPI_V2',
+    IContentRepository_V2 = 'IContentRepository_V2'
 }
 
 export interface IContainerAwareService {

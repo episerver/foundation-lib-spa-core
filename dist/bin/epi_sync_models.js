@@ -66,14 +66,13 @@ class EpiModelSync {
      */
     createAsyncTypeMapper(allItemNames) {
         const mapperFile = path_1.default.join(this.getModelPath(), 'TypeMapper.ts');
-        let mapper = "import { IContentType } from '@episerver/spa-core/Models/IContent';\nimport EpiserverSpaContext from '@episerver/spa-core/Spa';\n";
-        mapper += "import BaseTypeMapper, { TypeMapperTypeInfo } from '@episerver/spa-core/Loaders/BaseTypeMapper'\n;";
+        let mapper = "import { Taxonomy, Core, Loaders } from '@episerver/spa-core';\n";
         // allItemNames.forEach(x => mapper += "import {"+this.getModelInstanceName(x)+"} from './"+ this.getModelInterfaceName(x)+"';\n")
-        mapper += "\nexport default class TypeMapper extends BaseTypeMapper {\n";
-        mapper += "  protected map : { [type: string]: TypeMapperTypeInfo } = {\n";
+        mapper += "\nexport default class TypeMapper extends Loaders.BaseTypeMapper {\n";
+        mapper += "  protected map : { [type: string]: Loaders.TypeInfo } = {\n";
         allItemNames.forEach(x => mapper += "    '" + x + "': {dataModel: '" + this.getModelInterfaceName(x) + "',instanceModel: '" + this.getModelInstanceName(x) + "'},\n");
         mapper += "  }\n";
-        mapper += "  protected async doLoadType(typeInfo: TypeMapperTypeInfo) : Promise<IContentType> {\n";
+        mapper += "  protected async doLoadType(typeInfo: Loaders.TypeInfo) : Promise<Taxonomy.IContentType> {\n";
         mapper += "    return import(\n";
         mapper += "    /* webpackInclude: /\\.ts$/ */\n";
         mapper += "    /* webpackExclude: /\\.noimport\\.ts$/ */\n";
@@ -84,7 +83,7 @@ class EpiModelSync {
         mapper += "    \"./\" + typeInfo.dataModel).then(exports => {\n";
         mapper += "      return exports[typeInfo.instanceModel];\n";
         mapper += "    }).catch(reason => {\n";
-        mapper += "      if (EpiserverSpaContext.isDebugActive()) {\n";
+        mapper += "      if (Core.DefaultContext.isDebugActive()) {\n";
         mapper += "        console.error(`Error while importing ${typeInfo.instanceModel} from ${typeInfo.dataModel} due to:`, reason);\n";
         mapper += "      }\n";
         mapper += "      return null;\n";

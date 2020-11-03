@@ -22,7 +22,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getGlobalScope = exports.useServiceContainer = exports.useEpiserver = exports.init = exports.ContextProvider = exports.Tracking = exports.ServerSideRendering = exports.ComponentTypes = exports.Components = exports.Services = exports.Taxonomy = exports.Routing = exports.Layout = exports.ContentDelivery = exports.Core = void 0;
+exports.getGlobalScope = exports.useContentDeliveryAPI = exports.useIContentRepository = exports.useServiceContainer = exports.useEpiserver = exports.init = exports.IndexedDB = exports.Loaders = exports.ContextProvider = exports.Tracking = exports.ServerSideRendering = exports.ComponentTypes = exports.Components = exports.Services = exports.Taxonomy = exports.Routing = exports.Layout = exports.ContentDelivery = exports.Core = void 0;
 // Core SPA Libray
 const Core = __importStar(require("./Library/Core"));
 const ContextProvider = __importStar(require("./Hooks/Context"));
@@ -41,6 +41,8 @@ exports.ComponentTypes = __importStar(require("./Library/ComponentTypes"));
 exports.ServerSideRendering = __importStar(require("./Library/ServerSideRendering"));
 exports.Tracking = __importStar(require("./Library/Tracking"));
 exports.ContextProvider = __importStar(require("./Hooks/Context"));
+exports.Loaders = __importStar(require("./Library/Loaders"));
+exports.IndexedDB = __importStar(require("./Library/IndexedDB"));
 /**
  * Generic initialization function, usable for both Browser & Server side rendering
  *
@@ -77,6 +79,16 @@ exports.useEpiserver = ContextProvider.useEpiserver;
  * @returns  { Core.IServiceContainer }
  */
 exports.useServiceContainer = ContextProvider.useServiceContainer;
+/**
+ * React Hook (for functional components) to retrieve the Episerver Content Repository
+ * from the nearest Provider in the virtual dom
+ */
+exports.useIContentRepository = ContextProvider.useIContentRepository;
+/**
+ * React Hook (for functional components) to retrieve the Episerver Content Delivery API
+ * from the nearest Provider in the virtual dom
+ */
+exports.useContentDeliveryAPI = ContextProvider.useContentDeliveryAPI;
 /**
  * Helper method to get the global scope at any location within the SPA, this is either
  * the 'window' or 'global' variable, depending on execution context.

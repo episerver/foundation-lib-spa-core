@@ -37,6 +37,9 @@ const AppGlobal_1 = __importDefault(require("./AppGlobal"));
 const RoutingModule_1 = __importDefault(require("./Routing/RoutingModule"));
 const ErrorPage_1 = __importDefault(require("./Models/ErrorPage"));
 const StringUtils_1 = __importDefault(require("./Util/StringUtils"));
+// Content Delivery V2
+const IContentRepository_1 = __importDefault(require("./Repository/IContentRepository"));
+const ContentDeliveryAPI_2 = __importDefault(require("./ContentDelivery/ContentDeliveryAPI"));
 // Create context
 const ctx = AppGlobal_1.default();
 ctx.EpiserverSpa = ctx.EpiserverSpa || {};
@@ -63,23 +66,35 @@ class EpiserverSpaContext {
         this._initialized = InitStatus.Initializing;
         this._isServerSideRendering = isServerSideRendering;
         this._serviceContainer = serviceContainer;
-        const executionContext = {
-            isServerSideRendering: isServerSideRendering
-        };
-        //Create module list
+        const executionContext = { isServerSideRendering };
+        // Create module list
         this._modules.push(new RoutingModule_1.default());
         if (config.modules) {
             this._modules = this._modules.concat(config.modules);
         }
         if (config.enableDebug)
             console.debug('Spa modules:', this._modules.map((m) => m.GetName()));
+        // Add component loaders
+        const cl = new ComponentLoader_1.default();
+        cl.setDebug(config.enableDebug || false);
+        // @ToDo: Add registration logic
         // Register core services
         this._serviceContainer.addService(IServiceContainer_1.DefaultServices.Context, this);
         this._serviceContainer.addService(IServiceContainer_1.DefaultServices.Config, config);
         this._serviceContainer.addService(IServiceContainer_1.DefaultServices.ExecutionContext, executionContext);
         this._serviceContainer.addService(IServiceContainer_1.DefaultServices.ContentDeliveryApi, new ContentDeliveryAPI_1.default(this, config));
         this._serviceContainer.addService(IServiceContainer_1.DefaultServices.EventEngine, new DefaultEventEngine_1.default());
-        this._serviceContainer.addService(IServiceContainer_1.DefaultServices.ComponentLoader, new ComponentLoader_1.default());
+        this._serviceContainer.addService(IServiceContainer_1.DefaultServices.ComponentLoader, cl);
+        const newAPI = new ContentDeliveryAPI_2.default({
+            Adapter: config.networkAdapter,
+            BaseURL: config.epiBaseUrl,
+            AutoExpandAll: config.autoExpandRequests,
+            Debug: config.enableDebug,
+            EnableExtensions: true,
+            Language: config.defaultLanguage
+        });
+        this._serviceContainer.addService(IServiceContainer_1.DefaultServices.ContentDeliveryAPI_V2, newAPI);
+        this._serviceContainer.addService(IServiceContainer_1.DefaultServices.IContentRepository_V2, new IContentRepository_1.default(newAPI));
         // Have modules add services of their own
         this._modules.forEach(x => x.ConfigureContainer(this._serviceContainer));
         // Redux init
@@ -89,6 +104,7 @@ class EpiserverSpaContext {
         // Run module startup logic
         this._modules.forEach(x => x.StartModule(this));
         this._initialized = InitStatus.Initialized;
+        ctx.EpiserverSpa.serviceContainer = this._serviceContainer;
     }
     _initRedux() {
         const reducers = {};

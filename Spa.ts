@@ -25,6 +25,10 @@ import Website from './Models/Website';
 import StringUtils from './Util/StringUtils';
 import IInitializableModule from './Core/IInitializableModule';
 
+// Content Delivery V2
+import IContentRepositoryV2 from './Repository/IContentRepository';
+import ContentDeliveryApiV2 from './ContentDelivery/ContentDeliveryAPI';
+
 // Create context
 const ctx : any = getGlobal();
 ctx.EpiserverSpa = ctx.EpiserverSpa || {};
@@ -76,16 +80,19 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
         this._initialized = InitStatus.Initializing;
         this._isServerSideRendering = isServerSideRendering;
         this._serviceContainer = serviceContainer;
-        const executionContext : IExecutionContext = {
-          isServerSideRendering: isServerSideRendering
-        }
+        const executionContext : IExecutionContext = { isServerSideRendering }
 
-        //Create module list
+        // Create module list
         this._modules.push(new RoutingModule());
         if (config.modules) {
           this._modules = this._modules.concat(config.modules);
         }
         if (config.enableDebug) console.debug('Spa modules:', this._modules.map((m) => m.GetName()));
+
+        // Add component loaders
+        const cl = new ComponentLoader();
+        cl.setDebug(config.enableDebug || false);
+        // @ToDo: Add registration logic
 
         // Register core services
         this._serviceContainer.addService(DefaultServices.Context, this);
@@ -93,7 +100,18 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
         this._serviceContainer.addService(DefaultServices.ExecutionContext, executionContext);
         this._serviceContainer.addService(DefaultServices.ContentDeliveryApi, new ContentDeliveryAPI(this, config));
         this._serviceContainer.addService(DefaultServices.EventEngine, new DefaultEventEngine());
-        this._serviceContainer.addService(DefaultServices.ComponentLoader, new ComponentLoader());
+        this._serviceContainer.addService(DefaultServices.ComponentLoader, cl);
+
+        const newAPI = new ContentDeliveryApiV2({
+          Adapter: config.networkAdapter,
+          BaseURL: config.epiBaseUrl,
+          AutoExpandAll: config.autoExpandRequests,
+          Debug: config.enableDebug,
+          EnableExtensions: true,
+          Language: config.defaultLanguage
+        });
+        this._serviceContainer.addService(DefaultServices.ContentDeliveryAPI_V2, newAPI);
+        this._serviceContainer.addService(DefaultServices.IContentRepository_V2, new IContentRepositoryV2(newAPI));
 
         // Have modules add services of their own
         this._modules.forEach(x => x.ConfigureContainer(this._serviceContainer));
@@ -108,6 +126,7 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
         this._modules.forEach(x => x.StartModule(this));
 
         this._initialized = InitStatus.Initialized;
+        ctx.EpiserverSpa.serviceContainer = this._serviceContainer;
     }
 
     private _initRedux() : void

@@ -37,9 +37,8 @@ const EpiSpaRouter = __importStar(require("../Routing/EpiSpaRouter"));
 exports.EpiserverWebsite = (props) => {
     const [website, setWebsite] = react_1.useState(props.context.getCurrentWebsite());
     const [homepage, setHomepage] = react_1.useState(props.context.getContentByRef("startPage"));
-    const [path, setPath] = react_1.useState(props.context.getCurrentPath());
-    const [firstpage, setFirstPage] = react_1.useState(props.context.getContentByPath(path));
     const [isInitializing, setIsInitializing] = react_1.useState(website === null || homepage === null);
+    const SiteLayout = getLayout(props.context.config());
     // Load website if needed, only once!
     react_1.useEffect(() => {
         if (!website)
@@ -58,65 +57,28 @@ exports.EpiserverWebsite = (props) => {
             }
         });
     }, [website]);
-    // Load current page
-    react_1.useEffect(() => {
-        props.context.loadContentByPath(path).then(c => {
-            if (c) {
-                if (c.contentLink.url !== path)
-                    props.context.dispatch(IContent_1.IContentActionFactory.registerPaths(c, [path])); // Ensure the page is bound to the current path;
-                setFirstPage(c);
-            }
-        });
-    }, [path, website, homepage]);
     // If we're initializing, return a spinner
     if (isInitializing) {
         return Spinner_1.default.CreateInstance({ key: 'Episerver-Loading' });
     }
     // If we're server side rendering, ignore the connected components
     if (props.context.isServerSideRendering()) {
-        const ServerLayout = getLayout(props.context.config());
         return react_1.default.createElement(Context_1.default.Provider, { value: props.context },
             react_1.default.createElement(EpiSpaRouter.Router, null,
                 react_1.default.createElement(react_helmet_1.Helmet, null),
-                react_1.default.createElement(ServerLayout, { context: props.context, page: firstpage === null || firstpage === void 0 ? void 0 : firstpage.contentLink, expandedValue: firstpage || undefined, path: path, startPage: homepage || undefined },
+                react_1.default.createElement(SiteLayout, { context: props.context },
                     react_1.default.createElement(EpiSpaRouter.RoutedContent, { config: props.context.config().routes || [], keyPrefix: "CmsSite-RoutedContent" }),
                     props.children)));
     }
-    const BrowserLayout = react_redux_1.connect(buildLayoutPropsFromState)(getLayout(props.context.config()));
     return react_1.default.createElement(react_redux_1.Provider, { store: props.context.getStore() },
         react_1.default.createElement(Context_1.default.Provider, { value: props.context },
             react_1.default.createElement(EpiSpaRouter.Router, null,
                 react_1.default.createElement(react_helmet_1.Helmet, null),
-                react_1.default.createElement(BrowserLayout, { context: props.context, page: firstpage === null || firstpage === void 0 ? void 0 : firstpage.contentLink, expandedValue: firstpage || undefined, path: path, startPage: homepage || undefined },
+                react_1.default.createElement(SiteLayout, { context: props.context },
                     react_1.default.createElement(EpiSpaRouter.RoutedContent, { config: props.context.config().routes || [], keyPrefix: "CmsSite-RoutedContent" }),
                     props.children))));
 };
 function getLayout(config) {
     return config.layout || Layout_1.default;
-}
-function buildLayoutPropsFromState(state, ownProps) {
-    try {
-        const path = state.ViewContext.currentPath || '';
-        const idx = state.iContentRepo.paths[path];
-        if (!idx) {
-            return Object.assign(Object.assign({}, ownProps), { path, page: undefined, expandedValue: undefined, startPage: undefined });
-        }
-        let contentLink;
-        let contentItem;
-        let startPage;
-        contentItem = state.iContentRepo.items[idx].content;
-        contentLink = contentItem.contentLink;
-        const startIdx = state.iContentRepo.refs.startPage;
-        if (startIdx && state.iContentRepo.items[startIdx]) {
-            startPage = state.iContentRepo.items[startIdx].content;
-        }
-        const newProps = Object.assign(Object.assign({}, ownProps), { page: contentLink, expandedValue: contentItem, path,
-            startPage });
-        return newProps;
-    }
-    catch (e) {
-        // Ignore layout property building errors
-    }
-    return ownProps;
 }
 exports.default = exports.EpiserverWebsite;

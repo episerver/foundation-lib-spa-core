@@ -1,14 +1,25 @@
 import React, { ReactNode, ComponentType } from 'react';
 import IContent from '../Models/IContent';
 import { ComponentProps } from '../EpiComponent';
-export declare type TComponentType = ComponentType<ComponentProps<IContent>>;
-export declare type TComponentTypePromise = Promise<TComponentType>;
+export declare type TComponentType<T = ComponentProps<IContent>> = ComponentType<T>;
+export declare type TComponentTypePromise<T = ComponentProps<IContent>> = Promise<TComponentType<T>>;
 /**
  * Type defintiion to allow access to the pre-loaded modules
  */
-interface PreLoadedModuleList {
-    [key: string]: any;
-}
+declare type LoadedModuleList<T = ComponentProps<IContent>> = {
+    [key: string]: TComponentType<T>;
+};
+declare type LoadingModuleList<T = ComponentProps<IContent>> = {
+    [key: string]: TComponentTypePromise<T>;
+};
+declare type IComponentLoaderList = IComponentLoader[];
+export declare type IComponentLoader = {
+    order: number;
+    canLoad: (componentName: string) => boolean;
+    load: <T = ComponentProps<IContent>>(componentName: string) => TComponentTypePromise<T>;
+    setDebug: (debug: boolean) => void;
+};
+export declare type IComponentLoaderType = new () => IComponentLoader;
 /**
  * Helper class that ensures components can be pre-loaded for server side
  * rendering whilest loading them asynchronously in browser to minimize the
@@ -21,19 +32,29 @@ export default class ComponentLoader {
     /**
      * The cache of components already pre-loaded by this loader
      */
-    protected cache: PreLoadedModuleList;
+    protected cache: LoadedModuleList<any>;
     /**
      * The list of promises currenlty being awaited by this loader, prior
      * to adding them to the cache.
      */
-    protected loading: {
-        [component: string]: Promise<ComponentType<any>>;
-    };
+    protected loading: LoadingModuleList<any>;
+    /**
+     * The list of IComponent Loaders
+     */
+    protected loaders: IComponentLoaderList;
+    /**
+     * State of the debug
+     */
+    protected debug: boolean;
     /**
      * Create a new instance and populate the cache with the data prepared
      * by the server side rendering.
      */
     constructor();
+    addLoader(loader: IComponentLoader): void;
+    addLoaders(loaders: IComponentLoaderList): void;
+    createLoader(loaderType: IComponentLoaderType): void;
+    setDebug(debug: boolean): void;
     /**
      * Verify if a component is in the cache
      *
@@ -49,7 +70,7 @@ export default class ComponentLoader {
     getPreLoadedType<P = ComponentProps<IContent>>(component: string, throwOnUnknown?: boolean): ComponentType<P> | null;
     getPreLoadedComponent(component: string, props: ComponentProps<IContent>): ReactNode;
     LoadType<P = ComponentProps<IContent>>(component: string): Promise<ComponentType<P>>;
-    protected doLoadComponent(component: string): Promise<TComponentType>;
+    protected doLoadComponentType(component: string): Promise<TComponentType>;
     LoadComponent<P = ComponentProps<IContent>>(component: string, props: P): Promise<React.ReactElement<P, any>>;
 }
 export {};

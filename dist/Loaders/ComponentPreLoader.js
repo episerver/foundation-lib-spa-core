@@ -24,7 +24,7 @@ class ComponentPreLoader {
     static load(config, loader) {
         return __awaiter(this, void 0, void 0, function* () {
             if (config && config.length > 0) {
-                let list = config.map((c) => loader.LoadType(c).catch((e) => e));
+                const list = config.map((c) => loader.LoadType(c).catch((e) => e));
                 try {
                     yield Promise.all(list);
                     return true;

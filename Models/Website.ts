@@ -1,10 +1,27 @@
 import LanguageList from './LanguageList';
 import ContentRootList from './ContentRootList';
 
+export type HostDefinition = {
+    /**
+     * The name of the host (domain name)
+     */
+    name: string,
+
+    /**
+     * The type of the host (or "Undefined" if not set)
+     */
+    type: string,
+
+    /**
+     * The default language for the host
+     */
+    language: null | string
+}
+
 /**
  * Episerver Website Model, as returned by the ContentDelivery API.
  */
-export default interface Website {
+export type Website = {
     /**
      * The GUID of the website
      */
@@ -28,20 +45,6 @@ export default interface Website {
     /**
      * The list of hostnames assigned to this website
      */
-    hosts?: {
-        /**
-         * The name of the host (domain name)
-         */
-        name: string,
-
-        /**
-         * The type of the host (or undefined if not set)
-         */
-        type: string,
-
-        /**
-         * The default language for the host
-         */
-        language: any
-    }[];
+    hosts?: HostDefinition[];
 }
+export default Website;

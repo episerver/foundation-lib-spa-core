@@ -1,4 +1,4 @@
-import IServiceContainer, { IContainerAwareService, IContextAwareService, DefaultServices } from './IServiceContainer';
+import IServiceContainer, { IContainerAwareService, IContextAwareService } from './IServiceContainer';
 
 export default class DefaultServiceContainer implements IServiceContainer
 {
@@ -45,7 +45,7 @@ export default class DefaultServiceContainer implements IServiceContainer
         }
         this.getServiceNames().forEach(key => {
             const methodName = `set${key}`;
-            if ((service as any)[methodName] && typeof((service as any)[methodName]) == 'function') {
+            if ((service as any)[methodName] && typeof((service as any)[methodName]) === 'function') {
                 console.debug(`Injecting service ${key} into`, service);
                 (service as any)[methodName](this.getService(key));
             }
@@ -79,10 +79,6 @@ export default class DefaultServiceContainer implements IServiceContainer
 
     protected getServiceNames() : string[]
     {
-        const services : string[] = [];
-        for (const key in this.services) {
-            services.push(key);
-        }
-        return services;
+        return Object.keys(this.services);
     }
 }
