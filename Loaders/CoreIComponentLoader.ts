@@ -1,6 +1,6 @@
 import { ComponentProps } from '../EpiComponent';
 import IContent from '../Models/IContent';
-import { IComponentLoader, TComponentTypePromise } from './ComponentLoader';
+import { IComponentLoader, TComponentType } from './ComponentLoader';
 
 export default class CoreIComponentLoader implements IComponentLoader 
 {
@@ -18,7 +18,7 @@ export default class CoreIComponentLoader implements IComponentLoader
         return componentName.startsWith(this.PREFIX);
     }
 
-    public async load<T = ComponentProps<IContent>>(componentName: string) : TComponentTypePromise<T>
+    public async load<T = ComponentProps<IContent>>(componentName: string) : Promise<TComponentType<T>>
     {
         if (this.debug) console.debug(`Loading component: ${ componentName }`);
         const me = this;

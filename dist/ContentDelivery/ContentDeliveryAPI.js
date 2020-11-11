@@ -36,6 +36,7 @@ const axios_1 = __importDefault(require("axios"));
 const UUID = __importStar(require("uuid"));
 const Config_1 = require("./Config");
 const ContentLink_1 = require("../Models/ContentLink");
+const ActionResponse_1 = require("../Models/ActionResponse");
 class ContentDeliveryAPI {
     constructor(config) {
         this.ContentService = 'api/episerver/v2.0/content/'; // Stick to V2 as V3 doesn't support refs
@@ -46,6 +47,10 @@ class ContentDeliveryAPI {
         this.ModelService = 'api/episerver/v3/model/';
         this.errorCounter = 0;
         this._config = Object.assign(Object.assign({}, Config_1.DefaultConfig), config);
+        this._axios = axios_1.default.create(this.getDefaultRequestConfig());
+    }
+    get Axios() {
+        return this._axios;
     }
     get InEditMode() {
         return this._config.InEditMode;
@@ -61,6 +66,17 @@ class ContentDeliveryAPI {
     }
     get BaseURL() {
         return this._config.BaseURL.endsWith('/') ? this._config.BaseURL : this._config.BaseURL + '/';
+    }
+    get OnLine() {
+        // Do not invalidate while we're off-line
+        try {
+            if (navigator && !navigator.onLine)
+                return false;
+        }
+        catch (e) {
+            // There's no navigator object with onLine property...
+        }
+        return true;
     }
     login(username, password) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -110,7 +126,7 @@ class ContentDeliveryAPI {
         });
     }
     resolveRoute(path, select, expand) {
-        if (this._config.EnableExtensions) {
+        if (this._config.EnableExtensions && !this.InEditMode) {
             const serviceUrl = new URL(this.RouteService, this.BaseURL);
             if (this.CurrentWebsite)
                 serviceUrl.searchParams.set('siteId', this.CurrentWebsite.id);
@@ -200,6 +216,44 @@ class ContentDeliveryAPI {
         // Perform request
         return this.doRequest(url).catch(e => [this.createNetworkErrorResponse(e)]);
     }
+    invoke(content, method, verb, data, requestTransformer) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (!this._config.EnableExtensions)
+                return Promise.reject('Extensions must be enabled to use the invoke method');
+            // Base configuration
+            const apiId = ContentLink_1.ContentLinkService.createApiId(content, true);
+            const url = new URL(this.MethodService + apiId + '/' + method, this.BaseURL);
+            // Default JSON Transformer for request data
+            const defaultTransformer = (reqData, reqHeaders) => {
+                if (reqData) {
+                    reqHeaders['Content-Type'] = 'application/json';
+                    return JSON.stringify(reqData);
+                }
+                return reqData;
+            };
+            // Axios request config
+            const options = {
+                method: verb,
+                data,
+                transformRequest: requestTransformer || defaultTransformer
+            };
+            // Run the actual request
+            return this.doRequest(url, options).catch((e) => {
+                const errorResponse = this.createNetworkErrorResponse(e);
+                const actionResponse = {
+                    actionName: method,
+                    contentLink: errorResponse.contentLink,
+                    currentContent: errorResponse,
+                    responseType: ActionResponse_1.ResponseType.ActionResult,
+                    data: errorResponse,
+                    language: this.Language,
+                    name: typeof (errorResponse.name) === "string" ? errorResponse.name : errorResponse.name.value,
+                    url: errorResponse.contentLink.url
+                };
+                return actionResponse;
+            });
+        });
+    }
     isServiceURL(url) {
         const reqUrl = typeof (url) === 'string' ? new URL(url) : url;
         const serviceUrls = [
@@ -239,7 +293,7 @@ class ContentDeliveryAPI {
             try {
                 if (this._config.Debug)
                     console.info('ContentDeliveryAPI Requesting', requestConfig.method + ' ' + requestConfig.url, requestConfig.data);
-                const response = yield axios_1.default.request(requestConfig);
+                const response = yield this.Axios.request(requestConfig);
                 if (response.status >= 400) {
                     if (this._config.Debug)
                         console.info(`ContentDeliveryAPI Error ${response.status}: ${response.statusText}`, requestConfig.method + ' ' + requestConfig.url);
@@ -289,10 +343,13 @@ class ContentDeliveryAPI {
                 id: errorId,
                 providerName: 'EpiserverSPA',
                 workId: 0,
-                url: ''
+                url: '#EpiserverSPA__' + errorId
             },
             name: 'Network error',
-            error: e,
+            error: {
+                propertyDataType: 'errorMessage',
+                value: e
+            },
             contentType: ['Errors', 'NetworkError']
         };
     }

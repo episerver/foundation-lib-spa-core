@@ -5,6 +5,9 @@ import * as WebsiteListNS from '../Models/WebsiteList';
 import * as LanguageNS from '../Models/Language';
 import * as LanguageListNS from '../Models/LanguageList';
 
+// Export Property Namespace
+export * as Property from '../Property';
+
 // Types
 export type IContent = IContentNS.default
 export type IContentType = IContentNS.IContentType;
@@ -19,3 +22,6 @@ export type LanguageList = LanguageListNS.default;
 // Classes
 export const AbstractIContent = IContentNS.BaseIContent;
 export const ContentLinkService = ContentLinkNS.ContentLinkService;
+
+// Type guards
+export const namePropertyIsString = IContentNS.namePropertyIsString

@@ -1,0 +1,13 @@
+import { AxiosAdapter } from 'axios';
+export declare type CachingFetchAdapter = AxiosAdapter & {
+    isCachable?: ((url: URL) => boolean)[];
+};
+/**
+ * A basic implementation of an AxiosAdapter to let Axios use the Fetch API to
+ * retrieve content.
+ *
+ * @param   { AxiosRequestConfig }  config  The request configuration given by the implementing code
+ * @returns { Promise<AxiosResponse> }      The response of the Fetch API Call
+ */
+export declare const FetchAdapter: CachingFetchAdapter;
+export default FetchAdapter;

@@ -19,6 +19,14 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.BaseTypeMapper = void 0;
+exports.isComponentLoader = exports.BaseTypeMapper = exports.ComponentLoader = void 0;
 const TypeMapperNS = __importStar(require("../Loaders/BaseTypeMapper"));
+const ComponentNS = __importStar(require("../Loaders/ComponentLoader"));
+// Components
+exports.ComponentLoader = ComponentNS.ComponentLoader;
+// TypeMapper
 exports.BaseTypeMapper = TypeMapperNS.BaseTypeMapper;
+// Guards
+exports.isComponentLoader = ComponentNS.isIComponentLoader;
+// Default loader
+exports.default = exports.ComponentLoader;

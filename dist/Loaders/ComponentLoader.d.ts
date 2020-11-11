@@ -1,8 +1,8 @@
 import React, { ReactNode, ComponentType } from 'react';
 import IContent from '../Models/IContent';
 import { ComponentProps } from '../EpiComponent';
-export declare type TComponentType<T = ComponentProps<IContent>> = ComponentType<T>;
-export declare type TComponentTypePromise<T = ComponentProps<IContent>> = Promise<TComponentType<T>>;
+export declare type TComponentType<T extends unknown = ComponentProps<IContent>> = ComponentType<T>;
+export declare type TComponentTypePromise<T extends unknown = ComponentProps<IContent>> = Promise<TComponentType<T>>;
 /**
  * Type defintiion to allow access to the pre-loaded modules
  */
@@ -12,13 +12,17 @@ declare type LoadedModuleList<T = ComponentProps<IContent>> = {
 declare type LoadingModuleList<T = ComponentProps<IContent>> = {
     [key: string]: TComponentTypePromise<T>;
 };
-declare type IComponentLoaderList = IComponentLoader[];
-export declare type IComponentLoader = {
+export declare type IComponentLoaderList = IComponentLoader[];
+export declare type IComponentLoaderConfig = (IComponentLoader | IComponentLoaderType)[] & {
+    debug?: boolean;
+};
+export declare const isIComponentLoader: (toTest: IComponentLoader | IComponentLoaderType) => toTest is IComponentLoader;
+export interface IComponentLoader {
     order: number;
     canLoad: (componentName: string) => boolean;
-    load: <T = ComponentProps<IContent>>(componentName: string) => TComponentTypePromise<T>;
+    load: <T extends unknown = ComponentProps<IContent>>(componentName: string) => TComponentTypePromise<T>;
     setDebug: (debug: boolean) => void;
-};
+}
 export declare type IComponentLoaderType = new () => IComponentLoader;
 /**
  * Helper class that ensures components can be pre-loaded for server side
@@ -28,7 +32,7 @@ export declare type IComponentLoaderType = new () => IComponentLoader;
  * For this script to work, the application must have the app/Components/ path
  * specified and all loadable components must reside within this path.
  */
-export default class ComponentLoader {
+export declare class ComponentLoader {
     /**
      * The cache of components already pre-loaded by this loader
      */
@@ -53,7 +57,7 @@ export default class ComponentLoader {
     constructor();
     addLoader(loader: IComponentLoader): void;
     addLoaders(loaders: IComponentLoaderList): void;
-    createLoader(loaderType: IComponentLoaderType): void;
+    createLoader(loaderType: IComponentLoaderType, add?: boolean): IComponentLoader;
     setDebug(debug: boolean): void;
     /**
      * Verify if a component is in the cache
@@ -73,4 +77,4 @@ export default class ComponentLoader {
     protected doLoadComponentType(component: string): Promise<TComponentType>;
     LoadComponent<P = ComponentProps<IContent>>(component: string, props: P): Promise<React.ReactElement<P, any>>;
 }
-export {};
+export default ComponentLoader;

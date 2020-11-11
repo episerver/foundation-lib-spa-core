@@ -32,14 +32,10 @@ class Spinner extends react_1.Component {
      * @param 	props 	The properties of the spinner
      */
     static CreateInstance(props) {
-        if (!Spa_1.default.config().enableSpinner) {
+        if (!Spa_1.default.config().enableSpinner)
             return null;
-        }
-        const SpinnerType = Spa_1.default.config().spinner;
-        if (!SpinnerType) {
-            return react_1.default.createElement(this, props);
-        }
-        return react_1.default.createElement(SpinnerType, Object.assign({}, props));
+        const SpinnerType = Spa_1.default.config().spinner || Spinner;
+        return react_1.default.createElement(SpinnerType, props);
     }
     render() {
         return react_1.default.createElement("div", { className: "alert alert-secondary", role: "alert" },

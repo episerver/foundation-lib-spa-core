@@ -18,6 +18,15 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -25,17 +34,15 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.EpiserverSpaContext = exports.InitStatus = void 0;
 // Redux & Redux setup
 const toolkit_1 = require("@reduxjs/toolkit");
-const AbstractRepostory_1 = require("./Repository/AbstractRepostory");
-const IContent_1 = __importStar(require("./Repository/IContent"));
-const ViewContext_1 = __importDefault(require("./Repository/ViewContext"));
+// Lodash
+const lodash_1 = require("lodash");
 const IServiceContainer_1 = require("./Core/IServiceContainer");
 const ContentDeliveryAPI_1 = __importDefault(require("./ContentDeliveryAPI"));
 const DefaultEventEngine_1 = __importDefault(require("./Core/DefaultEventEngine"));
 const ContentLink_1 = require("./Models/ContentLink");
-const ComponentLoader_1 = __importDefault(require("./Loaders/ComponentLoader"));
+const ComponentLoader_1 = __importStar(require("./Loaders/ComponentLoader"));
 const AppGlobal_1 = __importDefault(require("./AppGlobal"));
 const RoutingModule_1 = __importDefault(require("./Routing/RoutingModule"));
-const ErrorPage_1 = __importDefault(require("./Models/ErrorPage"));
 const StringUtils_1 = __importDefault(require("./Util/StringUtils"));
 // Content Delivery V2
 const IContentRepository_1 = __importDefault(require("./Repository/IContentRepository"));
@@ -67,6 +74,7 @@ class EpiserverSpaContext {
         this._isServerSideRendering = isServerSideRendering;
         this._serviceContainer = serviceContainer;
         const executionContext = { isServerSideRendering };
+        config.enableDebug = process.env.NODE_ENV === 'production' ? false : config.enableDebug;
         // Create module list
         this._modules.push(new RoutingModule_1.default());
         if (config.modules) {
@@ -77,7 +85,19 @@ class EpiserverSpaContext {
         // Add component loaders
         const cl = new ComponentLoader_1.default();
         cl.setDebug(config.enableDebug || false);
-        // @ToDo: Add registration logic
+        if (config.componentLoaders) {
+            config.componentLoaders.forEach(loader => {
+                var _a, _b;
+                if (ComponentLoader_1.isIComponentLoader(loader)) {
+                    loader.setDebug(((_a = config.componentLoaders) === null || _a === void 0 ? void 0 : _a.debug) || config.enableDebug || false);
+                    cl.addLoader(loader);
+                }
+                else {
+                    const loaderInstance = cl.createLoader(loader, true);
+                    loaderInstance.setDebug(((_b = config.componentLoaders) === null || _b === void 0 ? void 0 : _b.debug) || config.enableDebug || false);
+                }
+            });
+        }
         // Register core services
         this._serviceContainer.addService(IServiceContainer_1.DefaultServices.Context, this);
         this._serviceContainer.addService(IServiceContainer_1.DefaultServices.Config, config);
@@ -93,8 +113,9 @@ class EpiserverSpaContext {
             EnableExtensions: true,
             Language: config.defaultLanguage
         });
+        newAPI.InEditMode = this.initialEditMode();
         this._serviceContainer.addService(IServiceContainer_1.DefaultServices.ContentDeliveryAPI_V2, newAPI);
-        this._serviceContainer.addService(IServiceContainer_1.DefaultServices.IContentRepository_V2, new IContentRepository_1.default(newAPI));
+        this._serviceContainer.addService(IServiceContainer_1.DefaultServices.IContentRepository_V2, new IContentRepository_1.default(newAPI, { debug: config.enableDebug }));
         // Have modules add services of their own
         this._modules.forEach(x => x.ConfigureContainer(this._serviceContainer));
         // Redux init
@@ -108,15 +129,11 @@ class EpiserverSpaContext {
     }
     _initRedux() {
         const reducers = {};
-        IContent_1.default.ContentDeliveryAPI = this.contentDeliveryApi();
-        reducers[IContent_1.default.StateKey] = IContent_1.default.reducer.bind(IContent_1.default);
-        reducers[ViewContext_1.default.StateKey] = ViewContext_1.default.reducer.bind(ViewContext_1.default);
         this._modules.forEach(x => { const ri = x.GetStateReducer(); if (ri) {
             reducers[ri.stateKey] = ri.reducer;
         } });
         this._state = toolkit_1.configureStore({ reducer: reducers });
-        const initAction = { type: AbstractRepostory_1.RepositoryActions.INIT };
-        this._state.dispatch(initAction);
+        this._state.dispatch({ type: '@@EPI/INIT' });
     }
     _initEditMode() {
         if (this.isDebugActive())
@@ -133,17 +150,50 @@ class EpiserverSpaContext {
     }
     onEpiContentSaved(event) {
         if (this.isDebugActive())
-            console.info('Received updated content from the Episerver Shell', event);
+            console.info('EpiContentSaved: Received updated content from the Episerver Shell', event);
         if (event.successful) {
-            const baseId = event.savedContentLink.split('_')[0];
-            const baseContent = this.getContentById(baseId);
-            if (baseContent) {
-                event.properties.forEach((prop) => {
-                    if (prop.successful) {
-                        this.dispatch(IContent_1.IContentActionFactory.updateContentProperty(baseContent, prop.name, prop.value));
+            const repo = this.serviceContainer.getService(IServiceContainer_1.DefaultServices.IContentRepository_V2);
+            const baseId = event.savedContentLink;
+            const isStringProperty = (toTest, propName) => {
+                try {
+                    return toTest[propName] && typeof toTest[propName] === 'string';
+                }
+                catch (e) { /* Empty on purpose */ }
+                return false;
+            };
+            repo.patch(baseId, (item) => {
+                const out = lodash_1.clone(item);
+                event.properties.forEach(property => {
+                    if (property.successful) {
+                        const propertyData = {};
+                        if (property.name.substr(0, 9) === 'icontent_') {
+                            switch (property.name.substr(9)) {
+                                case 'name':
+                                    if (this.isDebugActive())
+                                        console.info('EpiContentSaved: Received updated name');
+                                    propertyData.name = isStringProperty(out, 'name') ? property.value : { expandedValue: undefined, value: property.value };
+                                    break;
+                                default:
+                                    if (this.isDebugActive())
+                                        console.warn('EpiContentSaved: Received unsupported property ', property);
+                                    break;
+                            }
+                        }
+                        else {
+                            if (this.isDebugActive())
+                                console.info(`EpiContentSaved: Received updated ${property.name}`);
+                            propertyData[property.name] = {
+                                expandedValue: undefined,
+                                value: property.value
+                            };
+                        }
+                        lodash_1.merge(out, propertyData);
                     }
                 });
-            }
+                if (this.isDebugActive())
+                    console.info('EpiContentSaved: Patched iContent', out);
+                return out;
+            });
         }
     }
     /**
@@ -206,61 +256,43 @@ class EpiserverSpaContext {
         return this._serviceContainer.getService(IServiceContainer_1.DefaultServices.ContentDeliveryApi);
     }
     getContentByGuid(guid) {
-        if (this._state.getState().iContentRepo.guids[guid]) {
-            const id = this._state.getState().iContentRepo.guids[guid];
-            return this.getContentById(id);
-        }
-        return null;
+        throw new Error('Synchronous content loading is no longer supported');
     }
     loadContentByGuid(id) {
-        const c = this.getContentByGuid(id);
-        if (c) {
-            return Promise.resolve(c);
-        }
-        return this.invoke(IContent_1.default.getById(id));
+        this.enforceInitialized();
+        const repo = this._serviceContainer.getService(IServiceContainer_1.DefaultServices.IContentRepository_V2);
+        return repo.load(id).then(iContent => { if (!iContent)
+            throw new Error('Content not resolved!'); return iContent; });
     }
     getContentById(id) {
-        if (this._state.getState().iContentRepo.items && this._state.getState().iContentRepo.items[id]) {
-            return this._state.getState().iContentRepo.items[id].content;
-        }
-        return null;
+        throw new Error('Synchronous content loading is no longer supported');
     }
     loadContentById(id) {
-        const c = this.getContentById(id);
-        if (c) {
-            return Promise.resolve(c);
-        }
-        return this.invoke(IContent_1.default.getById(id));
+        this.enforceInitialized();
+        const repo = this._serviceContainer.getService(IServiceContainer_1.DefaultServices.IContentRepository_V2);
+        return repo.load(id).then(iContent => { if (!iContent)
+            throw new Error('Content not resolved!'); return iContent; });
     }
     getContentByRef(ref) {
-        if (this._state.getState().iContentRepo.refs[ref]) {
-            const id = this._state.getState().iContentRepo.refs[ref];
-            return this.getContentById(id);
-        }
-        return null;
+        throw new Error('Synchronous content loading is no longer supported');
     }
     loadContentByRef(ref) {
-        const item = this.getContentByRef(ref);
-        if (item)
-            return Promise.resolve(item);
-        return this.invoke(IContent_1.default.getByReference(ref));
+        this.enforceInitialized();
+        const repo = this._serviceContainer.getService(IServiceContainer_1.DefaultServices.IContentRepository_V2);
+        return repo.getByReference(ref).then(iContent => { if (!iContent)
+            throw new Error('Content not resolved!'); return iContent; });
     }
     getContentByPath(path) {
-        if (this._state.getState().iContentRepo.paths[path]) {
-            const id = this._state.getState().iContentRepo.paths[path];
-            return this.getContentById(id);
-        }
-        return null;
+        throw new Error('Synchronous content loading is no longer supported');
     }
     loadContentByPath(path) {
-        const c = this.getContentByPath(path);
-        if (c) {
-            return Promise.resolve(c);
-        }
-        return this.invoke(IContent_1.default.getByPath(path));
+        this.enforceInitialized();
+        const repo = this._serviceContainer.getService(IServiceContainer_1.DefaultServices.IContentRepository_V2);
+        return repo.getByRoute(path).then(iContent => { if (!iContent)
+            throw new Error('Content not resolved!'); return iContent; });
     }
     injectContent(iContent) {
-        this.dispatch(IContent_1.IContentActionFactory.addOrUpdateItem(iContent));
+        // Ignore on purpose, will be removed
     }
     /**
      * Check whether or not we're in edit mode by looking at the URL. This
@@ -271,9 +303,7 @@ class EpiserverSpaContext {
     initialEditMode() {
         var _a;
         try {
-            const testA = ((_a = (new URLSearchParams(window.location.search)).get('epieditmode')) === null || _a === void 0 ? void 0 : _a.toLowerCase()) === 'true';
-            const testB = this.isInEditMode();
-            return testA || testB;
+            return (((_a = (new URLSearchParams(window.location.search)).get('epieditmode')) === null || _a === void 0 ? void 0 : _a.toLowerCase()) === 'true') || this.isInEditMode();
         }
         catch (e) {
             return false;
@@ -397,29 +427,45 @@ class EpiserverSpaContext {
         window.location.href = newPath;
     }
     getCurrentWebsite() {
-        var _a;
-        return (_a = this._state.getState().iContentRepo) === null || _a === void 0 ? void 0 : _a.website;
+        const website = this.serviceContainer.getService(IServiceContainer_1.DefaultServices.ContentDeliveryAPI_V2).CurrentWebsite;
+        if (!website)
+            throw new Error('The Current website has not been set');
+        return website;
     }
     loadCurrentWebsite() {
-        const website = this.getCurrentWebsite();
-        if (website) {
-            return Promise.resolve(website);
-        }
-        return this.invoke(IContent_1.default.getCurrentWebsite());
+        return __awaiter(this, void 0, void 0, function* () {
+            let domain = '';
+            const repo = this.serviceContainer.getService(IServiceContainer_1.DefaultServices.IContentRepository_V2);
+            try {
+                domain = window.location.hostname;
+            }
+            catch (e) {
+                // Ignored on purpose
+            }
+            ;
+            const website = yield repo.getWebsite(domain);
+            if (!website)
+                throw new Error('Current website not loadable');
+            this.serviceContainer.getService(IServiceContainer_1.DefaultServices.ContentDeliveryAPI_V2).CurrentWebsite = website;
+            return website;
+        });
     }
     getCurrentPath() {
         const state = this._state.getState();
         return state.ViewContext.currentPath;
     }
     getRoutedContent() {
-        if (this.isServerSideRendering()) {
-            return ErrorPage_1.default.Error404;
-        }
-        const c = this.getContentByPath(this.getCurrentPath());
-        if (!c) {
+        if (!this._routedContent) {
             throw new Error("There's no currently routed content");
         }
-        return c;
+        return this._routedContent;
+    }
+    setRoutedContent(iContent) {
+        this._routedContent = iContent;
+        return this;
+    }
+    hasRoutedContent() {
+        return this._routedContent ? true : false;
     }
     getContentByContentRef(ref) {
         const id = ContentLink_1.ContentLinkService.createApiId(ref);

@@ -1,7 +1,19 @@
-import Axios, { AxiosRequestConfig, Method, AxiosResponse, AxiosAdapter, AxiosPromise } from 'axios';
+import { AxiosResponse, AxiosAdapter, AxiosRequestConfig } from 'axios';
 
-export const FetchAdapter : AxiosAdapter = async (config) => 
+export type CachingFetchAdapter = AxiosAdapter & {
+    isCachable ?: ((url: URL) => boolean)[]
+}
+
+/**
+ * A basic implementation of an AxiosAdapter to let Axios use the Fetch API to 
+ * retrieve content.
+ * 
+ * @param   { AxiosRequestConfig }  config  The request configuration given by the implementing code
+ * @returns { Promise<AxiosResponse> }      The response of the Fetch API Call
+ */
+export const FetchAdapter : CachingFetchAdapter = async (config: AxiosRequestConfig) : Promise<AxiosResponse> => 
 {
+    const userAgent : string = 'Axios-Fetch-Adapter/0.0.1';
     const requestUrl : URL = new URL(config.url || '', config.baseURL);
     if (config.auth) {
         requestUrl.username = config.auth.username
@@ -19,21 +31,33 @@ export const FetchAdapter : AxiosAdapter = async (config) =>
     // Only set header if it hasn't been set in config
     // See https://github.com/axios/axios/issues/69
     if (!headers['User-Agent'] && !headers['user-agent']) {
-      headers['User-Agent'] = 'Axios-Fetch-Adapter/0.0.1';
+      headers['User-Agent'] = userAgent;
     }
 
     const requestConfig : RequestInit = {
-        headers: headers,
+        headers,
         credentials: config.withCredentials ? "include" : "omit",
         method: config.method,
         redirect: config.maxRedirects ? "follow" : "error", // @ToDo: Implement the actual maximum number of redirects
     }
 
-    var request = new Request(requestUrl.href, requestConfig);
-    const r = await fetch(request);
-    let responseHeaders: { [key: string]: string; } = {};
+    const request = new Request(requestUrl.href, requestConfig);
+    let r : Response;
+    if (FetchAdapter.isCachable && caches && FetchAdapter.isCachable.some(test => test(requestUrl))) {
+        const cache = await caches.open(userAgent);
+        const cacheResponse = await cache.match(request);
+        if (!cacheResponse) {
+            r = await fetch(request);
+            cache.put(request, r.clone());
+        } else {
+            r = cacheResponse;
+        }
+    } else {
+        r = await fetch(request);
+    }
+    const responseHeaders: { [key: string]: string; } = {};
     r.headers.forEach((value, name) => responseHeaders[name] = value);
-    let response: AxiosResponse = {
+    const response: AxiosResponse = {
         config,
         request,
         status: r.status,
@@ -57,5 +81,5 @@ export const FetchAdapter : AxiosAdapter = async (config) =>
     }
     return response;
 }
-
+FetchAdapter.isCachable = [];
 export default FetchAdapter;

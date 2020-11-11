@@ -23,7 +23,7 @@ class ContentLinkService {
      *
      * @param ref The content reference to generate the API-ID for.
      */
-    static createApiId(ref, preferGuid = false) {
+    static createApiId(ref, preferGuid = false, editModeId = false) {
         if (this.referenceIsString(ref)) {
             return ref;
         }
@@ -40,6 +40,9 @@ class ContentLinkService {
             }
             else {
                 let out = link.id.toString();
+                if (editModeId && link.workId) {
+                    out = `${out}_${link.workId}`;
+                }
                 if (link.providerName) {
                     out = `${out}__${link.providerName}`;
                 }

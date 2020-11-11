@@ -1,12 +1,11 @@
 // External libraries
-import { EnhancedStore } from '@reduxjs/toolkit';
+import { AnyAction, EnhancedStore } from '@reduxjs/toolkit';
 
 // Episerver Application
 import IServiceContainer from './IServiceContainer';
 import EpiConfig from '../AppConfig';
 import ContentDeliveryAPI from '../ContentDeliveryAPI';
 import IEventEngine from './IEventEngine';
-import { DispatchableMethod, RepositoryAction } from '../Repository/AbstractRepostory';
 import { ContentReference, ContentApiId } from '../Models/ContentLink';
 import ComponentLoader from '../Loaders/ComponentLoader';
 
@@ -48,16 +47,18 @@ export default interface IEpiserverContext {
     /**
      * Dispatch an action to the context (Redux store)
      *
+     * @deprecated Use getStore to get the Redux instance and run your logic manually
      * @param action
      */
-    dispatch<T extends RepositoryAction<any, any>>(action: T): T;
+    dispatch<T extends AnyAction>(action: AnyAction): T;
   
     /**
      * Invoke a function on the context (Redux store)
      *
+     * @deprecated Use getStore to get the Redux instance and run your logic manually
      * @param action
      */
-    invoke<T>(action: DispatchableMethod<T>): T;
+    invoke<T extends AnyAction>(action: AnyAction): T;
   
     /**
      * Get the store
@@ -81,13 +82,15 @@ export default interface IEpiserverContext {
   
     /**
      * Get an instance of the ContentDeliveryAPI
+     * 
+     * @deprecated Use the React Hook for functional components
      */
     contentDeliveryApi<API extends ContentDeliveryAPI = ContentDeliveryAPI>(): API;
   
     /**
      * Navigate to a specific item
      *
-     * @deprecated
+     * @deprecated 
      * @param item
      */
     navigateTo(item: ContentReference): void;
@@ -150,7 +153,19 @@ export default interface IEpiserverContext {
      * @param id The API ID (combination of ContentProvider & ID) of the content to fetch
      */
     loadContentById(id: ContentApiId): Promise<IContent>;
+
+    /**
+     * 
+     * @deprecated  Use the getByReference method of the IContentRepository_V2 Service instead
+     * @param ref 
+     */
     getContentByRef(ref: string): IContent | null;
+
+    /**
+     * 
+     * @deprecated  Use the getByReference method of the IContentRepository_V2 Service instead
+     * @param ref 
+     */
     loadContentByRef(ref: string): Promise<IContent>;
 
     /**
@@ -170,14 +185,24 @@ export default interface IEpiserverContext {
     /**
      * Retrieve the website that's currently being rendered by the system, returns null
      * if the website is not yet loaded into the state.
+     * 
+     * @deprecated  Use the getCurrentWebsite method of the IContentRepository_V2 Service instead
      */
     getCurrentWebsite(): Website | null;
   
     /**
      * Retrieve the website that's currently being rendered by the system, returns null
      * if the website is not yet loaded into the state.
+     * 
+     * @deprecated  Use the getCurrentWebsite method of the IContentRepository_V2 Service instead
      */
     loadCurrentWebsite(): Promise<Website | null>;
+
+    /**
+     * 
+     * @deprecated  No longer needed as the IContentRepository_V2 Service automatically caches content
+     * @param iContent 
+     */
     injectContent(iContent: IContent): void;
     isInEditMode(): boolean;
     isEditable(): boolean;
@@ -191,7 +216,9 @@ export default interface IEpiserverContext {
      * Retrieve the currently routed content
      */
     getRoutedContent(): IContent;
-  
+    hasRoutedContent(): boolean;
+    setRoutedContent(iContent ?: IContent) : IEpiserverContext;
+
     /**
      * Get the cached content by ContentReference object
      *

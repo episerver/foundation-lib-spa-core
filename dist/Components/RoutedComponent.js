@@ -33,11 +33,15 @@ exports.RoutedComponent = (props) => {
     const path = props.location.pathname;
     const [iContent, setIContent] = react_1.useState(null);
     react_1.useEffect(() => {
-        repo.getByRoute(path).then(c => setIContent(c));
+        repo.getByRoute(path).then(c => {
+            epi.setRoutedContent(c || undefined);
+            setIContent(c);
+        });
+        return () => { epi.setRoutedContent(); };
     }, [path]);
     if (iContent === null) {
         return Spinner_1.default.CreateInstance({});
     }
-    return react_1.default.createElement(EpiComponent_1.default, { contentLink: iContent.contentLink, context: epi, expandedValue: iContent, path: props.location.pathname });
+    return react_1.default.createElement(EpiComponent_1.default, { contentLink: iContent.contentLink, expandedValue: iContent, path: props.location.pathname });
 };
 exports.default = exports.RoutedComponent;

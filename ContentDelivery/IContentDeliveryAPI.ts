@@ -1,17 +1,21 @@
-// import { ContentDelivery, Taxonomy } from '@episerver/spa-core';
+import { Method, AxiosTransformer } from 'axios';
+import ActionResponse from '../Models/ActionResponse';
+import { ContentReference } from '../Models/ContentLink';
+import IContent from '../Models/IContent';
 import Website from '../Models/Website';
 import WebsiteList from '../Models/WebsiteList';
-import IContent from '../Models/IContent';
-import { ContentReference } from '../Models/ContentLink';
 import { PathResponse, NetworkErrorData } from '../ContentDeliveryAPI';
-
 
 /**
  * Service definition for the Episerver Content Delivery API. This is a
  * straight wrapper for the ContentDeliveryAPI and does not implement any
  * form of Client Side caching, that should be added at a higher level.
+ * 
+ * If desired it is possible to override the AxiosAdapter to add low-level
+ * request/response caching, however that may or may not be desired for your
+ * use case.
  */
-export default interface IContentDeliveryAPI {
+export type IContentDeliveryAPI = {
     /**
      * Flag to get/set whether or not the requests to the ContentDeliveryAPI
      * should be done with the Edit Mode flag present.
@@ -37,6 +41,14 @@ export default interface IContentDeliveryAPI {
      * of the ContentDelivery API.
      */
     CurrentWebsite?: Website;
+
+    /**
+     * Check if we're currenlty online, if this returns false the browser is aware of an off-line status, if it returns true
+     * network connectivity might still fail.
+     * 
+     * @returns { boolean } False if the browser knows the network is down, True otherwise
+     */
+    readonly OnLine: boolean
 
     /**
      * Authenticate a user using the Username and Password provided
@@ -120,4 +132,20 @@ export default interface IContentDeliveryAPI {
      * @returns { boolean } True when the URL is a ContentDeliveryAPI service, False otherwise
      */
     isServiceURL(url: string | URL) : boolean
+
+    /**
+     * Invoke a method on the controller for the content type referenced. This method will
+     * throw an exception if the Extensions are not marked as being avaialble in the
+     * configuration.
+     * 
+     * @param   { ContentReference }    content     The content item to invoke the method on
+     * @param   { string }              method      The method name
+     * @param   { Method }              verb        The verb to use when connecting to Episerver, defaults to GET
+     * @param   { TypeIn }              data        The data to post, undefined when there's no data to send
+     * @param   { AxiosTransformer }    requestTransformer  The transformer to add the data to the request, defaults to JSON Serialization
+     * @returns { Promise<ActionResponse<TypeOut>> }    The response from the service
+     */
+    invoke<TypeOut extends unknown = any, TypeIn extends unknown = any>(content: ContentReference, method: string, verb?: Method, data?: TypeIn, requestTransformer?: AxiosTransformer) : Promise<ActionResponse<TypeOut | NetworkErrorData>>;
+
 }
+export default IContentDeliveryAPI;

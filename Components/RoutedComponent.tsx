@@ -15,13 +15,17 @@ export const RoutedComponent : FunctionComponent<RouteComponentProps> = (props: 
     const [iContent, setIContent] = useState<IContent | null>(null);
 
     useEffect(() => {
-        repo.getByRoute(path).then(c => setIContent(c));
+        repo.getByRoute(path).then(c => {
+            epi.setRoutedContent(c || undefined);
+            setIContent(c);
+        });
+        return () => { epi.setRoutedContent() };
     }, [ path ]);
 
     if (iContent === null) {
         return Spinner.CreateInstance({});
     }
-    return <EpiComponent contentLink={ iContent.contentLink } context={ epi } expandedValue={ iContent } path={ props.location.pathname } />
+    return <EpiComponent contentLink={ iContent.contentLink } expandedValue={ iContent } path={ props.location.pathname } />
 }
 
 export default RoutedComponent;

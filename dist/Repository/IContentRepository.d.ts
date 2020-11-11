@@ -1,17 +1,14 @@
+import EventEmitter from 'eventemitter3';
 import IContentDeliveryAPI from '../ContentDelivery/IContentDeliveryAPI';
+import { IRepositoryItem, IPatchableRepository, IRepositoryConfig } from './IRepository';
 import { NetworkErrorData } from '../ContentDeliveryAPI';
+import IndexedDB from '../IndexedDB/IndexedDB';
+import SchemaUpgrade from '../IndexedDB/SchemaUpgrade';
+import Store from '../IndexedDB/Store';
 import { ContentReference } from '../Models/ContentLink';
 import IContent from '../Models/IContent';
 import Website from '../Models/Website';
 import WebsiteList from '../Models/WebsiteList';
-import IndexedDB from '../IndexedDB/IndexedDB';
-import SchemaUpgrade from '../IndexedDB/SchemaUpgrade';
-import Store from '../IndexedDB/Store';
-export declare type IRepositoryItem<T> = {
-    data: T;
-    added?: number;
-    accessed?: number;
-};
 /**
  * The data structure stored within the iContent repository
  */
@@ -21,14 +18,36 @@ export declare type IContentRepositoryItem<T extends IContent = IContent> = IRep
     type: string;
     route: string | null;
 };
+export interface IReadonlyRepositoryEvents<KeyType extends unknown = any, DataType extends unknown = any> {
+    'beforeGet': [item: Readonly<KeyType>];
+    'afterGet': [item: Readonly<KeyType>, value: DataType | null];
+}
+export interface IPatchableRepositoryEvents<KeyType extends unknown = any, DataType extends unknown = any> extends IReadonlyRepositoryEvents<KeyType, DataType> {
+    'beforePatch': [item: Readonly<KeyType>, value: DataType];
+    'afterPatch': [item: Readonly<KeyType>, newValue: DataType, oldValue: Readonly<DataType>];
+}
+export interface IEventingRepository<EventTypes extends EventEmitter.ValidEventTypes = string | symbol, Context extends unknown = any> {
+    /**
+     * Return the listeners registered for a given event.
+     */
+    listeners<T extends EventEmitter.EventNames<EventTypes>>(event: T): EventEmitter.EventListener<EventTypes, T>[];
+    /**
+     * Return the number of listeners listening to a given event.
+     */
+    listenerCount(event: EventEmitter.EventNames<EventTypes>): number;
+    /**
+     * Add the listener to a given event
+     */
+    on<T extends EventEmitter.EventNames<EventTypes>>(event: T, fn: EventEmitter.EventListener<EventTypes, T>, context?: Context): this;
+    addListener<T extends EventEmitter.EventNames<EventTypes>>(event: T, fn: EventEmitter.EventListener<EventTypes, T>, context?: Context): this;
+    /**
+     * Remove the listeners of a given event.
+     */
+    removeListener<T extends EventEmitter.EventNames<EventTypes>>(event: T, fn?: EventEmitter.EventListener<EventTypes, T>, context?: Context, once?: boolean): this;
+    off<T extends EventEmitter.EventNames<EventTypes>>(event: T, fn?: EventEmitter.EventListener<EventTypes, T>, context?: Context, once?: boolean): this;
+}
 export declare type WebsiteRepositoryItem<T extends Website = Website> = IRepositoryItem<T>;
-export declare type IReadOnlyRepository<KeyType, DataType> = {
-    get: (itemId: KeyType) => Promise<DataType | null>;
-    has: (itemId: KeyType) => Promise<boolean>;
-    load: (itemId: KeyType) => Promise<DataType | null>;
-    update: (reference: KeyType) => Promise<DataType | null>;
-};
-export declare type IIContentRepository = IReadOnlyRepository<ContentReference, IContent> & {
+export interface IIContentRepository extends IPatchableRepository<ContentReference, IContent>, IEventingRepository<IPatchableRepositoryEvents<ContentReference, IContent>, IIContentRepository> {
     /**
      * Get the IContent from the client repository, if it's not present there, go to the Episerver Instance
      * to load the data
@@ -42,9 +61,28 @@ export declare type IIContentRepository = IReadOnlyRepository<ContentReference, 
      * Force loading the IContent from Episerver and update the reference in the local repository
      */
     update: (reference: ContentReference, recursive?: boolean) => Promise<IContent | null>;
+    /**
+     * Retrieve content by the Episerver ContentId, using the index on the local repository
+     *
+     * @param { string } contentId  The Episerver ContentID (using format: {number}__{provider})
+     * @returns { Promise<IContent | null> } The content from the index or null otherwise
+     */
     getByContentId: (contentId: string) => Promise<IContent | null>;
+    /**
+     * Retrieve content by the Episerver route (URL), using the index on the local repository
+     *
+     * @param { string } route
+     * @returns { Promise<IContent | null> } The content from the index or null otherwise
+     */
     getByRoute(route: string): Promise<IContent | null>;
-    getByReference(reference: string, website: Website): Promise<IContent | null>;
+    /**
+     * Load content by the reference name from the website
+     *
+     * @param { string } reference The name of the page, as registered on the Website
+     * @param { Website } website The website to get the registrations from, if omitted it takes the current website from the ContentDelivery API
+     * @returns { Promise<IContent | null> } The content from the index or null otherwise
+     */
+    getByReference(reference: string, website?: Website): Promise<IContent | null>;
     /**
      * Retrieve a list of all websites stored within Episerver
      */
@@ -57,24 +95,25 @@ export declare type IIContentRepository = IReadOnlyRepository<ContentReference, 
      * @returns The matching website or null if none found or error
      */
     getWebsite(hostname: string, language?: string): Promise<Website | null>;
-};
-export declare type IIContentRepositoryType = new (api: IContentDeliveryAPI) => IIContentRepository;
+}
+export declare type IIContentRepositoryType = new (api: IContentDeliveryAPI, config?: Partial<IRepositoryConfig>) => IIContentRepository;
 /**
  * A wrapper for IndexedDB offering an Asynchronous API to load/fetch content items from the database
  * and underlying Episerver ContentDelivery API.
  */
-export declare class IContentRepository implements IIContentRepository {
+export declare class IContentRepository extends EventEmitter<IPatchableRepositoryEvents<ContentReference, IContent>, IIContentRepository> implements IIContentRepository {
     protected _api: IContentDeliveryAPI;
     protected _storage: IndexedDB;
     protected _loading: {
         [key: string]: Promise<IContent | NetworkErrorData<any> | null>;
     };
+    protected _config: IRepositoryConfig;
     /**
      * Create a new instance
      *
      * @param { IContentDeliveryAPI } api The ContentDelivery API wrapper to use within this IContent Repository
      */
-    constructor(api: IContentDeliveryAPI);
+    constructor(api: IContentDeliveryAPI, config?: Partial<IRepositoryConfig>);
     /**
      * Load the IContent, first try IndexedDB, if not found in the IndexedDB load it from the
      * ContentDelivery API
@@ -92,6 +131,14 @@ export declare class IContentRepository implements IIContentRepository {
      * @returns { Promise<IContent | null> }
      */
     update(reference: ContentReference, recursive?: boolean): Promise<IContent | null>;
+    /**
+     * Validate if the current item is still valid or must be refreshed from the server
+     *
+     * @param   { IContentRepositoryItem }  item    The item to be tested
+     * @returns The validity of the stored item
+     */
+    protected isValid(item: IContentRepositoryItem): boolean;
+    protected updateInBackground(item: IContentRepositoryItem): void;
     /**
      * Return whether or not the referenced iContent is available in the IndexedDB
      *
@@ -115,7 +162,8 @@ export declare class IContentRepository implements IIContentRepository {
      * @returns { Promise<Store<IContentRepositoryItem>> }
      */
     getByRoute(route: string): Promise<IContent | null>;
-    getByReference(reference: string, website: Website): Promise<IContent | null>;
+    getByReference(reference: string, website?: Website): Promise<IContent | null>;
+    patch(reference: ContentReference, patch: (item: Readonly<IContent>) => IContent): Promise<IContent | null>;
     getWebsites(): Promise<WebsiteList>;
     getWebsite(hostname: string, language?: string): Promise<Website | null>;
     /**

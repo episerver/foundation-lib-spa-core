@@ -19,9 +19,13 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ContentLinkService = exports.AbstractIContent = void 0;
+exports.namePropertyIsString = exports.ContentLinkService = exports.AbstractIContent = exports.Property = void 0;
 const IContentNS = __importStar(require("../Models/IContent"));
 const ContentLinkNS = __importStar(require("../Models/ContentLink"));
+// Export Property Namespace
+exports.Property = __importStar(require("../Property"));
 // Classes
 exports.AbstractIContent = IContentNS.BaseIContent;
 exports.ContentLinkService = ContentLinkNS.ContentLinkService;
+// Type guards
+exports.namePropertyIsString = IContentNS.namePropertyIsString;

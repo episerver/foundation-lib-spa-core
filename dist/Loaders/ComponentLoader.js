@@ -12,9 +12,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.ComponentLoader = exports.isIComponentLoader = void 0;
 const react_1 = __importDefault(require("react"));
 const ComponentNotFound_1 = __importDefault(require("../Components/Errors/ComponentNotFound"));
 const CoreIComponentLoader_1 = __importDefault(require("./CoreIComponentLoader"));
+exports.isIComponentLoader = (toTest) => {
+    return typeof (toTest) === 'object' && typeof (toTest.load) === 'function';
+};
 /**
  * Helper class that ensures components can be pre-loaded for server side
  * rendering whilest loading them asynchronously in browser to minimize the
@@ -64,9 +68,11 @@ class ComponentLoader {
         loaders.forEach(x => { x.setDebug(me.debug); me.loaders.push(x); });
         this.loaders.sort((a, b) => a.order - b.order);
     }
-    createLoader(loaderType) {
+    createLoader(loaderType, add = true) {
         const loader = new loaderType();
-        this.addLoader(loader);
+        if (add)
+            this.addLoader(loader);
+        return loader;
     }
     setDebug(debug) {
         this.debug = debug;
@@ -188,5 +194,6 @@ return type;
         });
     }
 }
-exports.default = ComponentLoader;
+exports.ComponentLoader = ComponentLoader;
 ;
+exports.default = ComponentLoader;

@@ -1,7 +1,7 @@
 import React, { FunctionComponent, useState, useEffect } from 'react';
 import StringUtils from '../Util/StringUtils';
 import { useEpiserver, useIContentRepository, useForceUpdate } from '../Hooks/Context';
-import ContentLink from '../Models/ContentLink';
+import ContentLink, { ContentReference, ContentLinkService } from '../Models/ContentLink';
 import IContent from '../Models/IContent';
 import ComponentLoader, { TComponentType } from '../Loaders/ComponentLoader';
 import IEpiserverContext from '../Core/IEpiserverContext';
@@ -38,8 +38,11 @@ export type EpiComponentProps<T extends IContent = IContent> = Omit<ComponentPro
  */
 export const EpiComponent : EpiComponentType = <T extends IContent = IContent>(props: EpiComponentProps<T>) =>
 {
+    const ctx = useEpiserver();
+    if (!props.contentLink) return ctx.isDebugActive() ? <div className="alert alert-danger">Debug: No content link provided</div> : null;
+
     const repo = useIContentRepository();
-    const componentLoader = useEpiserver().componentLoader();
+    const componentLoader = ctx.componentLoader();
     const forceUpdate = useForceUpdate();
     const [ iContent, setIContent ] = useState< IContent | null >(props.expandedValue || null);
 
@@ -58,6 +61,19 @@ export const EpiComponent : EpiComponentType = <T extends IContent = IContent>(p
         repo.load(props.contentLink).then(x => setIContent(x));
     }, [ props.contentLink, props.expandedValue, props.contentType ]);
 
+    // Update the iContent if the database changes
+    useEffect(() => {
+        const myApiId = ContentLinkService.createApiId(props.contentLink);
+        const onContentPatched = (item: ContentReference, newValue: IContent) => {
+            const itemApiId = ContentLinkService.createApiId(item);
+            if (myApiId === itemApiId) setIContent(newValue);
+        }
+        repo.addListener("afterPatch", onContentPatched, repo);
+        return () => {
+            repo.removeListener("afterPatch", onContentPatched);
+        }
+    }, [ props.contentLink ]);
+
     // Load component if needed
     useEffect(() => {
         if (!componentAvailable && componentName) {
@@ -69,7 +85,7 @@ export const EpiComponent : EpiComponentType = <T extends IContent = IContent>(p
     const componentType = componentName && componentAvailable ?
         componentLoader.getPreLoadedType(componentName) :
         null;
-    return componentType && iContent ? React.createElement(componentType, { ...props, data: iContent}) : Spinner.CreateInstance({});
+    return componentType && iContent ? React.createElement(componentType, { ...props, context: ctx, data: iContent}) : Spinner.CreateInstance({});
 }
 
 /**
@@ -88,17 +104,13 @@ export default EpiComponent;
  * Check if the current expanded value is both set and relates to the current
  * content reference.
  */
-const isExpandedValueValid : (content: IContent | null | undefined, link: ContentLink) => boolean = (content, link) =>
+const isExpandedValueValid : (content: IContent|null|undefined, link: ContentLink) => boolean = (content: IContent|null|undefined, link: ContentLink) =>
 {
-    if (!content) return false;
-    return content.contentLink.guidValue === link.guidValue;
-}
-
-const isComponentValid : (component: TComponentType | null, content: IContent, contentType?: string) => boolean = (component, content, contentType) =>
-{
-    if (!component) return false;
-    const name = buildComponentName(content, contentType);
-    return component.displayName === ComponentNotFound.displayName || component.displayName === name;
+    try {
+        return content && content.contentLink.guidValue === link.guidValue ? true : false;
+    } catch (e) {
+        return false;
+    }
 }
 
 /**

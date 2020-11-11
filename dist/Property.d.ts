@@ -20,10 +20,10 @@ export declare type ContentReferenceProperty = Property<ContentLink, IContent>;
 export declare type ContentReferenceListProperty = Property<ContentLink[], IContent[]>;
 export declare type ContentAreaProperty = Property<ContentAreaPropertyValue, IContent[]>;
 export declare type LinkListProperty = Property<LinkProperty[]>;
-export interface LinkProperty {
+export declare type LinkProperty = {
     href: string;
     title: string;
     target: string;
     text: string;
     contentLink: ContentLink;
-}
+};

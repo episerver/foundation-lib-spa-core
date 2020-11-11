@@ -4,13 +4,15 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const AppGlobal_1 = __importDefault(require("../AppGlobal"));
+const eventemitter3_1 = __importDefault(require("eventemitter3"));
 /**
  * The default event engine for the SPA
  */
 class DefaultEventEngine {
     constructor() {
-        this.listeners = {};
-        this.events = [];
+        this._listeners = {};
+        this._events = [];
+        this._eventEmitter = new eventemitter3_1.default();
         const ctx = AppGlobal_1.default();
         if (ctx.addEventListener) {
             ctx.addEventListener('message', this.onPostMessageReceived.bind(this), false);
@@ -24,16 +26,18 @@ class DefaultEventEngine {
         }
     }
     registerEvent(event) {
-        if (this.events.indexOf(event) === -1) {
-            this.events.push(event);
-            this.listeners[event] = [];
+        if (!this.hasEvent(event)) {
+            this._events.push(event);
         }
         return this;
     }
     hasEvent(event) {
-        return this.events.indexOf(event) >= 0;
+        return this._events.indexOf(event) >= 0;
     }
     addListener(event, id, handler, autoRegister = false) {
+        if (this._listeners[id]) {
+            throw new Error(`There's already a listener with id ${id} registered`);
+        }
         if (!this.hasEvent(event)) {
             if (autoRegister) {
                 this.registerEvent(event);
@@ -42,22 +46,24 @@ class DefaultEventEngine {
                 throw new Error(`The event ${event} has not been registered.`);
             }
         }
-        if (this.listeners[event].some(value => value.id === id)) {
-            throw new Error(`There's already a listener with id ${id} registered for the event ${event}`);
-        }
-        this.listeners[event].push({ callback: handler, id });
+        this._listeners[id] = handler;
+        this._eventEmitter.addListener(event, handler);
         return this;
     }
     dispatch(event, ...args) {
-        if (!this.hasEvent(event)) {
+        if (!this.hasEvent(event))
             this.registerEvent(event);
-        }
-        const ctx = this;
-        this.listeners[event].forEach((l) => {
-            l.callback.apply(ctx, args);
-        });
+        const emitArgs = [event];
+        for (const arg of args)
+            emitArgs.push(arg);
+        this._eventEmitter.emit.apply(this._eventEmitter, emitArgs);
     }
     removeListener(event, id) {
+        if (!this._listeners[id]) {
+            throw new Error(`There's no listner with ${id} present`);
+        }
+        this._eventEmitter.removeListener(event, this._listeners[id]);
+        delete this._listeners[id];
         return this;
     }
 }

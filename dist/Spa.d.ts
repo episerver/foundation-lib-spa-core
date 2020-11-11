@@ -1,5 +1,4 @@
-import { EnhancedStore } from '@reduxjs/toolkit';
-import { DispatchableMethod, RepositoryAction } from './Repository/AbstractRepostory';
+import { EnhancedStore, AnyAction } from '@reduxjs/toolkit';
 import IEpiserverContext from './Core/IEpiserverContext';
 import IServiceContainer from './Core/IServiceContainer';
 import ContentDeliveryAPI from './ContentDeliveryAPI';
@@ -38,8 +37,8 @@ export declare class EpiserverSpaContext implements IEpiserverContext, PathProvi
     isDebugActive(): boolean;
     isServerSideRendering(): boolean;
     protected enforceInitialized(): void;
-    dispatch<T extends RepositoryAction<any, any>>(action: T): T;
-    invoke<T>(action: DispatchableMethod<T>): T;
+    dispatch<T>(action: AnyAction): T;
+    invoke<T>(action: AnyAction): T;
     getStore(): EnhancedStore;
     events(): IEventEngine;
     config(): Readonly<AppConfig>;
@@ -81,7 +80,10 @@ export declare class EpiserverSpaContext implements IEpiserverContext, PathProvi
     getCurrentWebsite(): Website;
     loadCurrentWebsite(): Promise<Website>;
     getCurrentPath(): string;
+    private _routedContent?;
     getRoutedContent(): IContent;
+    setRoutedContent(iContent?: IContent): IEpiserverContext;
+    hasRoutedContent(): boolean;
     getContentByContentRef(ref: ContentReference): IContent | null;
     /**
      * Get the base path where the SPA is running. If it's configured to be

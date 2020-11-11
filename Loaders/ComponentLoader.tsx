@@ -10,8 +10,8 @@ import CoreIComponentLoader from './CoreIComponentLoader';
  */
 declare let PreLoad: LoadedModuleList<any>;
 
-export type TComponentType<T = ComponentProps<IContent>> = ComponentType<T>;
-export type TComponentTypePromise<T = ComponentProps<IContent>> = Promise<TComponentType<T>>;
+export type TComponentType<T extends unknown = ComponentProps<IContent>> = ComponentType<T>;
+export type TComponentTypePromise<T extends unknown = ComponentProps<IContent>> = Promise<TComponentType<T>>;
 
 /**
  * Type defintiion to allow access to the pre-loaded modules
@@ -22,12 +22,16 @@ type LoadedModuleList<T = ComponentProps<IContent>> = {
 type LoadingModuleList<T = ComponentProps<IContent>> = {
     [key: string]: TComponentTypePromise<T>
 }
-type IComponentLoaderList = IComponentLoader[];
+export type IComponentLoaderList = IComponentLoader[];
+export type IComponentLoaderConfig = (IComponentLoader | IComponentLoaderType)[] & { debug?: boolean }
+export const isIComponentLoader : (toTest : IComponentLoader | IComponentLoaderType) => toTest is IComponentLoader = (toTest : IComponentLoader | IComponentLoaderType) : toTest is IComponentLoader => {
+    return typeof(toTest) === 'object' && typeof(toTest.load) === 'function';
+}
 
-export type IComponentLoader = {
+export interface IComponentLoader {
     order: number
     canLoad: (componentName: string) => boolean
-    load: <T = ComponentProps<IContent>>(componentName: string) => TComponentTypePromise<T>
+    load: <T extends unknown = ComponentProps<IContent>>(componentName: string) => TComponentTypePromise<T>
     setDebug: (debug: boolean) => void
 }
 export type IComponentLoaderType = new() => IComponentLoader
@@ -40,7 +44,7 @@ export type IComponentLoaderType = new() => IComponentLoader
  * For this script to work, the application must have the app/Components/ path
  * specified and all loadable components must reside within this path.
  */
-export default class ComponentLoader
+export class ComponentLoader
 {
     /**
      * The cache of components already pre-loaded by this loader
@@ -91,10 +95,11 @@ export default class ComponentLoader
         this.loaders.sort((a, b) => a.order - b.order);
     }
 
-    public createLoader(loaderType : IComponentLoaderType)
+    public createLoader(loaderType : IComponentLoaderType, add : boolean = true) : IComponentLoader
     {
         const loader : IComponentLoader = new loaderType();
-        this.addLoader(loader);
+        if (add) this.addLoader(loader);
+        return loader;
     }
 
     public setDebug(debug: boolean) : void 
@@ -224,3 +229,4 @@ export default class ComponentLoader
         return React.createElement(type, props);
     }
 };
+export default ComponentLoader;

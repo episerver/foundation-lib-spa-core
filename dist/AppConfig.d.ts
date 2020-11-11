@@ -5,6 +5,8 @@ import { IComponentPreloadList } from './Loaders/ComponentPreLoader';
 import IInitializableModule from './Core/IInitializableModule';
 import IRouteConfig from './Routing/IRouteConfig';
 import { AxiosAdapter } from 'axios';
+import { IRepositoryConfig } from './Repository/IRepository';
+import { IComponentLoaderConfig } from './Loaders/ComponentLoader';
 export default interface AppConfig {
     /**
      * Enable debug logging to the console
@@ -75,4 +77,12 @@ export default interface AppConfig {
      * Override the standard adapter used by Axios to connect to the ContentDelivery API.
      */
     networkAdapter?: AxiosAdapter;
+    /**
+     * Additional configuration for the IContentRepository
+     */
+    iContentRepository?: IRepositoryConfig;
+    /**
+     * Configure the component loaders
+     */
+    componentLoaders?: IComponentLoaderConfig;
 }

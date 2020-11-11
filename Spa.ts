@@ -1,8 +1,8 @@
 // Redux & Redux setup
 import { configureStore, EnhancedStore, Action, AnyAction, Reducer } from '@reduxjs/toolkit';
-import { DispatchableMethod, RepositoryAction, RepositoryActions } from './Repository/AbstractRepostory';
-import IContentRepository, { IContentActionFactory } from './Repository/IContent';
-import ViewContext from './Repository/ViewContext';
+
+// Lodash
+import { merge, clone } from 'lodash'
 
 // Application context
 import IEpiserverContext from './Core/IEpiserverContext';
@@ -11,7 +11,7 @@ import ContentDeliveryAPI from './ContentDeliveryAPI';
 import IEventEngine from './Core/IEventEngine';
 import DefaultEventEngine from './Core/DefaultEventEngine';
 import { ContentReference, ContentLinkService, ContentApiId } from './Models/ContentLink';
-import ComponentLoader from './Loaders/ComponentLoader';
+import ComponentLoader, { isIComponentLoader } from './Loaders/ComponentLoader';
 import AppConfig from './AppConfig';
 import getGlobal from './AppGlobal';
 import PathProvider from './PathProvider';
@@ -19,14 +19,15 @@ import IExecutionContext from './Core/IExecutionContext';
 import RoutingModule from './Routing/RoutingModule';
 
 // Taxonomy
+import IContentProperty from './Property';
 import IContent from './Models/IContent';
-import ErrorPage from './Models/ErrorPage';
 import Website from './Models/Website';
 import StringUtils from './Util/StringUtils';
 import IInitializableModule from './Core/IInitializableModule';
 
 // Content Delivery V2
-import IContentRepositoryV2 from './Repository/IContentRepository';
+import IContentRepositoryV2, { IIContentRepository as IIContentRepositoryV2 } from './Repository/IContentRepository';
+import IContentDeliveryApiV2 from './ContentDelivery/IContentDeliveryAPI';
 import ContentDeliveryApiV2 from './ContentDelivery/ContentDeliveryAPI';
 
 // Create context
@@ -81,6 +82,7 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
         this._isServerSideRendering = isServerSideRendering;
         this._serviceContainer = serviceContainer;
         const executionContext : IExecutionContext = { isServerSideRendering }
+        config.enableDebug = process.env.NODE_ENV === 'production' ? false : config.enableDebug;
 
         // Create module list
         this._modules.push(new RoutingModule());
@@ -92,7 +94,17 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
         // Add component loaders
         const cl = new ComponentLoader();
         cl.setDebug(config.enableDebug || false);
-        // @ToDo: Add registration logic
+        if (config.componentLoaders) {
+          config.componentLoaders.forEach(loader => {
+            if (isIComponentLoader(loader)) {
+              loader.setDebug(config.componentLoaders?.debug || config.enableDebug || false);
+              cl.addLoader(loader);
+            } else {
+              const loaderInstance = cl.createLoader(loader, true);
+              loaderInstance.setDebug(config.componentLoaders?.debug || config.enableDebug || false);
+            }
+          })
+        }
 
         // Register core services
         this._serviceContainer.addService(DefaultServices.Context, this);
@@ -110,8 +122,9 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
           EnableExtensions: true,
           Language: config.defaultLanguage
         });
+        newAPI.InEditMode = this.initialEditMode();
         this._serviceContainer.addService(DefaultServices.ContentDeliveryAPI_V2, newAPI);
-        this._serviceContainer.addService(DefaultServices.IContentRepository_V2, new IContentRepositoryV2(newAPI));
+        this._serviceContainer.addService(DefaultServices.IContentRepository_V2, new IContentRepositoryV2(newAPI, { debug: config.enableDebug }));
 
         // Have modules add services of their own
         this._modules.forEach(x => x.ConfigureContainer(this._serviceContainer));
@@ -132,14 +145,9 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
     private _initRedux() : void
     {
         const reducers: { [key : string ]: Reducer<any, Action> } = {};
-
-        IContentRepository.ContentDeliveryAPI = this.contentDeliveryApi();
-        reducers[IContentRepository.StateKey] = IContentRepository.reducer.bind(IContentRepository);
-        reducers[ViewContext.StateKey] = ViewContext.reducer.bind(ViewContext);
         this._modules.forEach(x => { const ri = x.GetStateReducer(); if (ri) { reducers[ri.stateKey] = ri.reducer }});
         this._state = configureStore({ reducer: reducers });
-        const initAction: Action<RepositoryActions> = { type: RepositoryActions.INIT };
-        this._state.dispatch(initAction);
+        this._state.dispatch({ type: '@@EPI/INIT' });
     }
 
     private _initEditMode() : void
@@ -157,19 +165,45 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
 
     private onEpiContentSaved(event: EpiContentSavedEvent) : void
     {
-        if (this.isDebugActive()) console.info('Received updated content from the Episerver Shell', event);
+        if (this.isDebugActive()) console.info('EpiContentSaved: Received updated content from the Episerver Shell', event);
         if (event.successful) {
-            const baseId = event.savedContentLink.split('_')[0];
-            const baseContent = this.getContentById(baseId);
-            if (baseContent) {
-                event.properties.forEach((prop) => {
-                    if (prop.successful) {
-                      this.dispatch(
-                          IContentActionFactory.updateContentProperty(baseContent as IContent, prop.name, prop.value),
-                      );
-                    }
-                });
+            const repo = this.serviceContainer.getService<IIContentRepositoryV2>(DefaultServices.IContentRepository_V2);
+            const baseId = event.savedContentLink;
+            const isStringProperty : (toTest: object, propName: string) => boolean = (toTest, propName) => {
+              try {
+                return (toTest as any)[propName] && typeof (toTest as any)[propName] === 'string';
+              } catch (e) { /* Empty on purpose */ }
+              return false;
             }
+            
+            repo.patch(baseId, (item) => {
+              const out = clone<IContent>(item);
+              event.properties.forEach(property => {
+                if (property.successful) {
+                  const propertyData : { [key: string ]: Partial<IContentProperty> | string } = { };
+                  if (property.name.substr(0, 9) === 'icontent_') {
+                    switch (property.name.substr(9)) {
+                      case 'name':
+                        if (this.isDebugActive()) console.info('EpiContentSaved: Received updated name');
+                        propertyData.name = isStringProperty(out, 'name') ? property.value : { expandedValue: undefined, value: property.value };
+                        break;
+                      default:
+                        if (this.isDebugActive()) console.warn('EpiContentSaved: Received unsupported property ', property);
+                        break;
+                    }
+                  } else {
+                    if (this.isDebugActive()) console.info(`EpiContentSaved: Received updated ${ property.name }`);
+                    propertyData[property.name] = {
+                      expandedValue: undefined,
+                      value: property.value
+                    }
+                  }
+                  merge(out, propertyData);
+                }
+              });
+              if (this.isDebugActive()) console.info('EpiContentSaved: Patched iContent', out);
+              return out;
+            });
         }
     }
 
@@ -210,14 +244,14 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
     }
   }
 
-  public dispatch<T extends RepositoryAction<any, any>>(action: T): T {
+  public dispatch<T>(action: AnyAction): T {
     this.enforceInitialized();
-    return this._state.dispatch(action);
+    return this._state.dispatch(action) as unknown as T
   }
 
-  public invoke<T>(action: DispatchableMethod<T>): T {
+  public invoke<T>(action: AnyAction): T {
     this.enforceInitialized();
-    return (this._state.dispatch((action as unknown) as AnyAction) as unknown) as T;
+    return this._state.dispatch(action) as unknown as T;
   }
 
   public getStore(): EnhancedStore {
@@ -244,69 +278,47 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
   }
 
   public getContentByGuid(guid: string): IContent | null {
-    if (this._state.getState().iContentRepo.guids[guid]) {
-      const id = this._state.getState().iContentRepo.guids[guid];
-      return this.getContentById(id);
-    }
-    return null;
+    throw new Error('Synchronous content loading is no longer supported');
   }
 
   public loadContentByGuid(id: string): Promise<IContent> {
-    const c: IContent | null = this.getContentByGuid(id);
-    if (c) {
-      return Promise.resolve(c);
-    }
-    return this.invoke(IContentRepository.getById(id));
+    this.enforceInitialized();
+    const repo = this._serviceContainer.getService<IIContentRepositoryV2>(DefaultServices.IContentRepository_V2);
+    return repo.load(id).then(iContent => { if (!iContent) throw new Error('Content not resolved!'); return iContent; });
   }
 
   public getContentById(id: ContentApiId): IContent | null {
-    if (this._state.getState().iContentRepo.items && this._state.getState().iContentRepo.items[id]) {
-      return this._state.getState().iContentRepo.items[id].content;
-    }
-    return null;
+    throw new Error('Synchronous content loading is no longer supported');
   }
 
   public loadContentById(id: ContentApiId): Promise<IContent> {
-    const c = this.getContentById(id);
-    if (c) {
-      return Promise.resolve(c);
-    }
-    return this.invoke(IContentRepository.getById(id));
+    this.enforceInitialized();
+    const repo = this._serviceContainer.getService<IIContentRepositoryV2>(DefaultServices.IContentRepository_V2);
+    return repo.load(id).then(iContent => { if (!iContent) throw new Error('Content not resolved!'); return iContent; });
   }
 
   public getContentByRef(ref: string): IContent | null {
-    if (this._state.getState().iContentRepo.refs[ref]) {
-      const id = this._state.getState().iContentRepo.refs[ref];
-      return this.getContentById(id);
-    }
-    return null;
+    throw new Error('Synchronous content loading is no longer supported');
   }
 
   public loadContentByRef(ref: string): Promise<IContent> {
-    const item = this.getContentByRef(ref);
-    if (item) return Promise.resolve(item);
-
-    return this.invoke(IContentRepository.getByReference(ref));
+    this.enforceInitialized();
+    const repo = this._serviceContainer.getService<IIContentRepositoryV2>(DefaultServices.IContentRepository_V2);
+    return repo.getByReference(ref).then(iContent => { if (!iContent) throw new Error('Content not resolved!'); return iContent; });
   }
 
   public getContentByPath(path: string): IContent | null {
-    if (this._state.getState().iContentRepo.paths[path]) {
-      const id = this._state.getState().iContentRepo.paths[path];
-      return this.getContentById(id);
-    }
-    return null;
+    throw new Error('Synchronous content loading is no longer supported');
   }
 
   public loadContentByPath(path: string): Promise<IContent> {
-    const c = this.getContentByPath(path);
-    if (c) {
-      return Promise.resolve(c);
-    }
-    return this.invoke(IContentRepository.getByPath(path));
+    this.enforceInitialized();
+    const repo = this._serviceContainer.getService<IIContentRepositoryV2>(DefaultServices.IContentRepository_V2);
+    return repo.getByRoute(path).then(iContent => { if (!iContent) throw new Error('Content not resolved!'); return iContent; });
   }
 
   public injectContent(iContent: IContent): void {
-    this.dispatch(IContentActionFactory.addOrUpdateItem(iContent));
+    // Ignore on purpose, will be removed
   }
 
     /**
@@ -317,9 +329,7 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
      */
     public initialEditMode(): boolean {
         try {
-            const testA = (new URLSearchParams(window.location.search)).get('epieditmode')?.toLowerCase() === 'true';
-            const testB = this.isInEditMode();
-            return testA || testB;
+            return ((new URLSearchParams(window.location.search)).get('epieditmode')?.toLowerCase() === 'true') || this.isInEditMode();
         } catch (e) {
             return false;
         }
@@ -442,15 +452,23 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
   }
 
   public getCurrentWebsite(): Website {
-    return this._state.getState().iContentRepo?.website;
+    const website = this.serviceContainer.getService<IContentDeliveryApiV2>(DefaultServices.ContentDeliveryAPI_V2).CurrentWebsite;
+    if (!website) throw new Error('The Current website has not been set');
+    return website;
   }
 
-  public loadCurrentWebsite(): Promise<Website> {
-    const website: Website = this.getCurrentWebsite();
-    if (website) {
-      return Promise.resolve(website);
-    }
-    return this.invoke(IContentRepository.getCurrentWebsite());
+  public async loadCurrentWebsite(): Promise<Website> {
+    let domain : string = '';
+    const repo = this.serviceContainer.getService<IIContentRepositoryV2>(DefaultServices.IContentRepository_V2);
+    try {
+      domain = window.location.hostname;
+    } catch (e) {
+      // Ignored on purpose
+    };
+    const website = await repo.getWebsite(domain);
+    if (!website) throw new Error('Current website not loadable');
+    this.serviceContainer.getService<IContentDeliveryApiV2>(DefaultServices.ContentDeliveryAPI_V2).CurrentWebsite = website;
+    return website;
   }
 
   public getCurrentPath(): string {
@@ -458,15 +476,23 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
     return state.ViewContext.currentPath;
   }
 
+  private _routedContent ?: IContent;
+
   public getRoutedContent(): IContent {
-    if (this.isServerSideRendering()) {
-      return ErrorPage.Error404;
-    }
-    const c = this.getContentByPath(this.getCurrentPath());
-    if (!c) {
+    if (!this._routedContent) {
       throw new Error("There's no currently routed content");
     }
-    return c;
+    return this._routedContent;
+  }
+
+  public setRoutedContent(iContent?: IContent) : IEpiserverContext
+  {
+    this._routedContent = iContent;
+    return this;
+  }
+
+  public hasRoutedContent() : boolean {
+    return this._routedContent ? true : false;
   }
 
   public getContentByContentRef(ref: ContentReference) {

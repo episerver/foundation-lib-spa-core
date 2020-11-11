@@ -22,14 +22,16 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.API_V2 = exports.RepositoryV2 = exports.DefaultAPI = exports.FetchAdapter = exports.PathResponseIsIContent = void 0;
+exports.API_V2 = exports.RepositoryV2 = exports.DefaultAPI = exports.namePropertyIsString = exports.FetchAdapter = exports.PathResponseIsIContent = void 0;
 const ContentDeliveryAPI_1 = __importStar(require("../ContentDeliveryAPI"));
-const FetchAdapter_1 = __importDefault(require("../FetchAdapter"));
+const FetchAdapter_1 = __importDefault(require("../ContentDelivery/FetchAdapter"));
+const IContent_1 = require("../Models/IContent");
 // V2 API Imports
 const IContentRepositoryNS = __importStar(require("../Repository/IContentRepository"));
 const ContentDeliveryAPI_2 = __importDefault(require("../ContentDelivery/ContentDeliveryAPI"));
 exports.PathResponseIsIContent = ContentDeliveryAPI_1.PathResponseIsIContent;
 exports.FetchAdapter = FetchAdapter_1.default;
+exports.namePropertyIsString = IContent_1.namePropertyIsString;
 exports.DefaultAPI = ContentDeliveryAPI_1.default;
 exports.RepositoryV2 = IContentRepositoryNS.IContentRepository;
 exports.API_V2 = ContentDeliveryAPI_2.default;

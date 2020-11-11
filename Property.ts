@@ -22,8 +22,7 @@ export type ContentReferenceProperty = Property<ContentLink, IContent>
 export type ContentReferenceListProperty = Property<ContentLink[], IContent[]>
 export type ContentAreaProperty = Property<ContentAreaPropertyValue, IContent[]>
 export type LinkListProperty = Property<LinkProperty[]>
-
-export interface LinkProperty {
+export type LinkProperty = {
   href: string;
   title: string;
   target: string;

@@ -1,5 +1,4 @@
 import React, { useEffect } from 'react';
-import jQuery from 'jquery';
 import { StaticRouter, StaticRouterProps, useHistory, useLocation, Switch, SwitchProps, Route, RouteProps, RouteComponentProps } from 'react-router';
 import { BrowserRouter, BrowserRouterProps } from 'react-router-dom';
 import IRouteConfig, { IRouteConfigItem } from './IRouteConfig';
@@ -35,35 +34,38 @@ const ElementNavigation : React.FunctionComponent<{}> = (props) : React.ReactEle
     const epi = useEpiserver();
     const config = epi.config();
 
-    if (!(epi.isInEditMode() || epi.isServerSideRendering())) useEffect(() => {
-        const onWindowClick = (event: JQuery.ClickEvent) => {
+    useEffect(() => {
+        if (epi.isInEditMode() || epi.isServerSideRendering()) {
+            if (config.enableDebug) console.info('ElementNavigation: Edit mode, or SSR, so not attaching events');
+            return;
+        }
+        const onWindowClick = (event: MouseEvent) => {
             const target: HTMLElement = (event.target as any) as HTMLElement;
             const currentUrl: URL = new URL(window.location.href);
-            let link: JQuery<HTMLElement>;
             let newPath: string = '';
 
-            if (target.tagName.toLowerCase() === 'a') {
-                const targetUrl: URL = new URL((target as HTMLAnchorElement).href);
+            // Loop parents till we find the link
+            let link = target;
+            while (link.parentElement && link.tagName.toLowerCase() !== 'a') link = link.parentElement;
 
-                // Only act if we remain on the same domain
-                if (targetUrl.origin === currentUrl.origin) {
-                    newPath = targetUrl.pathname;
-                }
-            } else if ((link = jQuery(target).parents('a').first()).length) {
-                const targetUrl: URL = new URL((link.get(0) as HTMLAnchorElement).href);
-        
+            // If we have a link, see if we need to navigate
+            if (link.tagName.toLowerCase() === 'a') {
+                const targetUrl: URL = new URL((link as HTMLAnchorElement).href, currentUrl);
+
                 // Only act if we remain on the same domain
                 if (targetUrl.origin === currentUrl.origin) {
                     newPath = targetUrl.pathname;
                 }
             }
 
+            // Do not navigate to the same page
             if (newPath === location.pathname) {
-                if (config.enableDebug) console.warn('Ignoring navigation to same path');
+                if (config.enableDebug) console.info('ElementNavigation: Ignoring navigation to same path');
                 event.preventDefault();
                 return false;
             }
             
+            // Navigate to the new path
             if (newPath) {
                 if (config.basePath && newPath.substr(0, config.basePath.length) === config.basePath) {
                     newPath = newPath.substr(config.basePath.length);
@@ -75,9 +77,11 @@ const ElementNavigation : React.FunctionComponent<{}> = (props) : React.ReactEle
             }
         }
 
-        jQuery(window).on('click', onWindowClick)
+        if (epi.isDebugActive()) console.info('ElementNavigation: Attaching listener');
+        document.addEventListener('click', onWindowClick)
         return () => {
-            jQuery(window).off('click', onWindowClick);
+            if (epi.isDebugActive()) console.info('ElementNavigation: Removing listener');
+            document.removeEventListener('click', onWindowClick);
         }
     });
 

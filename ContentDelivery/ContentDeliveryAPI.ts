@@ -1,4 +1,4 @@
-import Axios, {  AxiosRequestConfig } from 'axios';
+import Axios, {  AxiosInstance, AxiosRequestConfig, AxiosTransformer, Method } from 'axios';
 import * as UUID from 'uuid';
 import IContentDeliveryAPi from './IContentDeliveryAPI';
 import ContentDeliveryApiConfig, { DefaultConfig } from './Config';
@@ -8,6 +8,7 @@ import IContent from '../Models/IContent';
 import { ContentReference, ContentLinkService } from '../Models/ContentLink';
 import { PathResponse, NetworkErrorData } from '../ContentDeliveryAPI';
 import ContentRoutingResponse from './ContentRoutingResponse';
+import ActionResponse, { ResponseType } from '../Models/ActionResponse';
 
 export class ContentDeliveryAPI implements IContentDeliveryAPi
 {
@@ -19,10 +20,17 @@ export class ContentDeliveryAPI implements IContentDeliveryAPi
     public readonly ModelService: string   = 'api/episerver/v3/model/';
 
     private _config : ContentDeliveryApiConfig;
+    private _axios : AxiosInstance;
 
     public constructor(config : Partial<ContentDeliveryApiConfig>)
     {
         this._config = { ...DefaultConfig, ...config };
+        this._axios = Axios.create(this.getDefaultRequestConfig());
+    }
+
+    protected get Axios() : AxiosInstance
+    {
+        return this._axios;
     }
 
     public CurrentWebsite?: Website;
@@ -49,6 +57,17 @@ export class ContentDeliveryAPI implements IContentDeliveryAPi
     public get BaseURL() : string
     {
         return this._config.BaseURL.endsWith('/') ? this._config.BaseURL : this._config.BaseURL + '/';
+    }
+
+    public get OnLine() : boolean
+    {
+        // Do not invalidate while we're off-line
+        try {
+            if (navigator && !navigator.onLine) return false;
+        } catch (e) { 
+            // There's no navigator object with onLine property...
+        }
+        return true;
     }
 
     public async login(username: string, password: string) : Promise<boolean>
@@ -102,7 +121,7 @@ export class ContentDeliveryAPI implements IContentDeliveryAPi
 
     public resolveRoute<T = any, C extends IContent = IContent>(path : string, select ?: string[], expand ?: string[]) : Promise<PathResponse<T,C | NetworkErrorData>>
     {
-        if (this._config.EnableExtensions) {
+        if (this._config.EnableExtensions && !this.InEditMode) {
             const serviceUrl = new URL(this.RouteService, this.BaseURL);
             if (this.CurrentWebsite) serviceUrl.searchParams.set('siteId', this.CurrentWebsite.id);
             serviceUrl.searchParams.set('route', path);
@@ -195,6 +214,48 @@ export class ContentDeliveryAPI implements IContentDeliveryAPi
         return this.doRequest<IContent[]>(url).catch(e => [this.createNetworkErrorResponse(e)]);
     }
 
+    public async invoke<TypeOut extends unknown = any, TypeIn extends unknown = any>(content: ContentReference, method: string, verb?: Method, data?: TypeIn, requestTransformer?: AxiosTransformer): Promise<ActionResponse<TypeOut | NetworkErrorData, IContent>>
+    {
+        if (!this._config.EnableExtensions) return Promise.reject('Extensions must be enabled to use the invoke method');
+
+        // Base configuration
+        const apiId = ContentLinkService.createApiId(content, true);
+        const url = new URL(this.MethodService + apiId + '/' + method, this.BaseURL);
+
+        // Default JSON Transformer for request data
+        const defaultTransformer : AxiosTransformer = (reqData, reqHeaders) => {
+            if (reqData) {
+                reqHeaders['Content-Type'] = 'application/json';
+                return JSON.stringify(reqData);
+            }
+            return reqData;
+        }
+
+        // Axios request config
+        const options : Partial<AxiosRequestConfig> = {
+            method: verb,
+            data,
+
+            transformRequest: requestTransformer || defaultTransformer
+        }
+
+        // Run the actual request
+        return this.doRequest<ActionResponse<TypeOut | NetworkErrorData, IContent>>(url, options).catch((e : Error) => {
+            const errorResponse = this.createNetworkErrorResponse(e);
+            const actionResponse : ActionResponse<NetworkErrorData, NetworkErrorData> = {
+                actionName: method,
+                contentLink: errorResponse.contentLink,
+                currentContent: errorResponse,
+                responseType: ResponseType.ActionResult,
+                data: errorResponse,
+                language: this.Language,
+                name: typeof(errorResponse.name) === "string" ? errorResponse.name : errorResponse.name.value,
+                url: errorResponse.contentLink.url
+            }
+            return actionResponse;
+        });
+    }
+
     public isServiceURL(url : URL|string) : boolean
     {
         const reqUrl : URL = typeof(url) === 'string' ? new URL(url) : url;
@@ -240,7 +301,7 @@ export class ContentDeliveryAPI implements IContentDeliveryAPi
         // Execute request
         try {
             if (this._config.Debug) console.info('ContentDeliveryAPI Requesting', requestConfig.method+' '+requestConfig.url, requestConfig.data);
-            const response = await Axios.request<T>(requestConfig);
+            const response = await this.Axios.request<T>(requestConfig);
             if (response.status >= 400) {
                 if (this._config.Debug) console.info(`ContentDeliveryAPI Error ${ response.status }: ${ response.statusText }`, requestConfig.method+' '+requestConfig.url);
                 throw new Error(`${ response.status }: ${ response.statusText }`);
@@ -288,7 +349,7 @@ export class ContentDeliveryAPI implements IContentDeliveryAPi
 
     protected errorCounter : number = 0;
 
-    protected createNetworkErrorResponse(e : any) : NetworkErrorData
+    protected createNetworkErrorResponse<T extends unknown = any>(e : T) : NetworkErrorData<T>
     {
         const errorId = ++this.errorCounter;
         return {
@@ -297,10 +358,13 @@ export class ContentDeliveryAPI implements IContentDeliveryAPi
                 id: errorId,
                 providerName: 'EpiserverSPA',
                 workId: 0,
-                url: ''
+                url: '#EpiserverSPA__'+errorId
             },
             name: 'Network error',
-            error: e,
+            error: {
+                propertyDataType: 'errorMessage',
+                value: e
+            },
             contentType: ['Errors', 'NetworkError']
         }
     }

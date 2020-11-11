@@ -1,13 +1,14 @@
 import ContentDeliveryAPI, { PathResponse as BasePathResponse, NetworkErrorData as BaseNetworkErrorData, PathResponseIsIContent as BasePathResponseIsIContent } from '../ContentDeliveryAPI';
 import BaseActionResponse from '../Models/ActionResponse';
 import _Property, { StringProperty as _StringProperty, NumberProperty as _NumberProperty, BooleanProperty as _BooleanProperty, ContentReferenceProperty as _ContentReferenceProperty, ContentReferenceListProperty as _ContentReferenceListProperty, ContentAreaProperty as _ContentAreaProperty, LinkListProperty as _LinkListProperty, LinkProperty as _LinkProperty } from '../Property';
-import { IContent } from './Taxonomy';
+import IContent, { namePropertyIsString as _namePropertyIsString } from '../Models/IContent';
 import * as IContentRepositoryNS from '../Repository/IContentRepository';
 import IContentDeliveryAPI from '../ContentDelivery/IContentDeliveryAPI';
 import ContentDeliveryAPI_V2 from '../ContentDelivery/ContentDeliveryAPI';
 import IContentDeliveryAPIConfig from '../ContentDelivery/Config';
 export declare const PathResponseIsIContent: typeof BasePathResponseIsIContent;
-export declare const FetchAdapter: import("axios").AxiosAdapter;
+export declare const FetchAdapter: import("../ContentDelivery/FetchAdapter").CachingFetchAdapter;
+export declare const namePropertyIsString: typeof _namePropertyIsString;
 export declare const DefaultAPI: typeof ContentDeliveryAPI;
 export declare type API = ContentDeliveryAPI;
 export declare type NetworkErrorData = BaseNetworkErrorData;

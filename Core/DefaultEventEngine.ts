@@ -1,23 +1,17 @@
-import IEventEngine, { IListener } from './IEventEngine';
+import IEventEngine from './IEventEngine';
 import AppGlobal from '../AppGlobal';
-
-/**
- * The store of registered listeners
- */
-type IListenerStore = {
-    [event: string]: IListener[];
-}
+import EventEmitter from 'eventemitter3';
 
 /**
  * The default event engine for the SPA
  */
 export default class DefaultEventEngine implements IEventEngine {
-    protected listeners: IListenerStore;
-    protected events: string[];
+    protected _eventEmitter : EventEmitter<string, any>;
+    protected _listeners : { [key: string] : (...args: any[]) => void } = {};
+    protected _events : string[] = [];
 
     public constructor() {
-        this.listeners = {};
-        this.events = [];
+        this._eventEmitter = new EventEmitter<string, any>();
 
         const ctx = AppGlobal();
         if (ctx.addEventListener) {
@@ -34,19 +28,21 @@ export default class DefaultEventEngine implements IEventEngine {
     }
 
     public registerEvent(event: string): IEventEngine {
-        if (this.events.indexOf(event) === -1) {
-            this.events.push(event);
-            this.listeners[event] = [];
+        if (!this.hasEvent(event)) {
+            this._events.push(event);
         }
         return this;
     }
 
     public hasEvent(event: string): boolean {
-        return this.events.indexOf(event) >= 0;
+        return this._events.indexOf(event) >= 0;
     }
 
     public addListener(event: string, id: string, handler: (...args: any[]) => void, autoRegister: boolean = false): IEventEngine 
     {
+        if (this._listeners[id]) {
+            throw new Error(`There's already a listener with id ${ id } registered`);
+        }
         if (!this.hasEvent(event)) {
             if (autoRegister) {
                 this.registerEvent(event);
@@ -54,25 +50,25 @@ export default class DefaultEventEngine implements IEventEngine {
                 throw new Error(`The event ${event} has not been registered.`);
             }
         }
-        if (this.listeners[event].some(value => value.id === id)) {
-            throw new Error(`There's already a listener with id ${id} registered for the event ${event}`);
-        }
 
-        this.listeners[event].push({ callback: handler, id });
+        this._listeners[id] = handler;
+        this._eventEmitter.addListener(event, handler);
         return this;
     }
 
     public dispatch(event: string, ...args: any[]): void {
-        if (!this.hasEvent(event)) {
-            this.registerEvent(event);
-        }
-        const ctx = this;
-        this.listeners[event].forEach((l: IListener) => {
-            l.callback.apply(ctx, args);
-        });
+        if (!this.hasEvent(event)) this.registerEvent(event);
+        const emitArgs : [ event: string, ...args: any[] ] = [ event ];
+        for (const arg of args) emitArgs.push(arg);
+        this._eventEmitter.emit.apply(this._eventEmitter, emitArgs);
     }
 
     public removeListener(event: string, id: string): IEventEngine {
+        if (!this._listeners[id]) {
+            throw new Error(`There's no listner with ${ id } present`);
+        }
+        this._eventEmitter.removeListener(event, this._listeners[id]);
+        delete this._listeners[id];
         return this;
     }
 }

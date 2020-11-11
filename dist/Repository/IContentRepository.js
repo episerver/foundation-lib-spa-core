@@ -13,25 +13,40 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.IContentRepository = void 0;
+// Import libraries
+const eventemitter3_1 = __importDefault(require("eventemitter3"));
+const IRepository_1 = require("./IRepository");
 const ContentDeliveryAPI_1 = require("../ContentDeliveryAPI");
+// Import IndexedDB Wrappper
+const IndexedDB_1 = __importDefault(require("../IndexedDB/IndexedDB"));
 const ContentLink_1 = require("../Models/ContentLink");
 const WebsiteList_1 = require("../Models/WebsiteList");
-const IndexedDB_1 = __importDefault(require("../IndexedDB/IndexedDB"));
 /**
  * A wrapper for IndexedDB offering an Asynchronous API to load/fetch content items from the database
  * and underlying Episerver ContentDelivery API.
  */
-class IContentRepository {
+class IContentRepository extends eventemitter3_1.default {
     /**
      * Create a new instance
      *
      * @param { IContentDeliveryAPI } api The ContentDelivery API wrapper to use within this IContent Repository
      */
-    constructor(api) {
+    constructor(api, config) {
+        super();
         this._loading = {};
+        this._config = {
+            maxAge: 1440,
+            policy: IRepository_1.IRepositoryPolicy.NetworkFirst,
+            debug: false // Default to disabling debug mode
+        };
         this.schemaUpgrade = (db, t) => {
             return Promise.all([
                 db.hasStore('iContent') ? Promise.resolve(true) : db.createStore('iContent', 'apiId', undefined, [
+                    { name: 'guid', keyPath: 'data.contentLink.guidValue', unique: true },
+                    { name: 'contentId', keyPath: 'contentId', unique: true },
+                    { name: 'routes', keyPath: 'route', unique: false }
+                ]),
+                db.hasStore('iContentEditor') ? Promise.resolve(true) : db.createStore('iContentEditor', 'apiId', undefined, [
                     { name: 'guid', keyPath: 'data.contentLink.guidValue', unique: true },
                     { name: 'contentId', keyPath: 'contentId', unique: true },
                     { name: 'routes', keyPath: 'route', unique: false }
@@ -42,6 +57,7 @@ class IContentRepository {
             ]).then(() => true);
         };
         this._api = api;
+        this._config = Object.assign(Object.assign({}, this._config), config);
         this._storage = new IndexedDB_1.default("iContentRepository", 4, this.schemaUpgrade.bind(this));
         if (this._storage.IsAvailable)
             this._storage.open();
@@ -56,21 +72,12 @@ class IContentRepository {
      */
     load(reference, recursive = false) {
         return __awaiter(this, void 0, void 0, function* () {
-            const apiId = ContentLink_1.ContentLinkService.createApiId(reference);
-            if (yield this.has(reference))
+            const localFirst = this._config.policy === IRepository_1.IRepositoryPolicy.LocalStorageFirst ||
+                this._config.policy === IRepository_1.IRepositoryPolicy.PreferOffline ||
+                !this._api.OnLine;
+            if (localFirst && (yield this.has(reference)))
                 return this.get(reference);
-            if (!this._loading[apiId]) {
-                const internalLoad = () => __awaiter(this, void 0, void 0, function* () {
-                    const iContent = yield this._api.getContent(reference, undefined, recursive ? ['*'] : []);
-                    const table = yield this.getTable();
-                    yield this.recursiveLoad(iContent, recursive);
-                    table.put(this.buildRepositoryItem(iContent));
-                    delete this._loading[apiId];
-                    return iContent;
-                });
-                this._loading[apiId] = internalLoad();
-            }
-            return this._loading[apiId];
+            return this.update(reference, recursive);
         });
     }
     /**
@@ -81,8 +88,10 @@ class IContentRepository {
      * @returns { Promise<IContent | null> }
      */
     update(reference, recursive = false) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const apiId = ContentLink_1.ContentLinkService.createApiId(reference, true);
+        if (!this._api.OnLine)
+            return Promise.resolve(null);
+        const apiId = ContentLink_1.ContentLinkService.createApiId(reference, false, this._api.InEditMode);
+        if (!this._loading[apiId]) {
             const internalLoad = () => __awaiter(this, void 0, void 0, function* () {
                 const iContent = yield this._api.getContent(reference, undefined, recursive ? ['*'] : []);
                 const table = yield this.getTable();
@@ -91,14 +100,39 @@ class IContentRepository {
                 delete this._loading[apiId];
                 return iContent;
             });
-            if (!this._loading[apiId]) {
-                this._loading[apiId] = internalLoad(); // If not loaded before, do initial load
-            }
-            else {
-                this._loading[apiId] = this._loading[apiId].then(() => internalLoad()); // If loaded before, chain a reload to it
-            }
-            return this._loading[apiId];
-        });
+            this._loading[apiId] = internalLoad();
+        }
+        return this._loading[apiId];
+    }
+    /**
+     * Validate if the current item is still valid or must be refreshed from the server
+     *
+     * @param   { IContentRepositoryItem }  item    The item to be tested
+     * @returns The validity of the stored item
+     */
+    isValid(item) {
+        if (!this._api.OnLine)
+            return true; // Do not invalidate if we're off-line
+        // @ToDo: Invalidate if user changed
+        // @ToDo: Invalidate if visitor groups changed
+        // @ToDo: Invalidate if A/B test changed
+        // Check Content Provider
+        const isSpaContentProvider = item.data.contentLink.providerName === 'EpiserverSPA';
+        // Check expiry of content cache
+        const added = item.added || 0;
+        const now = Date.now();
+        const maxAgeMiliseconds = this._config.maxAge * 60 * 1000;
+        const expired = now - added > maxAgeMiliseconds;
+        // Run actual test
+        const valid = !isSpaContentProvider && !expired;
+        if (this._config.debug)
+            console.log(`IContentRepository: Validation check: ${item.contentId}`, valid);
+        return valid;
+    }
+    updateInBackground(item) {
+        if (!this._api.OnLine)
+            return; // Don't try updating if we're off-line
+        this.update(item.data.contentLink);
     }
     /**
      * Return whether or not the referenced iContent is available in the IndexedDB
@@ -108,12 +142,11 @@ class IContentRepository {
      */
     has(reference) {
         return __awaiter(this, void 0, void 0, function* () {
-            const apiId = ContentLink_1.ContentLinkService.createApiId(reference);
-            console.log('Verifying content in repo', reference, apiId);
+            const apiId = ContentLink_1.ContentLinkService.createApiId(reference, false, this._api.InEditMode);
             const table = yield this.getTable();
             return table.getViaIndex('contentId', apiId)
-                .then(x => { console.log('Got repo response: ', x); return x ? true : false; })
-                .catch(e => { console.log('Got repo error: ', e); return false; });
+                .then(x => x ? this.isValid(x) : false)
+                .catch(() => false);
         });
     }
     /**
@@ -125,18 +158,23 @@ class IContentRepository {
      */
     get(reference) {
         return __awaiter(this, void 0, void 0, function* () {
-            const apiId = ContentLink_1.ContentLinkService.createApiId(reference);
+            this.emit('beforeGet', reference);
+            const apiId = ContentLink_1.ContentLinkService.createApiId(reference, false, this._api.InEditMode);
             const table = yield this.getTable();
             const repositoryContent = yield table.getViaIndex('contentId', apiId).catch(() => undefined);
-            if (repositoryContent) {
-                // Update accessed time
+            if (repositoryContent && this.isValid(repositoryContent)) {
+                if (this._config.policy !== IRepository_1.IRepositoryPolicy.PreferOffline)
+                    this.updateInBackground(repositoryContent);
+                this.emit('afterGet', reference, repositoryContent.data);
+                return repositoryContent.data;
             }
-            return repositoryContent ? repositoryContent.data : null;
+            this.emit('afterGet', reference, null);
+            return null;
         });
     }
     getByContentId(contentId) {
         return __awaiter(this, void 0, void 0, function* () {
-            return this.getTable().then(table => table.getViaIndex('contentId', contentId)).then(iContent => iContent ? iContent.data : null);
+            return this.getTable().then(table => table.getViaIndex('contentId', contentId)).then(iContent => iContent && this.isValid(iContent) ? iContent.data : null);
         });
     }
     /**
@@ -148,23 +186,63 @@ class IContentRepository {
     getByRoute(route) {
         return __awaiter(this, void 0, void 0, function* () {
             const table = yield this.getTable();
-            const routedContents = yield table.getViaIndex('routes', route);
-            if (routedContents) {
-                return routedContents.data;
+            const resolveLocal = () => __awaiter(this, void 0, void 0, function* () {
+                const routedContents = yield table.getViaIndex('routes', route);
+                if (routedContents && this.isValid(routedContents)) {
+                    if (this._config.policy !== IRepository_1.IRepositoryPolicy.PreferOffline)
+                        this.updateInBackground(routedContents);
+                    return routedContents.data;
+                }
+                return null;
+            });
+            const resolveNetwork = () => __awaiter(this, void 0, void 0, function* () {
+                const resolvedRoute = yield this._api.resolveRoute(route);
+                const content = ContentDeliveryAPI_1.getIContentFromPathResponse(resolvedRoute);
+                if (content)
+                    table.put(this.buildRepositoryItem(content));
+                return content;
+            });
+            switch (this._config.policy) {
+                case IRepository_1.IRepositoryPolicy.NetworkFirst:
+                    return this._api.OnLine ? resolveNetwork() : resolveLocal();
+                case IRepository_1.IRepositoryPolicy.PreferOffline:
+                    return resolveLocal().then((x) => __awaiter(this, void 0, void 0, function* () { return x ? x : yield resolveNetwork(); }));
+                case IRepository_1.IRepositoryPolicy.LocalStorageFirst:
+                    return (yield resolveLocal().then(x => { if (x) {
+                        resolveNetwork();
+                    } return x; })) || (yield resolveNetwork());
             }
-            const resolvedRoute = yield this._api.resolveRoute(route);
-            const content = ContentDeliveryAPI_1.getIContentFromPathResponse(resolvedRoute);
-            if (content) {
-                table.put(this.buildRepositoryItem(content));
-            }
-            return content;
+            return resolveNetwork();
         });
     }
     getByReference(reference, website) {
-        if (website.contentRoots[reference]) {
-            return this.load(website.contentRoots[reference]);
-        }
+        const w = website || this._api.CurrentWebsite;
+        if (!w)
+            return Promise.reject('There\'s no website provided and none inferred from the ContentDelivery API');
+        if (w.contentRoots && w.contentRoots[reference])
+            return this.load(w.contentRoots[reference]);
         return Promise.reject(`The content root ${reference} has not been defined`);
+    }
+    patch(reference, patch) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const item = yield this.load(reference);
+                if (!item)
+                    return null;
+                if (this._config.debug)
+                    console.log('IContentRepository: Will apply patch to content item', reference, item, patch);
+                this.emit('beforePatch', item.contentLink, item);
+                const patchedItem = patch(item);
+                this.emit('afterPatch', patchedItem.contentLink, item, patchedItem);
+                if (this._config.debug)
+                    console.log('IContentRepository: Applied patch to content item', reference, item, patchedItem);
+                const table = yield this.getTable();
+                return (yield table.put(this.buildRepositoryItem(patchedItem))) ? patchedItem : null;
+            }
+            catch (e) {
+                return null;
+            }
+        });
     }
     getWebsites() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -191,7 +269,8 @@ class IContentRepository {
     getTable() {
         return __awaiter(this, void 0, void 0, function* () {
             const db = yield this._storage.open();
-            return db.getStore('iContent');
+            const tableName = this._api.InEditMode ? 'iContentEditor' : 'iContent';
+            return db.getStore(tableName);
         });
     }
     getWebsiteTable() {
@@ -210,8 +289,8 @@ class IContentRepository {
     buildRepositoryItem(iContent) {
         var _a, _b;
         return {
-            apiId: ContentLink_1.ContentLinkService.createApiId(iContent, true),
-            contentId: ContentLink_1.ContentLinkService.createApiId(iContent, false),
+            apiId: ContentLink_1.ContentLinkService.createApiId(iContent, true, this._api.InEditMode),
+            contentId: ContentLink_1.ContentLinkService.createApiId(iContent, false, this._api.InEditMode),
             type: (_b = (_a = iContent.contentType) === null || _a === void 0 ? void 0 : _a.join('/')) !== null && _b !== void 0 ? _b : 'Errors/ContentTypeUnknown',
             route: ContentLink_1.ContentLinkService.createRoute(iContent),
             data: iContent,

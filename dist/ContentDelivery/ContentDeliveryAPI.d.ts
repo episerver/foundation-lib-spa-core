@@ -1,4 +1,4 @@
-import { AxiosRequestConfig } from 'axios';
+import { AxiosInstance, AxiosRequestConfig, AxiosTransformer, Method } from 'axios';
 import IContentDeliveryAPi from './IContentDeliveryAPI';
 import ContentDeliveryApiConfig from './Config';
 import Website from '../Models/Website';
@@ -6,6 +6,7 @@ import WebsiteList from '../Models/WebsiteList';
 import IContent from '../Models/IContent';
 import { ContentReference } from '../Models/ContentLink';
 import { PathResponse, NetworkErrorData } from '../ContentDeliveryAPI';
+import ActionResponse from '../Models/ActionResponse';
 export declare class ContentDeliveryAPI implements IContentDeliveryAPi {
     readonly ContentService: string;
     readonly SiteService: string;
@@ -14,13 +15,16 @@ export declare class ContentDeliveryAPI implements IContentDeliveryAPi {
     readonly RouteService: string;
     readonly ModelService: string;
     private _config;
+    private _axios;
     constructor(config: Partial<ContentDeliveryApiConfig>);
+    protected get Axios(): AxiosInstance;
     CurrentWebsite?: Website;
     get InEditMode(): boolean;
     set InEditMode(value: boolean);
     get Language(): string;
     set Language(value: string);
     get BaseURL(): string;
+    get OnLine(): boolean;
     login(username: string, password: string): Promise<boolean>;
     getWebsites(): Promise<WebsiteList>;
     getWebsite(hostname?: string | URL): Promise<Website | undefined>;
@@ -43,13 +47,14 @@ export declare class ContentDeliveryAPI implements IContentDeliveryAPi {
     getContents<C extends IContent = IContent>(ids: ContentReference[], select?: string[], expand?: string[]): Promise<C[] | NetworkErrorData[]>;
     getAncestors(id: ContentReference, select?: string[], expand?: string[]): Promise<IContent[]>;
     getChildren(id: ContentReference, select?: string[], expand?: string[]): Promise<IContent[]>;
+    invoke<TypeOut extends unknown = any, TypeIn extends unknown = any>(content: ContentReference, method: string, verb?: Method, data?: TypeIn, requestTransformer?: AxiosTransformer): Promise<ActionResponse<TypeOut | NetworkErrorData, IContent>>;
     isServiceURL(url: URL | string): boolean;
     protected apiIdIsGuid(apiId: string): boolean;
     protected doRequest<T>(url: string | URL, options?: Partial<AxiosRequestConfig>): Promise<T>;
     protected getDefaultRequestConfig(): AxiosRequestConfig;
     protected getHeaders(customHeaders?: AxiosHeaders): AxiosHeaders;
     protected errorCounter: number;
-    protected createNetworkErrorResponse(e: any): NetworkErrorData;
+    protected createNetworkErrorResponse<T extends unknown = any>(e: T): NetworkErrorData<T>;
 }
 export declare type AxiosHeaders = {
     [key: string]: string;

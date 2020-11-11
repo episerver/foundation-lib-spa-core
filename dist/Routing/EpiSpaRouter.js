@@ -18,13 +18,9 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RoutedContent = exports.Router = void 0;
 const react_1 = __importStar(require("react"));
-const jquery_1 = __importDefault(require("jquery"));
 const react_router_1 = require("react-router");
 const react_router_dom_1 = require("react-router-dom");
 const index_1 = require("../index");
@@ -53,49 +49,56 @@ const ElementNavigation = (props) => {
     const location = react_router_1.useLocation();
     const epi = index_1.useEpiserver();
     const config = epi.config();
-    if (!(epi.isInEditMode() || epi.isServerSideRendering()))
-        react_1.useEffect(() => {
-            const onWindowClick = (event) => {
-                const target = event.target;
-                const currentUrl = new URL(window.location.href);
-                let link;
-                let newPath = '';
-                if (target.tagName.toLowerCase() === 'a') {
-                    const targetUrl = new URL(target.href);
-                    // Only act if we remain on the same domain
-                    if (targetUrl.origin === currentUrl.origin) {
-                        newPath = targetUrl.pathname;
-                    }
+    react_1.useEffect(() => {
+        if (epi.isInEditMode() || epi.isServerSideRendering()) {
+            if (config.enableDebug)
+                console.info('ElementNavigation: Edit mode, or SSR, so not attaching events');
+            return;
+        }
+        const onWindowClick = (event) => {
+            const target = event.target;
+            const currentUrl = new URL(window.location.href);
+            let newPath = '';
+            // Loop parents till we find the link
+            let link = target;
+            while (link.parentElement && link.tagName.toLowerCase() !== 'a')
+                link = link.parentElement;
+            // If we have a link, see if we need to navigate
+            if (link.tagName.toLowerCase() === 'a') {
+                const targetUrl = new URL(link.href, currentUrl);
+                // Only act if we remain on the same domain
+                if (targetUrl.origin === currentUrl.origin) {
+                    newPath = targetUrl.pathname;
                 }
-                else if ((link = jquery_1.default(target).parents('a').first()).length) {
-                    const targetUrl = new URL(link.get(0).href);
-                    // Only act if we remain on the same domain
-                    if (targetUrl.origin === currentUrl.origin) {
-                        newPath = targetUrl.pathname;
-                    }
+            }
+            // Do not navigate to the same page
+            if (newPath === location.pathname) {
+                if (config.enableDebug)
+                    console.info('ElementNavigation: Ignoring navigation to same path');
+                event.preventDefault();
+                return false;
+            }
+            // Navigate to the new path
+            if (newPath) {
+                if (config.basePath && newPath.substr(0, config.basePath.length) === config.basePath) {
+                    newPath = newPath.substr(config.basePath.length);
+                    if (newPath.substr(0, 1) !== '/')
+                        newPath = '/' + newPath; // Ensure we've an absolute path
                 }
-                if (newPath === location.pathname) {
-                    if (config.enableDebug)
-                        console.warn('Ignoring navigation to same path');
-                    event.preventDefault();
-                    return false;
-                }
-                if (newPath) {
-                    if (config.basePath && newPath.substr(0, config.basePath.length) === config.basePath) {
-                        newPath = newPath.substr(config.basePath.length);
-                        if (newPath.substr(0, 1) !== '/')
-                            newPath = '/' + newPath; // Ensure we've an absolute path
-                    }
-                    history.push(newPath);
-                    event.preventDefault();
-                    return false;
-                }
-            };
-            jquery_1.default(window).on('click', onWindowClick);
-            return () => {
-                jquery_1.default(window).off('click', onWindowClick);
-            };
-        });
+                history.push(newPath);
+                event.preventDefault();
+                return false;
+            }
+        };
+        if (epi.isDebugActive())
+            console.info('ElementNavigation: Attaching listener');
+        document.addEventListener('click', onWindowClick);
+        return () => {
+            if (epi.isDebugActive())
+                console.info('ElementNavigation: Removing listener');
+            document.removeEventListener('click', onWindowClick);
+        };
+    });
     return props.children;
 };
 exports.RoutedContent = (props) => {

@@ -13,7 +13,8 @@ const EpiComponent_1 = __importDefault(require("../Components/EpiComponent"));
 const CmsSite_1 = __importDefault(require("../Components/CmsSite"));
 const Spinner_1 = __importDefault(require("../Components/Spinner"));
 const Page_1 = __importDefault(require("../Page"));
-exports.Property = Property_1.default;
+function Property(props) { return Property_1.default(props); }
+exports.Property = Property;
 exports.Link = Link_1.default;
 exports.LazyComponent = LazyComponent_1.default;
 exports.ContentArea = ContentArea_1.default;

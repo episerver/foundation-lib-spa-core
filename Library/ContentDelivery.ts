@@ -11,9 +11,8 @@ import _Property, {
     LinkListProperty as _LinkListProperty, 
     LinkProperty as _LinkProperty
 } from '../Property';
-import ContentLink from '../Models/ContentLink';
-import _FetchAdapter from '../FetchAdapter';
-import { IContent } from './Taxonomy';
+import _FetchAdapter from '../ContentDelivery/FetchAdapter';
+import IContent, { namePropertyIsString as _namePropertyIsString } from '../Models/IContent';
 
 // V2 API Imports
 import * as IContentRepositoryNS from '../Repository/IContentRepository';
@@ -23,6 +22,7 @@ import IContentDeliveryAPIConfig from '../ContentDelivery/Config';
 
 export const PathResponseIsIContent = BasePathResponseIsIContent;
 export const FetchAdapter = _FetchAdapter;
+export const namePropertyIsString = _namePropertyIsString;
 export const DefaultAPI = ContentDeliveryAPI;
 export type API = ContentDeliveryAPI;
 export type NetworkErrorData = BaseNetworkErrorData;

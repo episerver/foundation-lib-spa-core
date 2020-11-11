@@ -26,14 +26,17 @@ exports.EpiComponent = void 0;
 const react_1 = __importStar(require("react"));
 const StringUtils_1 = __importDefault(require("../Util/StringUtils"));
 const Context_1 = require("../Hooks/Context");
+const ContentLink_1 = require("../Models/ContentLink");
 const Spinner_1 = __importDefault(require("../Components/Spinner"));
-const ComponentNotFound_1 = __importDefault(require("../Components/Errors/ComponentNotFound"));
 /**
  * The Episerver CMS Component wrapper
  */
 exports.EpiComponent = (props) => {
+    const ctx = Context_1.useEpiserver();
+    if (!props.contentLink)
+        return ctx.isDebugActive() ? react_1.default.createElement("div", { className: "alert alert-danger" }, "Debug: No content link provided") : null;
     const repo = Context_1.useIContentRepository();
-    const componentLoader = Context_1.useEpiserver().componentLoader();
+    const componentLoader = ctx.componentLoader();
     const forceUpdate = Context_1.useForceUpdate();
     const [iContent, setIContent] = react_1.useState(props.expandedValue || null);
     // Always check if the component is available
@@ -50,6 +53,19 @@ exports.EpiComponent = (props) => {
         setIContent(null);
         repo.load(props.contentLink).then(x => setIContent(x));
     }, [props.contentLink, props.expandedValue, props.contentType]);
+    // Update the iContent if the database changes
+    react_1.useEffect(() => {
+        const myApiId = ContentLink_1.ContentLinkService.createApiId(props.contentLink);
+        const onContentPatched = (item, newValue) => {
+            const itemApiId = ContentLink_1.ContentLinkService.createApiId(item);
+            if (myApiId === itemApiId)
+                setIContent(newValue);
+        };
+        repo.addListener("afterPatch", onContentPatched, repo);
+        return () => {
+            repo.removeListener("afterPatch", onContentPatched);
+        };
+    }, [props.contentLink]);
     // Load component if needed
     react_1.useEffect(() => {
         if (!componentAvailable && componentName) {
@@ -60,7 +76,7 @@ exports.EpiComponent = (props) => {
     const componentType = componentName && componentAvailable ?
         componentLoader.getPreLoadedType(componentName) :
         null;
-    return componentType && iContent ? react_1.default.createElement(componentType, Object.assign(Object.assign({}, props), { data: iContent })) : Spinner_1.default.CreateInstance({});
+    return componentType && iContent ? react_1.default.createElement(componentType, Object.assign(Object.assign({}, props), { context: ctx, data: iContent })) : Spinner_1.default.CreateInstance({});
 };
 /**
  * Create the instantiable type of the EpiComponent for the current
@@ -78,15 +94,12 @@ exports.default = exports.EpiComponent;
  * content reference.
  */
 const isExpandedValueValid = (content, link) => {
-    if (!content)
+    try {
+        return content && content.contentLink.guidValue === link.guidValue ? true : false;
+    }
+    catch (e) {
         return false;
-    return content.contentLink.guidValue === link.guidValue;
-};
-const isComponentValid = (component, content, contentType) => {
-    if (!component)
-        return false;
-    const name = buildComponentName(content, contentType);
-    return component.displayName === ComponentNotFound_1.default.displayName || component.displayName === name;
+    }
 };
 /**
  * Create the name of the React Component to load for this EpiComponent

@@ -1,19 +1,17 @@
-import React, { Component, ReactNode, ComponentElement, ComponentType } from 'react';
+import React, { Component, ReactNode, ComponentType, ReactElement } from 'react';
 import EpiContext from '../Spa';
 
 /**
  * Interface definition of the instance type of a Spinner
  * component.
  */
-export type SpinnerComponent<P extends SpinnerProps = SpinnerProps> = ComponentType<P>;
-export type SpinnerInstance<P extends SpinnerProps = SpinnerProps> = ComponentElement<P, any>
+export type SpinnerComponent<P extends SpinnerProps = SpinnerProps> = ComponentType<P>
+export type SpinnerInstance<P extends SpinnerProps = SpinnerProps> = ReactElement<P>
 
 /**
  * The property definition for a spinner
  */
-export interface SpinnerProps {
-
-}
+export type SpinnerProps = {}
 
 export default class Spinner extends Component<SpinnerProps>
 {
@@ -25,14 +23,9 @@ export default class Spinner extends Component<SpinnerProps>
 	 */
 	static CreateInstance(props: SpinnerProps) : SpinnerInstance | null
 	{
-		if (!EpiContext.config().enableSpinner) {
-			return null;
-		}
-		const SpinnerType = EpiContext.config().spinner;
-		if (!SpinnerType) {
-			return React.createElement(this, props);
-		}
-		return <SpinnerType {...props} />;
+		if (!EpiContext.config().enableSpinner) return null;
+		const SpinnerType : ComponentType<SpinnerProps> = EpiContext.config().spinner || Spinner;
+		return React.createElement<SpinnerProps>(SpinnerType, props);
 	}
 
 	render() : ReactNode {

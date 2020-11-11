@@ -1,11 +1,4 @@
-/**
- * A generic definition for an event listener
- */
-export interface IListener {
-    id: string;
-    callback: (...args: any[]) => void;
-}
-  
+ 
 export interface IEvent {
     data?: object;
     args?: any[];
