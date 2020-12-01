@@ -7,8 +7,16 @@ import { isSerializedIContent, isSerializedWebsite } from './ServerContext';
  */
 export class ServerContextAccessor {
     constructor() {
-        const ctx = getGlobal();
-        this._context = ctx.__INITIAL__DATA__;
+        try {
+            this._context = __INITIAL__DATA__ || undefined;
+        }
+        catch (e) {
+            // Ignored on purpose
+        }
+        if (!this._context) {
+            const ctx = getGlobal();
+            this._context = ctx.__INITIAL__DATA__;
+        }
     }
     get IsAvailable() {
         return this.hasContext();

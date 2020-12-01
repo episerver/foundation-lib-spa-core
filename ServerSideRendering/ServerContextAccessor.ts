@@ -6,18 +6,27 @@ import ServerContext, { isSerializedIContent, isSerializedWebsite } from './Serv
 
 export type IServerContextAccessor = new() => ServerContextAccessor;
 
+declare const __INITIAL__DATA__ : Readonly<ServerContext>;
+
 /**
  * Simple accessor to quickly and conveniently access the context created by the
  * server side rendering.
  */
 export class ServerContextAccessor
 {
-    private _context ?: ServerContext;
+    private _context ?: Readonly<ServerContext>;
 
     constructor() 
     {
-        const ctx = getGlobal();
-        this._context = ctx.__INITIAL__DATA__;
+        try {
+            this._context = __INITIAL__DATA__ || undefined;
+        } catch (e) {
+            // Ignored on purpose
+        }
+        if (!this._context) {
+            const ctx = getGlobal();
+            this._context = ctx.__INITIAL__DATA__;
+        }
     }
 
     public get IsAvailable() : boolean
