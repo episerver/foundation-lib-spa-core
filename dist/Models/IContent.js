@@ -1,14 +1,10 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.BaseIContent = exports.namePropertyIsString = void 0;
-function namePropertyIsString(prop) {
+export function namePropertyIsString(prop) {
     if (prop && prop.trim) {
         return true;
     }
     return false;
 }
-exports.namePropertyIsString = namePropertyIsString;
-class BaseIContent {
+export class BaseIContent {
     constructor(baseData) {
         this._serverData = baseData;
     }
@@ -40,4 +36,3 @@ class BaseIContent {
         return this._propertyMap[prop.toString()];
     }
 }
-exports.BaseIContent = BaseIContent;

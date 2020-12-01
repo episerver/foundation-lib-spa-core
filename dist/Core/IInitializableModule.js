@@ -1,9 +1,7 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.BaseInitializableModule = void 0;
-class BaseInitializableModule {
+export class BaseInitializableModule {
     constructor() {
         this.name = "Unnamed module";
+        this.SortOrder = 100;
     }
     GetName() {
         return this.name;
@@ -20,4 +18,3 @@ class BaseInitializableModule {
         return null;
     }
 }
-exports.BaseInitializableModule = BaseInitializableModule;

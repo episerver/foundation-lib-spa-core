@@ -1,2 +1,2 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
+import * as DefaultAccessorNS from '../ServerSideRendering/ServerContextAccessor';
+export const Accessor = DefaultAccessorNS.ServerContextAccessor;

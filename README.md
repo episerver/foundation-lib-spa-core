@@ -31,9 +31,9 @@ This library contains the core functionality for the Episerver Foundation React 
 
 Install latest master version from GitHub
 ```
-npm install --save @reduxjs/toolkit axios core-js dotenv eventemitter3 lodash react react-dom react-helmet react-redux react-router react-router-dom redux
+npm install --save @reduxjs/toolkit axios dotenv eventemitter3 lodash react react-dom react-helmet react-redux react-router react-router-dom redux
 
-npm install --save-dev @types/core-js @types/eventemitter3 @types/lodash @types/react @types/react-dom @types/react-helmet @types/react-redux @types/react-router @types/react-router-dom
+npm install --save-dev @types/eventemitter3 @types/react @types/react-dom @types/react-helmet @types/react-redux @types/react-router @types/react-router-dom
 
 npm install --save git+https://github.com/episerver/foundation-lib-spa-core.git
 ```
@@ -59,7 +59,6 @@ Make sure that your project provides the required peer dependencies for the libr
 | --- | --- | --- |
 |@reduxjs/toolkit|^1.3.6|`npm install --save @reduxjs/toolkit`|
 |axios|^0.20.0|`npm install --save axios`|
-|core-js|^3.6.5|`npm install --save-prod core-js`<br>`npm install --save-dev @types/core-js`|
 |dotenv|^8.2.0|`npm install --save dotenv`|
 |eventemitter3|^4.0.7|`npm install --save eventemitter3`<br>`npm install --save-dev @types/eventemitter3`|
 |lodash|^4.17.19|`npm install --save lodash`<br>`npm install --save-dev @types/lodash`|
@@ -76,12 +75,12 @@ Or install all dependencies in one go, using the following two commands:
 
 *Install  dependencies*
 ```
-npm install --save @reduxjs/toolkit axios core-js dotenv eventemitter3 lodash react react-dom react-helmet react-redux react-router react-router-dom redux
+npm install --save @reduxjs/toolkit axios dotenv eventemitter3 lodash react react-dom react-helmet react-redux react-router react-router-dom redux
 ```
 
 *Install TypeScript type definitions*
 ```
-npm install --save-dev @types/core-js @types/eventemitter3 @types/lodash @types/react @types/react-dom @types/react-helmet @types/react-redux @types/react-router @types/react-router-dom
+npm install --save-dev @types/eventemitter3 @types/lodash @types/react @types/react-dom @types/react-helmet @types/react-redux @types/react-router @types/react-router-dom
 ```
 
 ## 3. Usage

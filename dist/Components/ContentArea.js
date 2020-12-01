@@ -1,30 +1,6 @@
-"use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-const react_1 = __importStar(require("react"));
-const EpiComponent_1 = __importDefault(require("./EpiComponent"));
-class ContentArea extends react_1.Component {
+import React, { Component } from 'react';
+import EpiComponent from './EpiComponent';
+export default class ContentArea extends Component {
     render() {
         // Return the children if there's no components
         if (!this.props.data || !this.props.data.value)
@@ -33,7 +9,7 @@ class ContentArea extends react_1.Component {
         const components = this.props.data.value.map(this.renderComponent.bind(this));
         if (this.props.noWrap === true) {
             if (this.props.propertyName && this.props.context.isEditable()) {
-                return react_1.default.createElement("div", { "data-epi-edit": this.props.propertyName }, components);
+                return React.createElement("div", { "data-epi-edit": this.props.propertyName }, components);
             }
             return components;
         }
@@ -41,15 +17,15 @@ class ContentArea extends react_1.Component {
         const rowClass = `content-area ${this.getConfigValue('defaultRowClass', 'row')}`;
         if (!this.props.addContainer) {
             if (this.props.context.isEditable()) {
-                return react_1.default.createElement("div", { className: rowClass, "data-epi-edit": this.props.propertyName }, components);
+                return React.createElement("div", { className: rowClass, "data-epi-edit": this.props.propertyName }, components);
             }
-            return react_1.default.createElement("div", { className: rowClass }, components);
+            return React.createElement("div", { className: rowClass }, components);
         }
         const containerBreakBlockClass = this.getConfigValue('containerBreakBlockClass', undefined);
         const containerClass = this.getConfigValue('defaultContainerClass', 'container');
         if (!containerBreakBlockClass) {
-            return react_1.default.createElement("div", { className: containerClass },
-                react_1.default.createElement("div", { className: rowClass, "data-epi-edit": this.props.context.isEditable() ? this.props.propertyName : null }, components));
+            return React.createElement("div", { className: containerClass },
+                React.createElement("div", { className: rowClass, "data-epi-edit": this.props.context.isEditable() ? this.props.propertyName : null }, components));
         }
         const containers = [{ isContainer: true, components: [] }];
         let containerIdx = 0;
@@ -73,18 +49,18 @@ class ContentArea extends react_1.Component {
         });
         const groupedComponents = containers.map((cItem, idx) => {
             if (cItem.isContainer) {
-                return react_1.default.createElement("div", { className: containerClass, key: `ContentArea-${this.props.propertyName}-item-${idx}` },
-                    react_1.default.createElement("div", { className: rowClass }, cItem.components));
+                return React.createElement("div", { className: containerClass, key: `ContentArea-${this.props.propertyName}-item-${idx}` },
+                    React.createElement("div", { className: rowClass }, cItem.components));
             }
             else if (cItem.components.length > 1) {
-                return react_1.default.createElement("div", { key: `ContentArea-${this.props.propertyName}-item-${idx}` }, cItem.components);
+                return React.createElement("div", { key: `ContentArea-${this.props.propertyName}-item-${idx}` }, cItem.components);
             }
             else {
                 return cItem.components[0];
             }
         });
         if (this.props.context.isEditable()) {
-            return react_1.default.createElement("div", { "data-epi-edit": this.props.propertyName }, groupedComponents);
+            return React.createElement("div", { "data-epi-edit": this.props.propertyName }, groupedComponents);
         }
         return groupedComponents;
     }
@@ -95,12 +71,12 @@ class ContentArea extends react_1.Component {
             expandedValue = this.props.data.expandedValue[idx];
         }
         // Build component
-        const ConnectedEpiComponent = EpiComponent_1.default.CreateComponent(this.props.context);
-        const component = react_1.default.createElement(ConnectedEpiComponent, { context: this.props.context, contentLink: item.contentLink, contentType: this.getComponentType(), key: item.contentLink.guidValue, expandedValue: expandedValue });
+        const ConnectedEpiComponent = EpiComponent.CreateComponent(this.props.context);
+        const component = React.createElement(ConnectedEpiComponent, { context: this.props.context, contentLink: item.contentLink, contentType: this.getComponentType(), key: item.contentLink.guidValue, expandedValue: expandedValue });
         // Return if no wrapping
         if (this.props.noWrap === true) {
             if (this.props.context.isEditable()) {
-                return react_1.default.createElement("div", { "data-epi-block-id": item.contentLink.id, key: item.contentLink.guidValue + "-container" }, component);
+                return React.createElement("div", { "data-epi-block-id": item.contentLink.id, key: item.contentLink.guidValue + "-container" }, component);
             }
             return component;
         }
@@ -115,16 +91,16 @@ class ContentArea extends react_1.Component {
         };
         if (this.props.context.isEditable())
             props["data-epi-block-id"] = item.contentLink.id;
-        return react_1.default.createElement('div', props);
+        return React.createElement('div', props);
     }
     renderNoChildren() {
         if (this.props.context.isEditable()) {
-            return react_1.default.createElement("div", { "data-epi-edit": this.props.propertyName },
-                react_1.default.createElement("div", { className: "alert alert-info m-5" },
+            return React.createElement("div", { "data-epi-edit": this.props.propertyName },
+                React.createElement("div", { className: "alert alert-info m-5" },
                     "There're no blocks in ",
-                    react_1.default.createElement("i", null, this.props.propertyName || 'this area')));
+                    React.createElement("i", null, this.props.propertyName || 'this area')));
         }
-        return react_1.default.createElement("div", null);
+        return React.createElement("div", null);
     }
     getBlockClasses(displayOption) {
         const cssClasses = ['block'];
@@ -158,4 +134,3 @@ class ContentArea extends react_1.Component {
         return cfg.itemContentType || "Block";
     }
 }
-exports.default = ContentArea;

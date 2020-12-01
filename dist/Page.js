@@ -1,19 +1,13 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.PageType = void 0;
-const EpiComponent_1 = __importDefault(require("./EpiComponent"));
-var PageType;
+import EpiComponent from './EpiComponent';
+export var PageType;
 (function (PageType) {
     PageType["Home"] = "home";
     PageType["Product"] = "product";
     PageType["Category"] = "category";
     PageType["Basket"] = "basket";
     PageType["Other"] = "other";
-})(PageType = exports.PageType || (exports.PageType = {}));
-class Page extends EpiComponent_1.default {
+})(PageType || (PageType = {}));
+export default class Page extends EpiComponent {
     constructor() {
         super(...arguments);
         /**
@@ -62,4 +56,3 @@ class Page extends EpiComponent_1.default {
         };
     }
 }
-exports.default = Page;

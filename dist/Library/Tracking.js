@@ -1,5 +1,2 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.PageType = void 0;
-const Page_1 = require("../Page");
-exports.PageType = Page_1.PageType;
+import { PageType as DefaultPageType } from '../Page';
+export var PageType = DefaultPageType;

@@ -1,38 +1,16 @@
-"use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.RoutedContent = exports.Router = void 0;
-const react_1 = __importStar(require("react"));
-const react_router_1 = require("react-router");
-const react_router_dom_1 = require("react-router-dom");
-const index_1 = require("../index");
-exports.Router = (props) => {
-    const epi = index_1.useEpiserver();
+import React, { useEffect } from 'react';
+import { StaticRouter, useHistory, useLocation, Switch, Route } from 'react-router';
+import { BrowserRouter } from 'react-router-dom';
+import { useEpiserver } from '../index';
+export const Router = (props) => {
+    const epi = useEpiserver();
     if (epi.isServerSideRendering()) {
         const staticRouterProps = {
             basename: props.basename,
             context: props.context,
             location: props.location
         };
-        return react_1.default.createElement(react_router_1.StaticRouter, Object.assign({}, staticRouterProps), props.children);
+        return React.createElement(StaticRouter, Object.assign({}, staticRouterProps), props.children);
     }
     const browserRouterProps = {
         basename: props.basename,
@@ -40,16 +18,16 @@ exports.Router = (props) => {
         getUserConfirmation: props.getUserConfirmation,
         keyLength: props.keyLength
     };
-    return react_1.default.createElement(react_router_dom_1.BrowserRouter, Object.assign({}, browserRouterProps),
-        react_1.default.createElement(ElementNavigation, null, props.children));
+    return React.createElement(BrowserRouter, Object.assign({}, browserRouterProps),
+        React.createElement(ElementNavigation, null, props.children));
 };
-exports.default = exports.Router;
+export default Router;
 const ElementNavigation = (props) => {
-    const history = react_router_1.useHistory();
-    const location = react_router_1.useLocation();
-    const epi = index_1.useEpiserver();
+    const history = useHistory();
+    const location = useLocation();
+    const epi = useEpiserver();
     const config = epi.config();
-    react_1.useEffect(() => {
+    useEffect(() => {
         if (epi.isInEditMode() || epi.isServerSideRendering()) {
             if (config.enableDebug)
                 console.info('ElementNavigation: Edit mode, or SSR, so not attaching events');
@@ -101,12 +79,12 @@ const ElementNavigation = (props) => {
     });
     return props.children;
 };
-exports.RoutedContent = (props) => {
-    const ctx = index_1.useEpiserver();
+export const RoutedContent = (props) => {
+    const ctx = useEpiserver();
     const switchProps = {
         location: props.location
     };
-    return react_1.default.createElement(react_router_1.Switch, Object.assign({}, switchProps),
+    return React.createElement(Switch, Object.assign({}, switchProps),
         props.children,
         (props.config || []).map((item, idx) => createRouteNode(item, props.basePath, `${props.keyPrefix}-route-${idx}`, ctx)));
 };
@@ -129,9 +107,9 @@ function createRouteNode(route, basePath = "", key, ctx) {
                 return route.render(Object.assign(Object.assign({}, props), { routes: route.routes, path: route.path }));
             if (route.component) {
                 const RouteComponent = route.component;
-                return react_1.default.createElement(RouteComponent, Object.assign({}, props, { routes: route.routes, path: route.path }));
+                return React.createElement(RouteComponent, Object.assign({}, props, { routes: route.routes, path: route.path }));
             }
         }
     };
-    return react_1.default.createElement(react_router_1.Route, Object.assign({}, newRouteProps, { key: key }));
+    return React.createElement(Route, Object.assign({}, newRouteProps, { key: key }));
 }

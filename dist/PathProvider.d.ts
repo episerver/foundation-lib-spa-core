@@ -2,6 +2,8 @@
  * The path provider is the generic interface that must be implemented within the
  * Episerver context to ensure the current path is provided correctly based upon
  * the current execution environment.
+ *
+ * @deprecated
  */
 export default interface PathProvider {
     /**

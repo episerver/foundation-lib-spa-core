@@ -15,7 +15,9 @@ import _FetchAdapter from '../ContentDelivery/FetchAdapter';
 import IContent, { namePropertyIsString as _namePropertyIsString } from '../Models/IContent';
 
 // V2 API Imports
+export * from '../Repository/IRepository';
 import * as IContentRepositoryNS from '../Repository/IContentRepository';
+import * as IIContentRepositoryNS from '../Repository/IIContentRepository';
 import IContentDeliveryAPI from '../ContentDelivery/IContentDeliveryAPI';
 import ContentDeliveryAPI_V2 from '../ContentDelivery/ContentDeliveryAPI';
 import IContentDeliveryAPIConfig from '../ContentDelivery/Config';
@@ -43,6 +45,6 @@ export type ContentReferenceListProperty = _ContentReferenceListProperty;
 // V2 API
 export type IContentDeliveryAPI_V2 = IContentDeliveryAPI;
 export type ConfigV2 = IContentDeliveryAPIConfig;
-export type IIContentRepositoryV2 = IContentRepositoryNS.IIContentRepository;
+export type IIContentRepositoryV2 = IIContentRepositoryNS.IIContentRepository;
 export const RepositoryV2 = IContentRepositoryNS.IContentRepository;
 export const API_V2 = ContentDeliveryAPI_V2;

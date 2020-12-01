@@ -1,10 +1,7 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.DefaultConfig = void 0;
 /**
  * Default configuration for the ContentDeliveryAPI
  */
-exports.DefaultConfig = {
+export const DefaultConfig = {
     BaseURL: '/',
     Adapter: undefined,
     Debug: false,

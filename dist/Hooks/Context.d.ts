@@ -3,6 +3,7 @@ import IContentDeliveryAPI from '../ContentDelivery/IContentDeliveryAPI';
 import IEpiserverContext from '../Core/IEpiserverContext';
 import IServiceContainer from '../Core/IServiceContainer';
 import IContentRepository from '../Repository/IContentRepository';
+import ServerContextAccessor from '../ServerSideRendering/ServerContextAccessor';
 /**
  * The React Context object for the Episerver context
  *
@@ -38,3 +39,4 @@ export declare function useContentDeliveryAPI(): IContentDeliveryAPI;
  * create your forceUpdate hook
  */
 export declare function useForceUpdate(): () => void;
+export declare function useServerSideRendering(): ServerContextAccessor;

@@ -1,32 +1,10 @@
-"use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.isComponentLoader = exports.BaseTypeMapper = exports.ComponentLoader = void 0;
-const TypeMapperNS = __importStar(require("../Loaders/BaseTypeMapper"));
-const ComponentNS = __importStar(require("../Loaders/ComponentLoader"));
+import * as TypeMapperNS from '../Loaders/BaseTypeMapper';
+import * as ComponentNS from '../Loaders/ComponentLoader';
 // Components
-exports.ComponentLoader = ComponentNS.ComponentLoader;
+export const ComponentLoader = ComponentNS.ComponentLoader;
 // TypeMapper
-exports.BaseTypeMapper = TypeMapperNS.BaseTypeMapper;
+export const BaseTypeMapper = TypeMapperNS.BaseTypeMapper;
 // Guards
-exports.isComponentLoader = ComponentNS.isIComponentLoader;
+export const isComponentLoader = ComponentNS.isIComponentLoader;
 // Default loader
-exports.default = exports.ComponentLoader;
+export default ComponentLoader;

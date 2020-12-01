@@ -5,6 +5,12 @@ import IContent from '../Models/IContent';
 import Website from '../Models/Website';
 import WebsiteList from '../Models/WebsiteList';
 import { PathResponse, NetworkErrorData } from '../ContentDeliveryAPI';
+export declare type IContentDeliveryResponse<T> = [T, IContentDeliveryResponseContext];
+export declare type IContentDeliveryResponseContext = {
+    etag?: string;
+    date?: string;
+    cacheControl?: string[];
+};
 /**
  * Service definition for the Episerver Content Delivery API. This is a
  * straight wrapper for the ContentDeliveryAPI and does not implement any
@@ -15,6 +21,11 @@ import { PathResponse, NetworkErrorData } from '../ContentDeliveryAPI';
  * use case.
  */
 export declare type IContentDeliveryAPI = {
+    /**
+     * Flag to get if the page is running in the Episerver Shell, or related
+     * views.
+     */
+    readonly InEpiserverShell: boolean;
     /**
      * Flag to get/set whether or not the requests to the ContentDeliveryAPI
      * should be done with the Edit Mode flag present.
@@ -63,6 +74,13 @@ export declare type IContentDeliveryAPI = {
      * @returns { Promise<Website | undefined> }
      */
     getWebsite(hostname?: string | URL): Promise<Website | undefined>;
+    /**
+     * Get the current website
+     *
+     * @param { string | URL } hostname The hostname to get the website for
+     * @returns { Promise<Website | undefined> }
+     */
+    getCurrentWebsite(): Promise<Website | undefined>;
     /**
      * Execute a routing request to resolve a path to IContent item
      *

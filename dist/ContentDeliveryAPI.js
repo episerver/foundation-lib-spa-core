@@ -1,4 +1,3 @@
-"use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -8,29 +7,22 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.getIContentFromPathResponse = exports.PathResponseIsActionResponse = exports.PathResponseIsIContent = void 0;
-const axios_1 = __importDefault(require("axios"));
-const ContentLink_1 = require("./Models/ContentLink");
-const ActionResponse_1 = require("./Models/ActionResponse");
-function PathResponseIsIContent(iContent) {
+import Axios from 'axios';
+import { ContentLinkService } from './Models/ContentLink';
+import { ResponseType } from './Models/ActionResponse';
+export function PathResponseIsIContent(iContent) {
     if (iContent.actionName) {
         return false;
     }
     return true;
 }
-exports.PathResponseIsIContent = PathResponseIsIContent;
-function PathResponseIsActionResponse(actionResponse) {
+export function PathResponseIsActionResponse(actionResponse) {
     if (actionResponse.actionName) {
         return true;
     }
     return false;
 }
-exports.PathResponseIsActionResponse = PathResponseIsActionResponse;
-function getIContentFromPathResponse(response) {
+export function getIContentFromPathResponse(response) {
     if (PathResponseIsActionResponse(response)) {
         return response.currentContent;
     }
@@ -39,8 +31,17 @@ function getIContentFromPathResponse(response) {
     }
     return null;
 }
-exports.getIContentFromPathResponse = getIContentFromPathResponse;
-class ContentDeliveryAPI {
+/**
+ * ContentDelivery API Wrapper
+ *
+ * @deprecated
+ */
+export default class ContentDeliveryAPI {
+    /**
+     * ContentDelivery API Wrapper
+     *
+     * @deprecated
+     */
     constructor(pathProvider, config) {
         this.componentService = '/api/episerver/v2.0/content/';
         this.websiteService = '/api/episerver/v3/site/';
@@ -139,10 +140,10 @@ class ContentDeliveryAPI {
             else {
                 try {
                     serviceUrl = new URL(this.config.epiBaseUrl +
-                        (content.url ? content.url : this.componentService + ContentLink_1.ContentLinkService.createApiId(content)));
+                        (content.url ? content.url : this.componentService + ContentLinkService.createApiId(content)));
                 }
                 catch (e) {
-                    serviceUrl = new URL(this.config.epiBaseUrl + this.componentService + ContentLink_1.ContentLinkService.createApiId(content));
+                    serviceUrl = new URL(this.config.epiBaseUrl + this.componentService + ContentLinkService.createApiId(content));
                 }
             }
             //serviceUrl.searchParams.append('currentPageUrl', this.pathProvider.getCurrentPath());
@@ -194,7 +195,7 @@ class ContentDeliveryAPI {
     }
     getContentChildren(id) {
         return __awaiter(this, void 0, void 0, function* () {
-            let itemId = ContentLink_1.ContentLinkService.createApiId(id);
+            let itemId = ContentLinkService.createApiId(id);
             let serviceUrl = new URL(this.config.epiBaseUrl + this.componentService + itemId + '/children');
             if (this.config.autoExpandRequests) {
                 serviceUrl.searchParams.append('expand', '*');
@@ -206,7 +207,7 @@ class ContentDeliveryAPI {
     }
     getContentAncestors(link) {
         return __awaiter(this, void 0, void 0, function* () {
-            let itemId = ContentLink_1.ContentLinkService.createApiId(link);
+            let itemId = ContentLinkService.createApiId(link);
             let serviceUrl = new URL(`${this.config.epiBaseUrl}${this.componentService}${itemId}/ancestors`);
             if (this.config.autoExpandRequests) {
                 serviceUrl.searchParams.append('expand', '*');
@@ -239,7 +240,7 @@ class ContentDeliveryAPI {
             if (this.debug)
                 console.debug('Requesting: ' + url);
             options.url = url;
-            return axios_1.default.request(options)
+            return Axios.request(options)
                 .then((response) => {
                 if (this.debug)
                     console.debug(`Response from ${url}:`, response.data);
@@ -297,7 +298,7 @@ class ContentDeliveryAPI {
     static IsActionResponse(response) {
         if (response &&
             response.responseType &&
-            response.responseType == ActionResponse_1.ResponseType.ActionResult) {
+            response.responseType == ResponseType.ActionResult) {
             return true;
         }
         return false;
@@ -324,4 +325,3 @@ class ContentDeliveryAPI {
         };
     }
 }
-exports.default = ContentDeliveryAPI;

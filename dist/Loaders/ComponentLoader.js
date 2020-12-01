@@ -1,4 +1,3 @@
-"use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -8,15 +7,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.ComponentLoader = exports.isIComponentLoader = void 0;
-const react_1 = __importDefault(require("react"));
-const ComponentNotFound_1 = __importDefault(require("../Components/Errors/ComponentNotFound"));
-const CoreIComponentLoader_1 = __importDefault(require("./CoreIComponentLoader"));
-exports.isIComponentLoader = (toTest) => {
+import React from 'react';
+import ComponentNotFound from '../Components/Errors/ComponentNotFound';
+import CoreIComponentLoader from './CoreIComponentLoader';
+export const isIComponentLoader = (toTest) => {
     return typeof (toTest) === 'object' && typeof (toTest.load) === 'function';
 };
 /**
@@ -27,7 +21,7 @@ exports.isIComponentLoader = (toTest) => {
  * For this script to work, the application must have the app/Components/ path
  * specified and all loadable components must reside within this path.
  */
-class ComponentLoader {
+export class ComponentLoader {
     /**
      * Create a new instance and populate the cache with the data prepared
      * by the server side rendering.
@@ -50,7 +44,7 @@ class ComponentLoader {
          * State of the debug
          */
         this.debug = false;
-        this.loaders = [new CoreIComponentLoader_1.default()];
+        this.loaders = [new CoreIComponentLoader()];
         try {
             this.cache = PreLoad || {};
         }
@@ -113,7 +107,7 @@ class ComponentLoader {
     getPreLoadedComponent(component, props) {
         if (this.isPreLoaded(component)) {
             const type = this.getPreLoadedType(component);
-            return react_1.default.createElement(type, props);
+            return React.createElement(type, props);
         }
         throw new Error(`The component ${component} has not been pre-loaded!`);
     }
@@ -134,7 +128,7 @@ class ComponentLoader {
             delete this.loading[component];
             return c;
         }).catch(() => {
-            this.cache[component] = ComponentNotFound_1.default;
+            this.cache[component] = ComponentNotFound;
             delete this.loading[component];
             return this.cache[component];
         });
@@ -143,7 +137,7 @@ class ComponentLoader {
     doLoadComponentType(component) {
         const options = this.loaders.filter(x => x.canLoad(component));
         if (!options || options.length === 0) {
-            return Promise.resolve(ComponentNotFound_1.default);
+            return Promise.resolve(ComponentNotFound);
         }
         const tryOption = (idx) => new Promise((resolve, reject) => {
             options[idx].load(component).then(c => {
@@ -190,10 +184,9 @@ return type;
     LoadComponent(component, props) {
         return __awaiter(this, void 0, void 0, function* () {
             const type = yield this.LoadType(component);
-            return react_1.default.createElement(type, props);
+            return React.createElement(type, props);
         });
     }
 }
-exports.ComponentLoader = ComponentLoader;
 ;
-exports.default = ComponentLoader;
+export default ComponentLoader;

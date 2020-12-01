@@ -1,10 +1,11 @@
 import React, { FunctionComponent, useState, useEffect } from 'react';
 import StringUtils from '../Util/StringUtils';
-import { useEpiserver, useIContentRepository, useForceUpdate } from '../Hooks/Context';
+import { useEpiserver, useIContentRepository, useForceUpdate, useServiceContainer, useServerSideRendering } from '../Hooks/Context';
 import ContentLink, { ContentReference, ContentLinkService } from '../Models/ContentLink';
 import IContent from '../Models/IContent';
 import ComponentLoader, { TComponentType } from '../Loaders/ComponentLoader';
 import IEpiserverContext from '../Core/IEpiserverContext';
+import { DefaultServices } from '../Core/IServiceContainer';
 import { ComponentProps } from '../EpiComponent';
 import Spinner from '../Components/Spinner';
 import ComponentNotFound from '../Components/Errors/ComponentNotFound';
@@ -39,12 +40,13 @@ export type EpiComponentProps<T extends IContent = IContent> = Omit<ComponentPro
 export const EpiComponent : EpiComponentType = <T extends IContent = IContent>(props: EpiComponentProps<T>) =>
 {
     const ctx = useEpiserver();
+    const ssr = useServerSideRendering();
     if (!props.contentLink) return ctx.isDebugActive() ? <div className="alert alert-danger">Debug: No content link provided</div> : null;
 
     const repo = useIContentRepository();
-    const componentLoader = ctx.componentLoader();
+    const componentLoader = useServiceContainer().getService<ComponentLoader>(DefaultServices.ComponentLoader);
     const forceUpdate = useForceUpdate();
-    const [ iContent, setIContent ] = useState< IContent | null >(props.expandedValue || null);
+    const [ iContent, setIContent ] = useState< IContent | null >(props.expandedValue || ssr.getIContent(props.contentLink));
 
     // Always check if the component is available
     const componentName = iContent ? buildComponentName(iContent, props.contentType) : null;
@@ -80,6 +82,16 @@ export const EpiComponent : EpiComponentType = <T extends IContent = IContent>(p
             componentLoader.LoadType(componentName).then(() => forceUpdate());
         }
     }, [ componentAvailable, componentName ]);
+
+    // Update content once available
+    useEffect(() => {
+        if (!iContent) return;
+        const handleUpdate = (item : IContent | null) => {
+            if (item && item.contentLink.guidValue === iContent.contentLink.guidValue) setIContent(item);
+        }
+        repo.addListener("afterUpdate", handleUpdate);
+        return () => { repo.removeListener("afterUpdate", handleUpdate); }
+    }, [ iContent ]);
 
     // Render the component, or a loader when not all data is present
     const componentType = componentName && componentAvailable ?

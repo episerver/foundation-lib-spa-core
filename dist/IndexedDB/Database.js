@@ -1,12 +1,6 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.Database = void 0;
-const Transaction_1 = __importDefault(require("./Transaction"));
-const Store_1 = __importDefault(require("./Store"));
-class Database {
+import Transaction from './Transaction';
+import Store from './Store';
+export class Database {
     constructor(idb) {
         this._stores = [];
         this._idb = idb;
@@ -43,16 +37,15 @@ class Database {
         });
     }
     startTransaction(storeNames, mode = "readonly") {
-        return new Transaction_1.default(this._idb.transaction(storeNames, mode));
+        return new Transaction(this._idb.transaction(storeNames, mode));
     }
     getStore(name) {
         if (!this._idb.objectStoreNames.contains(name))
             throw new Error(`Store ${name} not found in the database`);
-        return new Store_1.default(this, name);
+        return new Store(this, name);
     }
     hasStore(name) {
         return this._idb.objectStoreNames.contains(name);
     }
 }
-exports.Database = Database;
-exports.default = Database;
+export default Database;

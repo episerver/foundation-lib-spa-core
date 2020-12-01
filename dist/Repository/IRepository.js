@@ -1,10 +1,7 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.IRepositoryPolicy = void 0;
 /**
  * Configuration of the load method of an IRepository implementation
  */
-var IRepositoryPolicy;
+export var IRepositoryPolicy;
 (function (IRepositoryPolicy) {
     /**
      * [Default Policy] With the local storage first policy, the load method will first try the
@@ -22,4 +19,4 @@ var IRepositoryPolicy;
      * explicitly required by the system.
      */
     IRepositoryPolicy["PreferOffline"] = "PreferOffline";
-})(IRepositoryPolicy = exports.IRepositoryPolicy || (exports.IRepositoryPolicy = {}));
+})(IRepositoryPolicy || (IRepositoryPolicy = {}));

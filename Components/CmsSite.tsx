@@ -1,5 +1,5 @@
 // Import libraries
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import {Helmet} from 'react-helmet';
 import { Provider as ReduxProvider } from 'react-redux';
 
@@ -9,14 +9,11 @@ import EpiserverContext from '../Hooks/Context';
 import AppConfig from '../AppConfig';
 
 // Import Episerver Taxonomy
-import Website from '../Models/Website';
-import IContent from '../Models/IContent';
 import Layout, { LayoutComponent } from './Layout';
 
 // Import Episerver Components
-import Spinner from './Spinner';
 import * as EpiSpaRouter from '../Routing/EpiSpaRouter';
-import { IIContentRepository } from '../Repository/IContentRepository';
+import ServerContextAccessor from '../ServerSideRendering/ServerContextAccessor';
 import { DefaultServices } from '../Core/IServiceContainer';
 
 /**
@@ -28,8 +25,10 @@ export interface CmsSiteProps {
 
 export const EpiserverWebsite : React.FunctionComponent<CmsSiteProps> = (props) => {
     const SiteLayout = getLayout(props.context.config());
+    const ssr = props.context.serviceContainer.getService<ServerContextAccessor>(DefaultServices.ServerContext);
+    const location = (props.context.isServerSideRendering() ? ssr.Path : window.location.pathname) || undefined;
     const mainSite = <EpiserverContext.Provider value={ props.context }>
-        <EpiSpaRouter.Router>
+        <EpiSpaRouter.Router location={ location } basename={ props.context.config().basePath }>
             <Helmet />
             <SiteLayout context={ props.context } >
                 <EpiSpaRouter.RoutedContent config={ props.context.config().routes || [] } keyPrefix="CmsSite-RoutedContent" />

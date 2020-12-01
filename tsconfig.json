@@ -3,7 +3,7 @@
   "compilerOptions": {
     "target": "ES6",
     "jsx": "react",
-    "module": "CommonJS",
+    "module": "ESNext",
     "declaration": true,
     "noImplicitAny": true,
     "outDir": "./dist",

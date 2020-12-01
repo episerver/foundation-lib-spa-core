@@ -1,5 +1,3 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
 const fallback = {};
 /**
  * Get the global variable for the current environment, this method will
@@ -8,7 +6,7 @@ const fallback = {};
  * - When running in a Browser the window variable
  * - If unknown: a fallback object
  */
-function default_1() {
+export const getGlobal = () => {
     let ctx = null;
     if (!ctx)
         try {
@@ -23,5 +21,5 @@ function default_1() {
     ;
     ctx = ctx || fallback;
     return ctx;
-}
-exports.default = default_1;
+};
+export default getGlobal;

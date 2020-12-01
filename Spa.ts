@@ -2,7 +2,8 @@
 import { configureStore, EnhancedStore, Action, AnyAction, Reducer } from '@reduxjs/toolkit';
 
 // Lodash
-import { merge, clone } from 'lodash'
+import merge from 'lodash/merge';
+import clone from 'lodash/clone';
 
 // Application context
 import IEpiserverContext from './Core/IEpiserverContext';
@@ -16,7 +17,12 @@ import AppConfig from './AppConfig';
 import getGlobal from './AppGlobal';
 import PathProvider from './PathProvider';
 import IExecutionContext from './Core/IExecutionContext';
+import ServerContextAccessor from './ServerSideRendering/ServerContextAccessor';
+
+// Core Modules
 import RoutingModule from './Routing/RoutingModule';
+import RepositoryModule from './Repository/RepositoryModule';
+import LoadersModule from './Loaders/LoadersModule';
 
 // Taxonomy
 import IContentProperty from './Property';
@@ -26,9 +32,8 @@ import StringUtils from './Util/StringUtils';
 import IInitializableModule from './Core/IInitializableModule';
 
 // Content Delivery V2
-import IContentRepositoryV2, { IIContentRepository as IIContentRepositoryV2 } from './Repository/IContentRepository';
+import IIContentRepositoryV2 from './Repository/IIContentRepository';
 import IContentDeliveryApiV2 from './ContentDelivery/IContentDeliveryAPI';
-import ContentDeliveryApiV2 from './ContentDelivery/ContentDeliveryAPI';
 
 // Create context
 const ctx : any = getGlobal();
@@ -36,19 +41,19 @@ ctx.EpiserverSpa = ctx.EpiserverSpa || {};
 ctx.epi = ctx.epi || {};
 
 interface EpiContentSavedEvent {
-  successful: boolean;
-  contentLink: string;
-  hasContentLinkChanged: boolean;
-  savedContentLink: string;
-  publishedContentLink: string;
-  properties: {
-    name: string;
     successful: boolean;
-    validationErrors: any;
-    value: any;
-  }[];
-  validationErrors: any[];
-  oldContentLink: string;
+    contentLink: string;
+    hasContentLinkChanged: boolean;
+    savedContentLink: string;
+    publishedContentLink: string;
+    properties: {
+        name: string;
+        successful: boolean;
+        validationErrors: any;
+        value: any;
+    }[];
+    validationErrors: any[];
+    oldContentLink: string;
 }
 
 export enum InitStatus
@@ -71,6 +76,11 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
         return this._serviceContainer;
     }
 
+    /**
+     * Retrieve an instance of the ContentDeliveryAPI wrapper
+     * 
+     * @deprecated    Use the ContentRepository_V2 service to fetch content and interact with controllers
+     */
     public get contentStorage() : ContentDeliveryAPI
     {
         return this.serviceContainer.getService<ContentDeliveryAPI>(DefaultServices.ContentDeliveryApi);
@@ -85,46 +95,17 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
         config.enableDebug = process.env.NODE_ENV === 'production' ? false : config.enableDebug;
 
         // Create module list
-        this._modules.push(new RoutingModule());
-        if (config.modules) {
-          this._modules = this._modules.concat(config.modules);
-        }
+        this._modules.push(new RepositoryModule(), new RoutingModule(), new LoadersModule());
+        this._modules.sort((a, b) => a.SortOrder - b.SortOrder);
+        if (config.modules) this._modules = this._modules.concat(config.modules);
         if (config.enableDebug) console.debug('Spa modules:', this._modules.map((m) => m.GetName()));
-
-        // Add component loaders
-        const cl = new ComponentLoader();
-        cl.setDebug(config.enableDebug || false);
-        if (config.componentLoaders) {
-          config.componentLoaders.forEach(loader => {
-            if (isIComponentLoader(loader)) {
-              loader.setDebug(config.componentLoaders?.debug || config.enableDebug || false);
-              cl.addLoader(loader);
-            } else {
-              const loaderInstance = cl.createLoader(loader, true);
-              loaderInstance.setDebug(config.componentLoaders?.debug || config.enableDebug || false);
-            }
-          })
-        }
 
         // Register core services
         this._serviceContainer.addService(DefaultServices.Context, this);
         this._serviceContainer.addService(DefaultServices.Config, config);
         this._serviceContainer.addService(DefaultServices.ExecutionContext, executionContext);
-        this._serviceContainer.addService(DefaultServices.ContentDeliveryApi, new ContentDeliveryAPI(this, config));
+        this._serviceContainer.addService(DefaultServices.ServerContext, new ServerContextAccessor())
         this._serviceContainer.addService(DefaultServices.EventEngine, new DefaultEventEngine());
-        this._serviceContainer.addService(DefaultServices.ComponentLoader, cl);
-
-        const newAPI = new ContentDeliveryApiV2({
-          Adapter: config.networkAdapter,
-          BaseURL: config.epiBaseUrl,
-          AutoExpandAll: config.autoExpandRequests,
-          Debug: config.enableDebug,
-          EnableExtensions: true,
-          Language: config.defaultLanguage
-        });
-        newAPI.InEditMode = this.initialEditMode();
-        this._serviceContainer.addService(DefaultServices.ContentDeliveryAPI_V2, newAPI);
-        this._serviceContainer.addService(DefaultServices.IContentRepository_V2, new IContentRepositoryV2(newAPI, { debug: config.enableDebug }));
 
         // Have modules add services of their own
         this._modules.forEach(x => x.ConfigureContainer(this._serviceContainer));
@@ -138,8 +119,10 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
         // Run module startup logic
         this._modules.forEach(x => x.StartModule(this));
 
+        // Mark SPA as initialized & and make some info available in the global context
         this._initialized = InitStatus.Initialized;
         ctx.EpiserverSpa.serviceContainer = this._serviceContainer;
+        ctx.EpiserverSpa.modules = this._modules;
     }
 
     private _initRedux() : void
@@ -154,11 +137,12 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
     {
         if (this.isDebugActive()) console.debug(`Initializing edit mode in ${ this.initialEditMode() ? 'enabled' : 'disabled'} state`);
         if (!this._isServerSideRendering && this.initialEditMode()) {
-            if (this.isDebugActive()) console.debug('Adding edit mode event handlers');
-            this.contentDeliveryApi().setInEditMode(true);
-            this.events().addListener('beta/epiReady', 'BetaEpiReady', this.onEpiReady.bind(this), true);
+            // if (this.isDebugActive()) console.debug('Adding edit mode event handlers');
+            // this.contentDeliveryApi().setInEditMode(true);
+            this.serviceContainer.getService<IContentDeliveryApiV2>(DefaultServices.ContentDeliveryAPI_V2).InEditMode = true;
+            // this.events().addListener('beta/epiReady', 'BetaEpiReady', this.onEpiReady.bind(this), true);
             this.events().addListener('beta/contentSaved', 'BetaEpiContentSaved', this.onEpiContentSaved.bind(this), true);
-            this.events().addListener('epiReady', 'EpiReady', this.onEpiReady.bind(this), true);
+            // this.events().addListener('epiReady', 'EpiReady', this.onEpiReady.bind(this), true);
             this.events().addListener('contentSaved', 'EpiContentSaved', this.onEpiContentSaved.bind(this), true);
         }
     }
@@ -205,17 +189,6 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
               return out;
             });
         }
-    }
-
-    /**
-     * Handler for the postdata message sent by the Epishell to indicate that the environment is now ready
-     * and the edit mode can be detected.
-     */
-    private onEpiReady() : void
-    {
-        if (this.isDebugActive())
-            console.info('Episerver Ready, setting edit mode to', this.isInEditMode() ? 'true' : 'false');
-        this.contentDeliveryApi().setInEditMode(this.isInEditMode());
     }
 
   public isInitialized(): boolean {
@@ -329,7 +302,10 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
      */
     public initialEditMode(): boolean {
         try {
-            return ((new URLSearchParams(window.location.search)).get('epieditmode')?.toLowerCase() === 'true') || this.isInEditMode();
+            const mySearchParams = new URLSearchParams(window.location.search);
+            if (mySearchParams.get('commondrafts')?.toLowerCase() === 'true') return false;
+            if (mySearchParams.get('epieditmode')?.toLowerCase() === 'true') return true; 
+            return this.isInEditMode();
         } catch (e) {
             return false;
         }
@@ -342,6 +318,12 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
      * @returns {boolean}
      */
     public isInEditMode(): boolean {
+        try {
+            const mySearchParams = new URLSearchParams(window.location.search);
+            if (mySearchParams.get('commondrafts')?.toLowerCase() === 'true') return false;
+        } catch (e) {
+            // Ignore errors on purpose to go to next test
+        }
         try {
             return ctx.epi && ctx.epi.inEditMode !== undefined ? ctx.epi.inEditMode === true : false;
         } catch (e) {
@@ -361,6 +343,12 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
     }
 
   public isEditable(): boolean {
+    try {
+        const mySearchParams = new URLSearchParams(window.location.search);
+        if (mySearchParams.get('commondrafts')?.toLowerCase() === 'true') return false;
+    } catch (e) {
+        // Ignore errors on purpose to go to next test
+    }
     try {
       return ctx.epi ? ctx.epi.isEditable === true : false;
     } catch (e) {

@@ -3,6 +3,7 @@ import ContentLink from './ContentLink';
 import ContentTypePath from './ContentTypePath';
 import Language from './Language';
 import LanguageList from './LanguageList';
+import { IContentDeliveryResponseContext } from '../ContentDelivery/IContentDeliveryAPI';
 
 export type NameProperty = string | StringProperty;
 export type GenericProperty =
@@ -22,23 +23,25 @@ export function namePropertyIsString(prop: NameProperty): prop is string {
   return false;
 }
 
-export default interface IContent {
-  contentLink: ContentLink;
-  name: NameProperty;
-  language?: Language;
-  existingLanguages?: LanguageList;
-  masterLanguage?: Language;
-  contentType: ContentTypePath;
-  parentLink?: ContentLink;
-  routeSegment?: string | null;
-  url?: string | null;
-  changed?: string | null;
-  created?: string | null;
-  startPublish?: string | null;
-  stopPublish?: string | null;
-  saved?: string | null;
-  status?: string | null;
+export type IContent = {
+  contentLink: ContentLink
+  name: NameProperty
+  language?: Language
+  existingLanguages?: LanguageList
+  masterLanguage?: Language
+  contentType: ContentTypePath
+  parentLink?: ContentLink
+  routeSegment?: string | null
+  url?: string | null
+  changed?: string | null
+  created?: string | null
+  startPublish?: string | null
+  stopPublish?: string | null
+  saved?: string | null
+  status?: string | null
+  serverContext ?: Property<IContentDeliveryResponseContext>
 }
+export default IContent;
 
 export interface IContentData extends IContent {
   [name: string]: GenericProperty;

@@ -16,10 +16,10 @@ export type TComponentTypePromise<T extends unknown = ComponentProps<IContent>> 
 /**
  * Type defintiion to allow access to the pre-loaded modules
  */
-type LoadedModuleList<T = ComponentProps<IContent>> = {
+export type LoadedModuleList<T = ComponentProps<IContent>> = {
     [key: string]: TComponentType<T>
 }
-type LoadingModuleList<T = ComponentProps<IContent>> = {
+export type LoadingModuleList<T = ComponentProps<IContent>> = {
     [key: string]: TComponentTypePromise<T>
 }
 export type IComponentLoaderList = IComponentLoader[];

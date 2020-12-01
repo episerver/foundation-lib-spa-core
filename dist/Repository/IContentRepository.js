@@ -1,4 +1,3 @@
-"use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -8,45 +7,35 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.IContentRepository = void 0;
 // Import libraries
-const eventemitter3_1 = __importDefault(require("eventemitter3"));
-const IRepository_1 = require("./IRepository");
-const ContentDeliveryAPI_1 = require("../ContentDeliveryAPI");
+import EventEmitter from 'eventemitter3';
+import { IRepositoryPolicy } from './IRepository';
+import { getIContentFromPathResponse } from '../ContentDeliveryAPI';
 // Import IndexedDB Wrappper
-const IndexedDB_1 = __importDefault(require("../IndexedDB/IndexedDB"));
-const ContentLink_1 = require("../Models/ContentLink");
-const WebsiteList_1 = require("../Models/WebsiteList");
+import IndexedDB from '../IndexedDB/IndexedDB';
+import { ContentLinkService } from '../Models/ContentLink';
+import { hostnameFilter } from '../Models/WebsiteList';
 /**
  * A wrapper for IndexedDB offering an Asynchronous API to load/fetch content items from the database
  * and underlying Episerver ContentDelivery API.
  */
-class IContentRepository extends eventemitter3_1.default {
+export class IContentRepository extends EventEmitter {
     /**
      * Create a new instance
      *
      * @param { IContentDeliveryAPI } api The ContentDelivery API wrapper to use within this IContent Repository
      */
-    constructor(api, config) {
+    constructor(api, config, serverContext) {
         super();
         this._loading = {};
         this._config = {
             maxAge: 1440,
-            policy: IRepository_1.IRepositoryPolicy.NetworkFirst,
+            policy: IRepositoryPolicy.NetworkFirst,
             debug: false // Default to disabling debug mode
         };
         this.schemaUpgrade = (db, t) => {
             return Promise.all([
                 db.hasStore('iContent') ? Promise.resolve(true) : db.createStore('iContent', 'apiId', undefined, [
-                    { name: 'guid', keyPath: 'data.contentLink.guidValue', unique: true },
-                    { name: 'contentId', keyPath: 'contentId', unique: true },
-                    { name: 'routes', keyPath: 'route', unique: false }
-                ]),
-                db.hasStore('iContentEditor') ? Promise.resolve(true) : db.createStore('iContentEditor', 'apiId', undefined, [
                     { name: 'guid', keyPath: 'data.contentLink.guidValue', unique: true },
                     { name: 'contentId', keyPath: 'contentId', unique: true },
                     { name: 'routes', keyPath: 'route', unique: false }
@@ -58,9 +47,18 @@ class IContentRepository extends eventemitter3_1.default {
         };
         this._api = api;
         this._config = Object.assign(Object.assign({}, this._config), config);
-        this._storage = new IndexedDB_1.default("iContentRepository", 4, this.schemaUpgrade.bind(this));
+        this._storage = new IndexedDB("iContentRepository", 4, this.schemaUpgrade.bind(this));
         if (this._storage.IsAvailable)
             this._storage.open();
+        // Ingest server context into the database, if we have it
+        if (serverContext) {
+            if (serverContext.IContent)
+                this.ingestIContent(serverContext.IContent);
+            if (serverContext.StartPage)
+                this.ingestIContent(serverContext.StartPage);
+            if (serverContext.Website)
+                this.ingestWebsite(serverContext.Website);
+        }
     }
     /**
      * Load the IContent, first try IndexedDB, if not found in the IndexedDB load it from the
@@ -72,8 +70,8 @@ class IContentRepository extends eventemitter3_1.default {
      */
     load(reference, recursive = false) {
         return __awaiter(this, void 0, void 0, function* () {
-            const localFirst = this._config.policy === IRepository_1.IRepositoryPolicy.LocalStorageFirst ||
-                this._config.policy === IRepository_1.IRepositoryPolicy.PreferOffline ||
+            const localFirst = this._config.policy === IRepositoryPolicy.LocalStorageFirst ||
+                this._config.policy === IRepositoryPolicy.PreferOffline ||
                 !this._api.OnLine;
             if (localFirst && (yield this.has(reference)))
                 return this.get(reference);
@@ -90,13 +88,12 @@ class IContentRepository extends eventemitter3_1.default {
     update(reference, recursive = false) {
         if (!this._api.OnLine)
             return Promise.resolve(null);
-        const apiId = ContentLink_1.ContentLinkService.createApiId(reference, false, this._api.InEditMode);
+        const apiId = ContentLinkService.createApiId(reference, false);
         if (!this._loading[apiId]) {
             const internalLoad = () => __awaiter(this, void 0, void 0, function* () {
                 const iContent = yield this._api.getContent(reference, undefined, recursive ? ['*'] : []);
-                const table = yield this.getTable();
                 yield this.recursiveLoad(iContent, recursive);
-                table.put(this.buildRepositoryItem(iContent));
+                this.ingestIContent(iContent);
                 delete this._loading[apiId];
                 return iContent;
             });
@@ -142,7 +139,7 @@ class IContentRepository extends eventemitter3_1.default {
      */
     has(reference) {
         return __awaiter(this, void 0, void 0, function* () {
-            const apiId = ContentLink_1.ContentLinkService.createApiId(reference, false, this._api.InEditMode);
+            const apiId = ContentLinkService.createApiId(reference, false);
             const table = yield this.getTable();
             return table.getViaIndex('contentId', apiId)
                 .then(x => x ? this.isValid(x) : false)
@@ -159,17 +156,17 @@ class IContentRepository extends eventemitter3_1.default {
     get(reference) {
         return __awaiter(this, void 0, void 0, function* () {
             this.emit('beforeGet', reference);
-            const apiId = ContentLink_1.ContentLinkService.createApiId(reference, false, this._api.InEditMode);
+            let data = null;
+            const apiId = ContentLinkService.createApiId(reference, false);
             const table = yield this.getTable();
             const repositoryContent = yield table.getViaIndex('contentId', apiId).catch(() => undefined);
             if (repositoryContent && this.isValid(repositoryContent)) {
-                if (this._config.policy !== IRepository_1.IRepositoryPolicy.PreferOffline)
+                if (this._config.policy !== IRepositoryPolicy.PreferOffline)
                     this.updateInBackground(repositoryContent);
-                this.emit('afterGet', reference, repositoryContent.data);
-                return repositoryContent.data;
+                data = repositoryContent.data;
             }
-            this.emit('afterGet', reference, null);
-            return null;
+            this.emit('afterGet', reference, data);
+            return data;
         });
     }
     getByContentId(contentId) {
@@ -189,25 +186,28 @@ class IContentRepository extends eventemitter3_1.default {
             const resolveLocal = () => __awaiter(this, void 0, void 0, function* () {
                 const routedContents = yield table.getViaIndex('routes', route);
                 if (routedContents && this.isValid(routedContents)) {
-                    if (this._config.policy !== IRepository_1.IRepositoryPolicy.PreferOffline)
+                    if (this._config.policy !== IRepositoryPolicy.PreferOffline)
                         this.updateInBackground(routedContents);
                     return routedContents.data;
+                }
+                if (route === '/') { // Special case for Homepage
+                    return this.getByReference('startPage');
                 }
                 return null;
             });
             const resolveNetwork = () => __awaiter(this, void 0, void 0, function* () {
                 const resolvedRoute = yield this._api.resolveRoute(route);
-                const content = ContentDeliveryAPI_1.getIContentFromPathResponse(resolvedRoute);
+                const content = getIContentFromPathResponse(resolvedRoute);
                 if (content)
-                    table.put(this.buildRepositoryItem(content));
+                    this.ingestIContent(content);
                 return content;
             });
             switch (this._config.policy) {
-                case IRepository_1.IRepositoryPolicy.NetworkFirst:
+                case IRepositoryPolicy.NetworkFirst:
                     return this._api.OnLine ? resolveNetwork() : resolveLocal();
-                case IRepository_1.IRepositoryPolicy.PreferOffline:
-                    return resolveLocal().then((x) => __awaiter(this, void 0, void 0, function* () { return x ? x : yield resolveNetwork(); }));
-                case IRepository_1.IRepositoryPolicy.LocalStorageFirst:
+                case IRepositoryPolicy.PreferOffline:
+                    return resolveLocal().then(x => x ? x : resolveNetwork());
+                case IRepositoryPolicy.LocalStorageFirst:
                     return (yield resolveLocal().then(x => { if (x) {
                         resolveNetwork();
                     } return x; })) || (yield resolveNetwork());
@@ -216,12 +216,14 @@ class IContentRepository extends eventemitter3_1.default {
         });
     }
     getByReference(reference, website) {
-        const w = website || this._api.CurrentWebsite;
-        if (!w)
-            return Promise.reject('There\'s no website provided and none inferred from the ContentDelivery API');
-        if (w.contentRoots && w.contentRoots[reference])
-            return this.load(w.contentRoots[reference]);
-        return Promise.reject(`The content root ${reference} has not been defined`);
+        const ws = website ? Promise.resolve(website) : this.getCurrentWebsite();
+        return ws.then(x => {
+            if (!x)
+                throw new Error('There\'s no website provided and none inferred from the ContentDelivery API');
+            if (!(x === null || x === void 0 ? void 0 : x.contentRoots[reference]))
+                throw new Error(`The content root ${reference} has not been defined`);
+            return this.load(x.contentRoots[reference]);
+        });
     }
     patch(reference, patch) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -236,8 +238,7 @@ class IContentRepository extends eventemitter3_1.default {
                 this.emit('afterPatch', patchedItem.contentLink, item, patchedItem);
                 if (this._config.debug)
                     console.log('IContentRepository: Applied patch to content item', reference, item, patchedItem);
-                const table = yield this.getTable();
-                return (yield table.put(this.buildRepositoryItem(patchedItem))) ? patchedItem : null;
+                return yield this.ingestIContent(patchedItem);
             }
             catch (e) {
                 return null;
@@ -255,10 +256,54 @@ class IContentRepository extends eventemitter3_1.default {
             return websites;
         });
     }
-    getWebsite(hostname, language) {
+    getWebsite(hostname, language, matchWildCard = true) {
         return __awaiter(this, void 0, void 0, function* () {
-            const websites = (yield this.getWebsites()).filter(w => WebsiteList_1.hostnameFilter(w, hostname, language));
+            const websites = (yield this.getWebsites()).filter(w => hostnameFilter(w, hostname, language, matchWildCard));
             return websites && websites.length === 1 ? websites[0] : null;
+        });
+    }
+    getCurrentWebsite() {
+        let hostname = '*';
+        try {
+            hostname = window.location.hostname;
+        }
+        catch (e) { /* Ignored on purpose */ }
+        return this.getWebsite(hostname, undefined, false).then(w => w ? w : this.getWebsite(hostname, undefined, true));
+    }
+    ingestIContent(iContent) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const table = yield this.getTable();
+            const current = yield table.get(ContentLinkService.createApiId(iContent, true));
+            let isUpdate = false;
+            if (current && current.data) {
+                isUpdate = true;
+                if (this._config.debug)
+                    console.log('IContentRepository: Before update', iContent, current.data);
+                this.emit('beforeUpdate', iContent, current.data);
+            }
+            else {
+                if (this._config.debug)
+                    console.log('IContentRepository: Before add', iContent);
+                this.emit('beforeAdd', iContent);
+            }
+            const ingested = (yield table.put(this.buildRepositoryItem(iContent))) ? iContent : null;
+            if (isUpdate) {
+                if (this._config.debug)
+                    console.log('IContentRepository: After update', ingested);
+                this.emit('afterUpdate', ingested);
+            }
+            else {
+                if (this._config.debug)
+                    console.log('IContentRepository: After add', ingested);
+                this.emit('afterAdd', ingested);
+            }
+            return ingested;
+        });
+    }
+    ingestWebsite(website) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const table = yield this.getWebsiteTable();
+            return (yield table.put(this.buildWebsiteRepositoryItem(website))) ? website : null;
         });
     }
     /**
@@ -269,7 +314,7 @@ class IContentRepository extends eventemitter3_1.default {
     getTable() {
         return __awaiter(this, void 0, void 0, function* () {
             const db = yield this._storage.open();
-            const tableName = this._api.InEditMode ? 'iContentEditor' : 'iContent';
+            const tableName = 'iContent';
             return db.getStore(tableName);
         });
     }
@@ -289,10 +334,10 @@ class IContentRepository extends eventemitter3_1.default {
     buildRepositoryItem(iContent) {
         var _a, _b;
         return {
-            apiId: ContentLink_1.ContentLinkService.createApiId(iContent, true, this._api.InEditMode),
-            contentId: ContentLink_1.ContentLinkService.createApiId(iContent, false, this._api.InEditMode),
+            apiId: ContentLinkService.createApiId(iContent, true),
+            contentId: ContentLinkService.createApiId(iContent, false),
             type: (_b = (_a = iContent.contentType) === null || _a === void 0 ? void 0 : _a.join('/')) !== null && _b !== void 0 ? _b : 'Errors/ContentTypeUnknown',
-            route: ContentLink_1.ContentLinkService.createRoute(iContent),
+            route: ContentLinkService.createRoute(iContent),
             data: iContent,
             added: Date.now(),
             accessed: Date.now()
@@ -301,7 +346,6 @@ class IContentRepository extends eventemitter3_1.default {
     recursiveLoad(iContent, recurseDown = false) {
         var _a, _b, _c, _d;
         return __awaiter(this, void 0, void 0, function* () {
-            const table = yield this.getTable();
             for (const key of Object.keys(iContent)) {
                 const p = iContent[key];
                 if (p && p.propertyDataType)
@@ -310,7 +354,7 @@ class IContentRepository extends eventemitter3_1.default {
                         case 'PropertyPageReference':
                             const cRef = p;
                             if (cRef.expandedValue) {
-                                table.put(this.buildRepositoryItem(cRef.expandedValue));
+                                this.ingestIContent(cRef.expandedValue);
                                 this.recursiveLoad(cRef.expandedValue, recurseDown);
                                 delete iContent[key].expandedValue;
                                 break;
@@ -323,7 +367,7 @@ class IContentRepository extends eventemitter3_1.default {
                             const cArea = p;
                             if (cArea.expandedValue) {
                                 (_a = cArea.expandedValue) === null || _a === void 0 ? void 0 : _a.forEach(x => {
-                                    table.put(this.buildRepositoryItem(x));
+                                    this.ingestIContent(x);
                                     this.recursiveLoad(x);
                                 });
                                 delete iContent[key].expandedValue;
@@ -337,7 +381,7 @@ class IContentRepository extends eventemitter3_1.default {
                             const cRefList = p;
                             if (cRefList.expandedValue) {
                                 (_c = cRefList.expandedValue) === null || _c === void 0 ? void 0 : _c.forEach(x => {
-                                    table.put(this.buildRepositoryItem(x));
+                                    this.ingestIContent(x);
                                     this.recursiveLoad(x);
                                 });
                                 delete iContent[key].expandedValue;
@@ -352,5 +396,4 @@ class IContentRepository extends eventemitter3_1.default {
         });
     }
 }
-exports.IContentRepository = IContentRepository;
-exports.default = IContentRepository;
+export default IContentRepository;

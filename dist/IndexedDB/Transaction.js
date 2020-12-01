@@ -1,7 +1,4 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.Transaction = void 0;
-class Transaction {
+export class Transaction {
     constructor(idbt) {
         this._idbt = idbt;
     }
@@ -22,5 +19,4 @@ class Transaction {
         return this._idbt.objectStore(name);
     }
 }
-exports.Transaction = Transaction;
-exports.default = Transaction;
+export default Transaction;

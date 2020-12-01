@@ -38,6 +38,11 @@ export function getIContentFromPathResponse(response: PathResponse) : IContent |
   return null;
 }
 
+/**
+ * ContentDelivery API Wrapper
+ * 
+ * @deprecated
+ */
 export default class ContentDeliveryAPI {
   protected config: AppConfig;
   protected componentService: string = '/api/episerver/v2.0/content/';
@@ -65,6 +70,11 @@ export default class ContentDeliveryAPI {
    */
   private website!: Website;
 
+  /**
+   * ContentDelivery API Wrapper
+   * 
+   * @deprecated
+   */
   constructor(pathProvider: PathProvider, config: AppConfig) {
     this.pathProvider = pathProvider;
     this.config = config;

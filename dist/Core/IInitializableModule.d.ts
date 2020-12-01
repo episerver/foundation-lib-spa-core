@@ -3,9 +3,14 @@ import IEpiserverContext from './IEpiserverContext';
 import IStateReducerInfo from './IStateReducerInfo';
 export default interface IInitializableModule {
     /**
+     * The sort order of the modules when loaded using the initial bootstrapping
+     * sequence.
+     */
+    readonly SortOrder: number;
+    /**
      * Retrieve the name of the module
      *
-     * @returns {string}
+     * @returns { string }
      */
     GetName(): string;
     ConfigureContainer(container: IServiceContainer): void;
@@ -14,6 +19,7 @@ export default interface IInitializableModule {
 }
 export declare abstract class BaseInitializableModule implements IInitializableModule {
     protected name: string;
+    readonly SortOrder: number;
     GetName(): string;
     ConfigureContainer(container: IServiceContainer): void;
     StartModule(context: IEpiserverContext): void;

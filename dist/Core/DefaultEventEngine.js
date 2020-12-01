@@ -1,19 +1,14 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-const AppGlobal_1 = __importDefault(require("../AppGlobal"));
-const eventemitter3_1 = __importDefault(require("eventemitter3"));
+import AppGlobal from '../AppGlobal';
+import EventEmitter from 'eventemitter3';
 /**
  * The default event engine for the SPA
  */
-class DefaultEventEngine {
+export default class DefaultEventEngine {
     constructor() {
         this._listeners = {};
         this._events = [];
-        this._eventEmitter = new eventemitter3_1.default();
-        const ctx = AppGlobal_1.default();
+        this._eventEmitter = new EventEmitter();
+        const ctx = AppGlobal();
         if (ctx.addEventListener) {
             ctx.addEventListener('message', this.onPostMessageReceived.bind(this), false);
         }
@@ -67,4 +62,3 @@ class DefaultEventEngine {
         return this;
     }
 }
-exports.default = DefaultEventEngine;

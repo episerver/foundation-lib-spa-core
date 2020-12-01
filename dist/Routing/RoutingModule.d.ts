@@ -2,6 +2,7 @@ import IInitializableModule, { BaseInitializableModule } from '../Core/IInitiali
 import IServiceContainer from '../Core/IServiceContainer';
 export default class RoutingModule extends BaseInitializableModule implements IInitializableModule {
     protected name: string;
+    readonly SortOrder: number;
     /**
      * Ensure the configuration object within the service container contains a "*" route. If
      * this "*" route is not claimed by the implementation, it will be added as fall-back to

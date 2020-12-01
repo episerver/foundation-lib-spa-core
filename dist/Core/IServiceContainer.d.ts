@@ -1,21 +1,41 @@
 import IEpiserverContext from './IEpiserverContext';
 export declare enum DefaultServices {
-    /**
-     * @deprecated Upgrade to V2 API
-     */
-    ContentDeliveryApi = "ContentDeliveryAPI",
     ExecutionContext = "ExecutionContext",
     EventEngine = "EventEngine",
     Router = "Router",
     Config = "Config",
     Context = "Context",
+    /**
+     * The service that loads components into the SPA, enabling
+     * dynamic loading of the components that build the SPA.
+     */
     ComponentLoader = "ComponentLoader",
+    ServerContext = "ServerContext",
     /**
      * @deprecated Upgrade to V2 API
      */
     IContentRepository = "IContentRepository",
+    /**
+     * @deprecated Upgrade to V2 API
+     */
+    ContentDeliveryApi = "ContentDeliveryAPI",
+    /**
+     * The wrapper for the Episerver ContentDelivery API, use this as a
+     * low level library to connect with the ContentDelivery API
+     */
     ContentDeliveryAPI_V2 = "ContentDeliveryAPI_V2",
-    IContentRepository_V2 = "IContentRepository_V2"
+    /**
+     * The high level icontent (and website) repository, this will be
+     * configured to match the execution context of the SPA and may or
+     * may not include caching / local storage.
+     */
+    IContentRepository_V2 = "IContentRepository_V2",
+    /**
+     * The TypeMapper provides specific class instances for the iContent
+     * data retrieved through the ContentDeliveryAPI and/or
+     * IContentRepository.
+     */
+    TypeMapper = "TypeMapper"
 }
 export interface IContainerAwareService {
     setServiceContainer(container: IServiceContainer): void;

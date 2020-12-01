@@ -1,23 +1,3 @@
-"use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -27,17 +7,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.ContentDeliveryAPI = void 0;
-const axios_1 = __importDefault(require("axios"));
-const UUID = __importStar(require("uuid"));
-const Config_1 = require("./Config");
-const ContentLink_1 = require("../Models/ContentLink");
-const ActionResponse_1 = require("../Models/ActionResponse");
-class ContentDeliveryAPI {
+import Axios from 'axios';
+import * as UUID from 'uuid';
+import { DefaultConfig } from './Config';
+import { hostnameFilter } from '../Models/WebsiteList';
+import { ContentLinkService } from '../Models/ContentLink';
+import { ResponseType } from '../Models/ActionResponse';
+export class ContentDeliveryAPI {
     constructor(config) {
         this.ContentService = 'api/episerver/v2.0/content/'; // Stick to V2 as V3 doesn't support refs
         this.SiteService = 'api/episerver/v2.0/site/'; // Stick to V2 as V3 doesn't report hosts
@@ -46,8 +22,8 @@ class ContentDeliveryAPI {
         this.RouteService = 'api/episerver/v3/route/';
         this.ModelService = 'api/episerver/v3/model/';
         this.errorCounter = 0;
-        this._config = Object.assign(Object.assign({}, Config_1.DefaultConfig), config);
-        this._axios = axios_1.default.create(this.getDefaultRequestConfig());
+        this._config = Object.assign(Object.assign({}, DefaultConfig), config);
+        this._axios = Axios.create(this.getDefaultRequestConfig());
     }
     get Axios() {
         return this._axios;
@@ -78,6 +54,24 @@ class ContentDeliveryAPI {
         }
         return true;
     }
+    get InEpiserverShell() {
+        var _a;
+        if (this.InEditMode)
+            return true;
+        try {
+            const searchParams = new URLSearchParams(window.location.search);
+            if (searchParams.has('visitorgroupsByID'))
+                return true;
+            if (searchParams.has('commondrafts'))
+                return true;
+            if (searchParams.has('epieditmode') && ((_a = searchParams.get('epieditmode')) === null || _a === void 0 ? void 0 : _a.toLowerCase()) === 'true')
+                return true;
+        }
+        catch (e) {
+            // Ignored on purpose
+        }
+        return false;
+    }
     login(username, password) {
         return __awaiter(this, void 0, void 0, function* () {
             const params = new URLSearchParams();
@@ -100,47 +94,83 @@ class ContentDeliveryAPI {
     }
     getWebsite(hostname) {
         return __awaiter(this, void 0, void 0, function* () {
+            let processedHost = '';
             switch (typeof (hostname)) {
                 case 'undefined':
-                    hostname = '';
+                    processedHost = '';
                     break;
                 case 'string':
-                    hostname = hostname;
+                    processedHost = hostname;
                     break;
                 default:
-                    hostname = hostname.hostname;
+                    processedHost = hostname.hostname;
                     break;
             }
+            if (this._config.Debug)
+                console.log(`ContentDeliveryAPI: Resolving website for: ${processedHost}`);
             return this.getWebsites().then(websites => {
-                let website;
-                let starWebsite;
-                websites.forEach(w => {
-                    if (w.hosts)
-                        w.hosts.forEach(h => {
-                            website = website || h.name === hostname ? w : undefined;
-                            starWebsite = starWebsite || h.name === '*' ? w : undefined;
-                        });
-                });
-                return website || starWebsite;
+                const website = websites.filter(w => hostnameFilter(w, processedHost, undefined, false)).shift();
+                const starWebsite = websites.filter(w => hostnameFilter(w, '*', undefined, false)).shift();
+                const outValue = website || starWebsite;
+                if (this._config.Debug)
+                    console.log(`ContentDeliveryAPI: Resolved website for: ${processedHost} to ${outValue === null || outValue === void 0 ? void 0 : outValue.name}`);
+                return outValue;
             });
         });
     }
-    resolveRoute(path, select, expand) {
-        if (this._config.EnableExtensions && !this.InEditMode) {
-            const serviceUrl = new URL(this.RouteService, this.BaseURL);
+    getCurrentWebsite() {
+        return __awaiter(this, void 0, void 0, function* () {
             if (this.CurrentWebsite)
-                serviceUrl.searchParams.set('siteId', this.CurrentWebsite.id);
-            serviceUrl.searchParams.set('route', path);
-            return this.doRequest(serviceUrl).then(r => this.getContent(r.contentLink)).catch(e => this.createNetworkErrorResponse(e));
-        }
-        const url = new URL(path.startsWith('/') ? path.substr(1) : path, this.BaseURL);
-        // Handle additional parameters
-        if (select)
-            url.searchParams.set('select', select.map(s => encodeURIComponent(s)).join(','));
-        if (expand)
-            url.searchParams.set('expand', expand.map(s => encodeURIComponent(s)).join(','));
-        // Perform request
-        return this.doRequest(url); // .catch(e => this.createNetworkErrorResponse(e));
+                return this.CurrentWebsite;
+            let hostname;
+            try {
+                hostname = window.location.hostname;
+            }
+            catch (e) { /* Ignored on purpose */ }
+            const w = yield this.getWebsite(hostname);
+            this.CurrentWebsite = w;
+            return w;
+        });
+    }
+    resolveRoute(path, select, expand) {
+        return __awaiter(this, void 0, void 0, function* () {
+            // Try CD-API 2.17 method first
+            const contentServiceUrl = new URL(this.ContentService, this.BaseURL);
+            contentServiceUrl.searchParams.set('contentUrl', path);
+            if (select)
+                contentServiceUrl.searchParams.set('select', select.join(','));
+            if (expand)
+                contentServiceUrl.searchParams.set('expand', expand.join(','));
+            const list = yield this.doRequest(contentServiceUrl);
+            if (list && list.length === 1) {
+                return list[0];
+            }
+            // Then try the extension method
+            if (this._config.EnableExtensions && !this.InEditMode) {
+                const routeServiceUrl = new URL(this.RouteService, this.BaseURL);
+                if (this.CurrentWebsite)
+                    routeServiceUrl.searchParams.set('siteId', this.CurrentWebsite.id);
+                routeServiceUrl.searchParams.set('route', path);
+                try {
+                    const routeResponse = yield this.doRequest(routeServiceUrl);
+                    if (routeResponse) {
+                        const iContent = yield this.getContent(routeResponse.contentLink);
+                        if (iContent)
+                            return iContent;
+                    }
+                }
+                catch (e) {
+                    // Ignored on purpose
+                }
+            }
+            // Fallback to resolving by accessing the URL itself
+            const url = new URL(path.startsWith('/') ? path.substr(1) : path, this.BaseURL);
+            if (select)
+                url.searchParams.set('select', select.map(s => encodeURIComponent(s)).join(','));
+            if (expand)
+                url.searchParams.set('expand', expand.map(s => encodeURIComponent(s)).join(','));
+            return this.doRequest(url); // .catch(e => this.createNetworkErrorResponse(e));
+        });
     }
     /**
      * Retrieve a single piece of content from Episerver
@@ -151,7 +181,7 @@ class ContentDeliveryAPI {
      */
     getContent(id, select, expand) {
         // Create base URL
-        const apiId = ContentLink_1.ContentLinkService.createApiId(id, true);
+        const apiId = ContentLinkService.createApiId(id, true);
         const url = new URL(this.ContentService + apiId, this.BaseURL);
         // Handle additional parameters
         if (select)
@@ -159,7 +189,14 @@ class ContentDeliveryAPI {
         if (expand)
             url.searchParams.set('expand', expand.map(s => encodeURIComponent(s)).join(','));
         // Perform request
-        return this.doRequest(url).catch(e => this.createNetworkErrorResponse(e));
+        return this.doAdvancedRequest(url).then(r => {
+            const c = r[0];
+            c.serverContext = {
+                propertyDataType: 'IContentDeliveryResponseContext',
+                value: r[1]
+            };
+            return c;
+        }).catch(e => this.createNetworkErrorResponse(e));
     }
     /**
      * Retrieve a list content-items from Episerver in one round-trip
@@ -172,7 +209,7 @@ class ContentDeliveryAPI {
         const refs = [];
         const guids = [];
         ids === null || ids === void 0 ? void 0 : ids.forEach(id => {
-            const apiId = ContentLink_1.ContentLinkService.createApiId(id, true);
+            const apiId = ContentLinkService.createApiId(id, true);
             if (this.apiIdIsGuid(apiId)) {
                 guids.push(apiId);
             }
@@ -194,7 +231,7 @@ class ContentDeliveryAPI {
     }
     getAncestors(id, select, expand) {
         // Create base URL
-        const apiId = ContentLink_1.ContentLinkService.createApiId(id, true);
+        const apiId = ContentLinkService.createApiId(id, true);
         const url = new URL(this.ContentService + apiId + '/ancestors', this.BaseURL);
         // Handle additional parameters
         if (select)
@@ -206,7 +243,7 @@ class ContentDeliveryAPI {
     }
     getChildren(id, select, expand) {
         // Create base URL
-        const apiId = ContentLink_1.ContentLinkService.createApiId(id, true);
+        const apiId = ContentLinkService.createApiId(id, true);
         const url = new URL(this.ContentService + apiId + '/children', this.BaseURL);
         // Handle additional parameters
         if (select)
@@ -221,7 +258,7 @@ class ContentDeliveryAPI {
             if (!this._config.EnableExtensions)
                 return Promise.reject('Extensions must be enabled to use the invoke method');
             // Base configuration
-            const apiId = ContentLink_1.ContentLinkService.createApiId(content, true);
+            const apiId = ContentLinkService.createApiId(content, true);
             const url = new URL(this.MethodService + apiId + '/' + method, this.BaseURL);
             // Default JSON Transformer for request data
             const defaultTransformer = (reqData, reqHeaders) => {
@@ -244,7 +281,7 @@ class ContentDeliveryAPI {
                     actionName: method,
                     contentLink: errorResponse.contentLink,
                     currentContent: errorResponse,
-                    responseType: ActionResponse_1.ResponseType.ActionResult,
+                    responseType: ResponseType.ActionResult,
                     data: errorResponse,
                     language: this.Language,
                     name: typeof (errorResponse.name) === "string" ? errorResponse.name : errorResponse.name.value,
@@ -272,11 +309,30 @@ class ContentDeliveryAPI {
     }
     doRequest(url, options = {}) {
         return __awaiter(this, void 0, void 0, function* () {
+            const [responseData, responseInfo] = yield this.doAdvancedRequest(url, options);
+            return responseData;
+        });
+    }
+    doAdvancedRequest(url, options = {}) {
+        var _a;
+        return __awaiter(this, void 0, void 0, function* () {
             // Pre-process URL
             const requestUrl = typeof (url) === "string" ? new URL(url.toLowerCase(), this.BaseURL) : url;
             if (this.InEditMode) {
                 requestUrl.searchParams.set('epieditmode', 'True');
                 requestUrl.searchParams.set('preventcache', Math.round(Math.random() * 100000000).toString());
+                // Propagate the VisitorGroup Preview
+                try {
+                    if (!requestUrl.searchParams.has('visitorgroupsByID')) {
+                        const windowSearchParams = new URLSearchParams((_a = window === null || window === void 0 ? void 0 : window.location) === null || _a === void 0 ? void 0 : _a.search);
+                        if (windowSearchParams.has('visitorgroupsByID')) {
+                            requestUrl.searchParams.set('visitorgroupsByID', windowSearchParams.get('visitorgroupsByID'));
+                        }
+                    }
+                }
+                catch (e) {
+                    // Ignore on purpose
+                }
             }
             if (requestUrl.pathname.indexOf(this.ContentService) && this._config.AutoExpandAll && !requestUrl.searchParams.has('expand')) {
                 requestUrl.searchParams.set('expand', '*');
@@ -300,9 +356,26 @@ class ContentDeliveryAPI {
                     throw new Error(`${response.status}: ${response.statusText}`);
                 }
                 const data = response.data;
+                const ctx = {};
+                for (const key of Object.keys(response.headers)) {
+                    switch (key) {
+                        case 'etag':
+                            ctx.etag = response.headers[key];
+                            break;
+                        case 'date':
+                            ctx.date = response.headers[key];
+                            break;
+                        case 'cache-control':
+                            ctx.cacheControl = response.headers['cache-control'].split(',').map(s => s.trim());
+                            break;
+                        default:
+                            // Do Nothing
+                            break;
+                    }
+                }
                 if (this._config.Debug)
-                    console.info('ContentDeliveryAPI Response', requestConfig.method + ' ' + requestConfig.url, data);
-                return data;
+                    console.info('ContentDeliveryAPI Response', requestConfig.method + ' ' + requestConfig.url, data, response.headers);
+                return [data, ctx];
             }
             catch (e) {
                 if (this._config.Debug)
@@ -354,5 +427,4 @@ class ContentDeliveryAPI {
         };
     }
 }
-exports.ContentDeliveryAPI = ContentDeliveryAPI;
-exports.default = ContentDeliveryAPI;
+export default ContentDeliveryAPI;

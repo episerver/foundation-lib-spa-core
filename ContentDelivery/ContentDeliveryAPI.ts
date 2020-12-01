@@ -1,9 +1,9 @@
 import Axios, {  AxiosInstance, AxiosRequestConfig, AxiosTransformer, Method } from 'axios';
 import * as UUID from 'uuid';
-import IContentDeliveryAPi from './IContentDeliveryAPI';
+import IContentDeliveryAPi, { IContentDeliveryResponse, IContentDeliveryResponseContext } from './IContentDeliveryAPI';
 import ContentDeliveryApiConfig, { DefaultConfig } from './Config';
 import Website from '../Models/Website';
-import WebsiteList from '../Models/WebsiteList';
+import WebsiteList, { hostnameFilter } from '../Models/WebsiteList';
 import IContent from '../Models/IContent';
 import { ContentReference, ContentLinkService } from '../Models/ContentLink';
 import { PathResponse, NetworkErrorData } from '../ContentDeliveryAPI';
@@ -70,6 +70,20 @@ export class ContentDeliveryAPI implements IContentDeliveryAPi
         return true;
     }
 
+    public get InEpiserverShell() : boolean
+    {
+        if (this.InEditMode) return true;
+        try {
+            const searchParams = new URLSearchParams(window.location.search);
+            if (searchParams.has('visitorgroupsByID')) return true;
+            if (searchParams.has('commondrafts')) return true;
+            if (searchParams.has('epieditmode') && searchParams.get('epieditmode')?.toLowerCase() === 'true') return true;
+        } catch (e) {
+            // Ignored on purpose
+        }
+        return false;
+    }
+
     public async login(username: string, password: string) : Promise<boolean>
     {
         const params = new URLSearchParams();
@@ -95,46 +109,72 @@ export class ContentDeliveryAPI implements IContentDeliveryAPi
 
     public async getWebsite(hostname ?: string | URL) : Promise<Website | undefined>
     {
+        let processedHost : string = '';
         switch (typeof(hostname)) {
             case 'undefined':
-                hostname = '';
+                processedHost = '';
                 break;
             case 'string':
-                hostname = hostname;
+                processedHost = hostname;
                 break;
             default:
-                hostname = hostname.hostname;
+                processedHost = hostname.hostname;
                 break;
         }
+        if (this._config.Debug) console.log(`ContentDeliveryAPI: Resolving website for: ${ processedHost }`);
         return this.getWebsites().then(websites => {
-            let website: Website | undefined;
-            let starWebsite: Website | undefined;
-            websites.forEach(w => {
-                if (w.hosts) w.hosts.forEach(h => {
-                    website = website || h.name === hostname ? w : undefined;
-                    starWebsite = starWebsite || h.name === '*' ? w : undefined;
-                });
-            });
-            return website || starWebsite;
+            const website: Website | undefined = websites.filter(w => hostnameFilter(w, processedHost, undefined, false)).shift();
+            const starWebsite: Website | undefined = websites.filter(w => hostnameFilter(w, '*', undefined, false)).shift();
+            const outValue = website || starWebsite;
+            if (this._config.Debug) console.log(`ContentDeliveryAPI: Resolved website for: ${ processedHost } to ${ outValue?.name }`);
+            return outValue;
         });
     }
 
-    public resolveRoute<T = any, C extends IContent = IContent>(path : string, select ?: string[], expand ?: string[]) : Promise<PathResponse<T,C | NetworkErrorData>>
+    public async getCurrentWebsite() : Promise<Website | undefined>
     {
-        if (this._config.EnableExtensions && !this.InEditMode) {
-            const serviceUrl = new URL(this.RouteService, this.BaseURL);
-            if (this.CurrentWebsite) serviceUrl.searchParams.set('siteId', this.CurrentWebsite.id);
-            serviceUrl.searchParams.set('route', path);
-            return this.doRequest<ContentRoutingResponse>(serviceUrl).then(r => this.getContent<C>(r.contentLink)).catch(e => this.createNetworkErrorResponse(e));
+        if (this.CurrentWebsite) return this.CurrentWebsite;
+        let hostname : undefined | string | URL;
+        try {
+            hostname = window.location.hostname;
+        } catch (e) { /* Ignored on purpose */ }
+        const w = await this.getWebsite(hostname);
+        this.CurrentWebsite = w;
+        return w;
+    }
+
+    public async resolveRoute<T = any, C extends IContent = IContent>(path : string, select ?: string[], expand ?: string[]) : Promise<PathResponse<T,C | NetworkErrorData>>
+    {
+        // Try CD-API 2.17 method first
+        const contentServiceUrl = new URL(this.ContentService, this.BaseURL);
+        contentServiceUrl.searchParams.set('contentUrl', path);
+        if (select) contentServiceUrl.searchParams.set('select', select.join(','));
+        if (expand) contentServiceUrl.searchParams.set('expand', expand.join(','));
+        const list = await this.doRequest<IContent[]>(contentServiceUrl);
+        if (list && list.length === 1) {
+            return list[0] as C;
         }
 
-        const url = new URL(path.startsWith('/') ? path.substr(1) : path, this.BaseURL);
+        // Then try the extension method
+        if (this._config.EnableExtensions && !this.InEditMode) {
+            const routeServiceUrl = new URL(this.RouteService, this.BaseURL);
+            if (this.CurrentWebsite) routeServiceUrl.searchParams.set('siteId', this.CurrentWebsite.id);
+            routeServiceUrl.searchParams.set('route', path);
+            try {
+                const routeResponse = await this.doRequest<ContentRoutingResponse>(routeServiceUrl);
+                if (routeResponse ){
+                    const iContent = await this.getContent<C>(routeResponse.contentLink);
+                    if (iContent) return iContent;
+                }
+            } catch (e) {
+                // Ignored on purpose
+            }
+        }
 
-        // Handle additional parameters
+        // Fallback to resolving by accessing the URL itself
+        const url = new URL(path.startsWith('/') ? path.substr(1) : path, this.BaseURL);
         if (select) url.searchParams.set('select', select.map(s => encodeURIComponent(s)).join(','));
         if (expand) url.searchParams.set('expand', expand.map(s => encodeURIComponent(s)).join(','));
-
-        // Perform request
         return this.doRequest<PathResponse<T,C>>(url) // .catch(e => this.createNetworkErrorResponse(e));
     }
 
@@ -155,7 +195,14 @@ export class ContentDeliveryAPI implements IContentDeliveryAPi
         if (expand) url.searchParams.set('expand', expand.map(s => encodeURIComponent(s)).join(','));
 
         // Perform request
-        return this.doRequest<C>(url).catch(e => this.createNetworkErrorResponse(e));
+        return this.doAdvancedRequest<C>(url).then(r => { 
+            const c = r[0];
+            c.serverContext = {
+                propertyDataType: 'IContentDeliveryResponseContext',
+                value: r[1]
+            };
+            return c; 
+        }).catch(e => this.createNetworkErrorResponse(e));
     }
 
     /**
@@ -276,13 +323,33 @@ export class ContentDeliveryAPI implements IContentDeliveryAPi
         return apiId.match(guidRegex) ? true : false;
     }
 
-    protected async doRequest<T>(url: string | URL, options: Partial<AxiosRequestConfig> = {}) : Promise<T>
+    
+    private async doRequest<T>(url: string | URL, options: Partial<AxiosRequestConfig> = {}) : Promise<T>
+    {
+        const [ responseData, responseInfo ] = await this.doAdvancedRequest<T>(url, options);
+        return responseData;
+    }
+
+    protected async doAdvancedRequest<T>(url: string | URL, options: Partial<AxiosRequestConfig> = {}) : Promise<IContentDeliveryResponse<T>>
     {
         // Pre-process URL
+
         const requestUrl : URL = typeof(url) === "string" ? new URL(url.toLowerCase(), this.BaseURL) : url;
         if (this.InEditMode) {
             requestUrl.searchParams.set('epieditmode', 'True');
             requestUrl.searchParams.set('preventcache', Math.round(Math.random() * 100000000).toString());
+
+            // Propagate the VisitorGroup Preview
+            try {
+                if (!requestUrl.searchParams.has('visitorgroupsByID')) {
+                    const windowSearchParams = new URLSearchParams(window?.location?.search);
+                    if (windowSearchParams.has('visitorgroupsByID')) {
+                        requestUrl.searchParams.set('visitorgroupsByID', windowSearchParams.get('visitorgroupsByID') as string);
+                    }
+                }
+            } catch (e) {
+                // Ignore on purpose
+            }
         }
         if (requestUrl.pathname.indexOf(this.ContentService) && this._config.AutoExpandAll && !requestUrl.searchParams.has('expand')) {
             requestUrl.searchParams.set('expand', '*');
@@ -307,8 +374,25 @@ export class ContentDeliveryAPI implements IContentDeliveryAPi
                 throw new Error(`${ response.status }: ${ response.statusText }`);
             }
             const data = response.data;
-            if (this._config.Debug) console.info('ContentDeliveryAPI Response', requestConfig.method+' '+requestConfig.url, data);
-            return data;
+            const ctx : IContentDeliveryResponseContext = {};
+            for (const key of Object.keys(response.headers)) {
+                switch (key) {
+                    case 'etag':
+                        ctx.etag = response.headers[key];
+                        break;
+                    case 'date':
+                        ctx.date = response.headers[key];
+                        break;
+                    case 'cache-control':
+                        ctx.cacheControl = (response.headers['cache-control'] as string).split(',').map(s => s.trim());
+                        break;
+                    default:
+                        // Do Nothing
+                        break;
+                }
+            }
+            if (this._config.Debug) console.info('ContentDeliveryAPI Response', requestConfig.method+' '+requestConfig.url, data, response.headers);
+            return [ data, ctx ];
         } catch (e) {
             if (this._config.Debug) console.info('ContentDeliveryAPI Error', requestConfig.method+' '+requestConfig.url, e);
             throw e;

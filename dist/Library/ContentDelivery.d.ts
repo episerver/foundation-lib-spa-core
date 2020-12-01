@@ -2,7 +2,9 @@ import ContentDeliveryAPI, { PathResponse as BasePathResponse, NetworkErrorData 
 import BaseActionResponse from '../Models/ActionResponse';
 import _Property, { StringProperty as _StringProperty, NumberProperty as _NumberProperty, BooleanProperty as _BooleanProperty, ContentReferenceProperty as _ContentReferenceProperty, ContentReferenceListProperty as _ContentReferenceListProperty, ContentAreaProperty as _ContentAreaProperty, LinkListProperty as _LinkListProperty, LinkProperty as _LinkProperty } from '../Property';
 import IContent, { namePropertyIsString as _namePropertyIsString } from '../Models/IContent';
+export * from '../Repository/IRepository';
 import * as IContentRepositoryNS from '../Repository/IContentRepository';
+import * as IIContentRepositoryNS from '../Repository/IIContentRepository';
 import IContentDeliveryAPI from '../ContentDelivery/IContentDeliveryAPI';
 import ContentDeliveryAPI_V2 from '../ContentDelivery/ContentDeliveryAPI';
 import IContentDeliveryAPIConfig from '../ContentDelivery/Config';
@@ -25,6 +27,6 @@ export declare type LinkProperty = _LinkProperty;
 export declare type ContentReferenceListProperty = _ContentReferenceListProperty;
 export declare type IContentDeliveryAPI_V2 = IContentDeliveryAPI;
 export declare type ConfigV2 = IContentDeliveryAPIConfig;
-export declare type IIContentRepositoryV2 = IContentRepositoryNS.IIContentRepository;
+export declare type IIContentRepositoryV2 = IIContentRepositoryNS.IIContentRepository;
 export declare const RepositoryV2: typeof IContentRepositoryNS.IContentRepository;
 export declare const API_V2: typeof ContentDeliveryAPI_V2;

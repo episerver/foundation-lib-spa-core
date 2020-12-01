@@ -1,5 +1,5 @@
 import { AxiosInstance, AxiosRequestConfig, AxiosTransformer, Method } from 'axios';
-import IContentDeliveryAPi from './IContentDeliveryAPI';
+import IContentDeliveryAPi, { IContentDeliveryResponse } from './IContentDeliveryAPI';
 import ContentDeliveryApiConfig from './Config';
 import Website from '../Models/Website';
 import WebsiteList from '../Models/WebsiteList';
@@ -25,9 +25,11 @@ export declare class ContentDeliveryAPI implements IContentDeliveryAPi {
     set Language(value: string);
     get BaseURL(): string;
     get OnLine(): boolean;
+    get InEpiserverShell(): boolean;
     login(username: string, password: string): Promise<boolean>;
     getWebsites(): Promise<WebsiteList>;
     getWebsite(hostname?: string | URL): Promise<Website | undefined>;
+    getCurrentWebsite(): Promise<Website | undefined>;
     resolveRoute<T = any, C extends IContent = IContent>(path: string, select?: string[], expand?: string[]): Promise<PathResponse<T, C | NetworkErrorData>>;
     /**
      * Retrieve a single piece of content from Episerver
@@ -50,7 +52,8 @@ export declare class ContentDeliveryAPI implements IContentDeliveryAPi {
     invoke<TypeOut extends unknown = any, TypeIn extends unknown = any>(content: ContentReference, method: string, verb?: Method, data?: TypeIn, requestTransformer?: AxiosTransformer): Promise<ActionResponse<TypeOut | NetworkErrorData, IContent>>;
     isServiceURL(url: URL | string): boolean;
     protected apiIdIsGuid(apiId: string): boolean;
-    protected doRequest<T>(url: string | URL, options?: Partial<AxiosRequestConfig>): Promise<T>;
+    private doRequest;
+    protected doAdvancedRequest<T>(url: string | URL, options?: Partial<AxiosRequestConfig>): Promise<IContentDeliveryResponse<T>>;
     protected getDefaultRequestConfig(): AxiosRequestConfig;
     protected getHeaders(customHeaders?: AxiosHeaders): AxiosHeaders;
     protected errorCounter: number;

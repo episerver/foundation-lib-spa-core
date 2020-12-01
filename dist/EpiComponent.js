@@ -1,16 +1,10 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.EpiComponent = void 0;
-const react_1 = require("react");
-const Spa_1 = __importDefault(require("./Spa"));
+import { Component } from 'react';
+import CurrentContext from './Spa';
 /**
  * Base abstract class to be used by components representing an Episerver IContent component (e.g. Block, Page, Media,
  * Catalog, Product, etc...)
  */
-class EpiComponent extends react_1.Component {
+export class EpiComponent extends Component {
     constructor(props) {
         super(props);
         this.currentComponentId = this.props.data.contentLink.id;
@@ -45,7 +39,7 @@ class EpiComponent extends react_1.Component {
         return this.props.data.contentLink;
     }
     getContext() {
-        const context = this.props.context || Spa_1.default;
+        const context = this.props.context || CurrentContext;
         return context;
     }
     /**
@@ -77,5 +71,4 @@ class EpiComponent extends react_1.Component {
         this.getContext().navigateTo(toPage);
     }
 }
-exports.EpiComponent = EpiComponent;
-exports.default = EpiComponent;
+export default EpiComponent;

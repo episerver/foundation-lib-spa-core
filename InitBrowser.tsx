@@ -13,10 +13,6 @@ export default function InitBrowser(config: AppConfig, containerId?: string, ser
         serviceContainer = new DefaultServiceContainer();
     }
     EpiContext.init(config, serviceContainer);
-
-    /*if ((new URLSearchParams(window.location.search)).get('epieditmode') !== 'True') {
-        History.setupPageBinding(EpiContext);
-    }*/
     
     const container = document.getElementById(containerId ? containerId : "epi-page-container");
     if (container && container.childElementCount > 0) {
@@ -25,10 +21,10 @@ export default function InitBrowser(config: AppConfig, containerId?: string, ser
         const loader = EpiContext.componentLoader();
         ComponentPreLoader.load(components, loader).finally(() => {
             if (EpiContext.isDebugActive()) console.info('Hydrating existing render, Stage 2. Hydration ...');
-            ReactDOM.hydrate(<CmsSite context={EpiContext} />, container);
+            ReactDOM.hydrate(<CmsSite context={ EpiContext } />, container);
         });
     } else {
         if (EpiContext.isDebugActive()) console.info('Building new application');
-        ReactDOM.render(<CmsSite context={EpiContext} />, container);
+        ReactDOM.render(<CmsSite context={ EpiContext } />, container);
     }
 }

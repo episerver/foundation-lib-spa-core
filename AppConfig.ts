@@ -7,6 +7,8 @@ import IRouteConfig from './Routing/IRouteConfig';
 import { AxiosAdapter } from 'axios';
 import { IRepositoryConfig } from './Repository/IRepository';
 import { IComponentLoaderConfig } from './Loaders/ComponentLoader'
+import ContentDeliveryConfig from './ContentDelivery/Config';
+import { TypeMapperType } from './Loaders/BaseTypeMapper';
 
 export default interface AppConfig {
   /**
@@ -97,10 +99,15 @@ export default interface AppConfig {
   /**
    * Additional configuration for the IContentRepository
    */
-  iContentRepository ?: IRepositoryConfig
+  iContentRepository ?: Partial<IRepositoryConfig>
 
   /**
    * Configure the component loaders
    */
   componentLoaders ?: IComponentLoaderConfig
+
+  /**
+   * Create instance objects from raw iContent data
+   */
+  typeMapper ?: TypeMapperType
 }

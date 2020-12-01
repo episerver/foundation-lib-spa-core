@@ -1,46 +1,26 @@
-"use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.EpiserverWebsite = void 0;
 // Import libraries
-const react_1 = __importDefault(require("react"));
-const react_helmet_1 = require("react-helmet");
-const react_redux_1 = require("react-redux");
-const Context_1 = __importDefault(require("../Hooks/Context"));
-const Layout_1 = __importDefault(require("./Layout"));
-const EpiSpaRouter = __importStar(require("../Routing/EpiSpaRouter"));
-exports.EpiserverWebsite = (props) => {
+import React from 'react';
+import { Helmet } from 'react-helmet';
+import { Provider as ReduxProvider } from 'react-redux';
+import EpiserverContext from '../Hooks/Context';
+// Import Episerver Taxonomy
+import Layout from './Layout';
+// Import Episerver Components
+import * as EpiSpaRouter from '../Routing/EpiSpaRouter';
+import { DefaultServices } from '../Core/IServiceContainer';
+export const EpiserverWebsite = (props) => {
     const SiteLayout = getLayout(props.context.config());
-    const mainSite = react_1.default.createElement(Context_1.default.Provider, { value: props.context },
-        react_1.default.createElement(EpiSpaRouter.Router, null,
-            react_1.default.createElement(react_helmet_1.Helmet, null),
-            react_1.default.createElement(SiteLayout, { context: props.context },
-                react_1.default.createElement(EpiSpaRouter.RoutedContent, { config: props.context.config().routes || [], keyPrefix: "CmsSite-RoutedContent" }),
+    const ssr = props.context.serviceContainer.getService(DefaultServices.ServerContext);
+    const location = (props.context.isServerSideRendering() ? ssr.Path : window.location.pathname) || undefined;
+    const mainSite = React.createElement(EpiserverContext.Provider, { value: props.context },
+        React.createElement(EpiSpaRouter.Router, { location: location, basename: props.context.config().basePath },
+            React.createElement(Helmet, null),
+            React.createElement(SiteLayout, { context: props.context },
+                React.createElement(EpiSpaRouter.RoutedContent, { config: props.context.config().routes || [], keyPrefix: "CmsSite-RoutedContent" }),
                 props.children)));
-    return props.context.isServerSideRendering() ? mainSite : react_1.default.createElement(react_redux_1.Provider, { store: props.context.getStore() }, mainSite);
+    return props.context.isServerSideRendering() ? mainSite : React.createElement(ReduxProvider, { store: props.context.getStore() }, mainSite);
 };
 function getLayout(config) {
-    return config.layout || Layout_1.default;
+    return config.layout || Layout;
 }
-exports.default = exports.EpiserverWebsite;
+export default EpiserverWebsite;

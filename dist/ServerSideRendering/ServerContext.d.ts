@@ -11,7 +11,7 @@ export declare function isSerializedWebsite(data: WebsiteOrSerialzed): data is s
  * The TypeScript definition of the ServerContext being passed from .Net to the
  * React Application.
  */
-export default interface ServerContext {
+export declare type ServerContext = {
     /**
      * Window.location compatible location object.
      */
@@ -36,5 +36,5 @@ export default interface ServerContext {
      * The content of the the current start page (JSON Encoded)
      */
     StartPageData: IContentOrSerialized;
-}
-export {};
+};
+export default ServerContext;

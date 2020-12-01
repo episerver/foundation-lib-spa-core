@@ -1,6 +1,4 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-class DefaultServiceContainer {
+export default class DefaultServiceContainer {
     constructor() {
         this.services = {};
     }
@@ -66,4 +64,3 @@ class DefaultServiceContainer {
         return Object.keys(this.services);
     }
 }
-exports.default = DefaultServiceContainer;

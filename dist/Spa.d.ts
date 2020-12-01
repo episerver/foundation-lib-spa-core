@@ -23,16 +23,16 @@ export declare class EpiserverSpaContext implements IEpiserverContext, PathProvi
     protected _serviceContainer: IServiceContainer;
     protected _modules: IInitializableModule[];
     get serviceContainer(): IServiceContainer;
+    /**
+     * Retrieve an instance of the ContentDeliveryAPI wrapper
+     *
+     * @deprecated    Use the ContentRepository_V2 service to fetch content and interact with controllers
+     */
     get contentStorage(): ContentDeliveryAPI;
     init(config: AppConfig, serviceContainer: IServiceContainer, isServerSideRendering?: boolean): void;
     private _initRedux;
     private _initEditMode;
     private onEpiContentSaved;
-    /**
-     * Handler for the postdata message sent by the Epishell to indicate that the environment is now ready
-     * and the edit mode can be detected.
-     */
-    private onEpiReady;
     isInitialized(): boolean;
     isDebugActive(): boolean;
     isServerSideRendering(): boolean;

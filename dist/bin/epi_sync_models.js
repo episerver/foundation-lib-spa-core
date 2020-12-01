@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-"use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -9,15 +8,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-const fs_1 = __importDefault(require("fs"));
-const path_1 = __importDefault(require("path"));
-const dotenv_1 = __importDefault(require("dotenv"));
-const axios_1 = __importDefault(require("axios"));
-const StringUtils_1 = __importDefault(require("../Util/StringUtils"));
+import fs from 'fs';
+import path from 'path';
+import dotenv from 'dotenv';
+import axios from 'axios';
+import StringUtils from '../Util/StringUtils';
 /**
  * Episerver Model Synchronization Job
  */
@@ -31,12 +26,12 @@ class EpiModelSync {
     constructor(spaDir, envFile) {
         this._servicePath = 'api/episerver/v3/model';
         this._iContentProps = ["contentLink"];
-        if (!fs_1.default.existsSync(spaDir))
+        if (!fs.existsSync(spaDir))
             throw new Error("SPA Directory not found");
-        if (!fs_1.default.existsSync(envFile))
+        if (!fs.existsSync(envFile))
             throw new Error(".env File not found");
         this._rootDir = spaDir;
-        this._config = dotenv_1.default.parse(fs_1.default.readFileSync(envFile));
+        this._config = dotenv.parse(fs.readFileSync(envFile));
     }
     /**
      * Run the configuration job
@@ -65,7 +60,7 @@ class EpiModelSync {
      * @returns {void}
      */
     createAsyncTypeMapper(allItemNames) {
-        const mapperFile = path_1.default.join(this.getModelPath(), 'TypeMapper.ts');
+        const mapperFile = path.join(this.getModelPath(), 'TypeMapper.ts');
         let mapper = "import { Taxonomy, Core, Loaders } from '@episerver/spa-core';\n";
         // allItemNames.forEach(x => mapper += "import {"+this.getModelInstanceName(x)+"} from './"+ this.getModelInterfaceName(x)+"';\n")
         mapper += "\nexport default class TypeMapper extends Loaders.BaseTypeMapper {\n";
@@ -90,7 +85,7 @@ class EpiModelSync {
         mapper += "    });\n";
         mapper += "  }\n";
         mapper += "}\n";
-        fs_1.default.writeFile(mapperFile, mapper, () => {
+        fs.writeFile(mapperFile, mapper, () => {
             console.log(' - Written type mapper');
         });
     }
@@ -151,8 +146,8 @@ class EpiModelSync {
             });
             iface += "}\n";
             // Write interface
-            const fullTarget = path_1.default.join(me.getModelPath(), fileName);
-            fs_1.default.writeFile(fullTarget, iface, () => {
+            const fullTarget = path.join(me.getModelPath(), fileName);
+            fs.writeFile(fullTarget, iface, () => {
                 console.log("   - " + interfaceName + " written to " + fullTarget);
             });
         });
@@ -204,12 +199,12 @@ class EpiModelSync {
     clearModels(keep) {
         console.log(' - Cleaning model directory');
         const modelPath = this.getModelPath();
-        const files = fs_1.default.readdirSync(modelPath);
+        const files = fs.readdirSync(modelPath);
         files.forEach(file => {
-            const name = path_1.default.parse(file).name;
+            const name = path.parse(file).name;
             if (name !== "TypeMapper" && keep && !keep.includes(name)) {
                 console.log('  - Removing old model: ', name);
-                fs_1.default.unlinkSync(path_1.default.join(modelPath, file));
+                fs.unlinkSync(path.join(modelPath, file));
             }
         });
     }
@@ -233,9 +228,9 @@ class EpiModelSync {
         if (!this._config.EPI_MODEL_PATH) {
             throw new Error('Episerver models directory not set');
         }
-        const modelPath = path_1.default.join(this._rootDir, this._config.EPI_MODEL_PATH);
-        if (!fs_1.default.existsSync(modelPath)) {
-            fs_1.default.mkdirSync(modelPath, { "recursive": true });
+        const modelPath = path.join(this._rootDir, this._config.EPI_MODEL_PATH);
+        if (!fs.existsSync(modelPath)) {
+            fs.mkdirSync(modelPath, { "recursive": true });
         }
         return modelPath;
     }
@@ -247,7 +242,7 @@ class EpiModelSync {
      * @returns {string}
      */
     getModelInterfaceName(modelName) {
-        return StringUtils_1.default.SafeModelName(modelName) + 'Data';
+        return StringUtils.SafeModelName(modelName) + 'Data';
     }
     /**
      * Generate the TypeScript instance name
@@ -257,7 +252,7 @@ class EpiModelSync {
      * @returns {string}
      */
     getModelInstanceName(modelName) {
-        return StringUtils_1.default.SafeModelName(modelName) + 'Type';
+        return StringUtils.SafeModelName(modelName) + 'Type';
     }
     /**
      * Generate the TypeScript interface name
@@ -267,7 +262,7 @@ class EpiModelSync {
      * @return {string}
      */
     getComponentPropertiesInterfaceName(modelName) {
-        return StringUtils_1.default.SafeModelName(modelName) + 'Props';
+        return StringUtils.SafeModelName(modelName) + 'Props';
     }
     processFieldName(originalName) {
         let processedName = originalName;
@@ -278,7 +273,7 @@ class EpiModelSync {
         return __awaiter(this, void 0, void 0, function* () {
             let response;
             try {
-                response = yield axios_1.default.request({
+                response = yield axios.request({
                     method: 'get',
                     baseURL: this._config.EPI_URL,
                     url,
@@ -297,6 +292,6 @@ class EpiModelSync {
     }
 }
 const cwd = process.cwd();
-const configFile = path_1.default.join(cwd, ".env");
+const configFile = path.join(cwd, ".env");
 const sync = new EpiModelSync(cwd, configFile);
 sync.run();

@@ -13,6 +13,7 @@ export class IndexedDB
     protected _isAvailable : boolean = false;
     protected _idb : Database|undefined = undefined;
     protected _schemaUpgrade : SchemaUpgrade|undefined = undefined;
+    protected _debug : boolean = false;
 
     public get IsAvailable() : boolean { return this._isAvailable; }
     public get IsOpen() : boolean { return this._idb ? true : false; }
@@ -20,11 +21,12 @@ export class IndexedDB
     public get Version() : number { return this._version; }
     public get Database() : Database|undefined { return this._idb; }
 
-    constructor(name: string, version: number, schemaUpgrade?: SchemaUpgrade, autoOpen?: boolean) 
+    constructor(name: string, version: number, schemaUpgrade?: SchemaUpgrade, autoOpen?: boolean, debug: boolean = false) 
     {
         this._name = name;
         this._version = version;
         this._schemaUpgrade = schemaUpgrade;
+        this._debug = debug;
         if (window.indexedDB) {
             this._isAvailable = true;
             if (autoOpen) this.open();
@@ -47,9 +49,9 @@ export class IndexedDB
                     } else {
                         me._idb = idb.result ? new Database(idb.result) : undefined
                         const t = new Transaction((e.currentTarget as any).transaction);
-                        console.log(t);
                         if (me._idb) {
-                            me._schemaUpgrade(me._idb, t).then(x => x ? resolve(me._idb) : reject('Unable to upgrade the database')).catch(x => reject(x))
+                            const _idb : Database = me._idb;
+                            me._schemaUpgrade(_idb, t).then(x => x ? resolve(_idb) : reject('Unable to upgrade the database')).catch(x => reject(x))
                         }
                     }
                 }

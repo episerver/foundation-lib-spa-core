@@ -7,6 +7,7 @@ import RoutedComponent from '../Components/RoutedComponent';
 export default class RoutingModule extends BaseInitializableModule implements IInitializableModule
 {
     protected name : string = "Episerver CMS Routing";
+    public readonly SortOrder : number = 20;
     
     /**
      * Ensure the configuration object within the service container contains a "*" route. If

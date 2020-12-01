@@ -1,4 +1,3 @@
-"use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -8,12 +7,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-Object.defineProperty(exports, "__esModule", { value: true });
 /**
  * Helper class to pre-load a list of components to either ensure hydration of a server-side
  * rendered page is going smoothly or it's pre-load components for quick rendering.
  */
-class ComponentPreLoader {
+export default class ComponentPreLoader {
     /**
      * Perform the actual pre-loading of components, this is works by filling the cache of the
      * component loader.
@@ -52,4 +50,3 @@ class ComponentPreLoader {
         return allPreLoaded;
     }
 }
-exports.default = ComponentPreLoader;

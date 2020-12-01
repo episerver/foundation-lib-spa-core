@@ -1,11 +1,5 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.ContentLinkService = void 0;
-const Spa_1 = __importDefault(require("../Spa"));
-class ContentLinkService {
+import EpiContext from '../Spa';
+export class ContentLinkService {
     constructor() {
         // Just here to prevent instances
     }
@@ -80,7 +74,7 @@ class ContentLinkService {
         let linkUrl = link.url || '';
         if (linkUrl.substr(0, 1) === '/') {
             // Absolute URL
-            const basePath = Spa_1.default.config().basePath;
+            const basePath = EpiContext.config().basePath;
             linkUrl = linkUrl.substr(1);
             return basePath.substr(-1) === '/' ? basePath + linkUrl : basePath + '/' + linkUrl;
         }
@@ -89,4 +83,3 @@ class ContentLinkService {
         }
     }
 }
-exports.ContentLinkService = ContentLinkService;

@@ -1,13 +1,9 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.TrimLeft = exports.TrimRight = exports.SafeModelName = exports.StringUtils = void 0;
 /**
  * String utilities for common advanced string operations, which are needed across multiple
  * locations.
  */
-class StringUtils {
+export class StringUtils {
 }
-exports.StringUtils = StringUtils;
 /**
  * Transform a model name, as received from the ContentDelivery API to a safe model name that
  * can be loaded through the ES module loaders.
@@ -76,7 +72,7 @@ StringUtils.TrimLeft = (char, subject) => {
 };
 ;
 // Create exported functions
-exports.SafeModelName = StringUtils.SafeModelName;
-exports.TrimRight = StringUtils.TrimRight;
-exports.TrimLeft = StringUtils.TrimLeft;
-exports.default = StringUtils;
+export const SafeModelName = StringUtils.SafeModelName;
+export const TrimRight = StringUtils.TrimRight;
+export const TrimLeft = StringUtils.TrimLeft;
+export default StringUtils;

@@ -20,6 +20,10 @@ export default interface IEpiserverContext {
 
     readonly serviceContainer: IServiceContainer;
 
+    /**
+     * 
+     * @deprecated Switch to the ContentDeliveryAPI V2, fetchable from the serviceContainer
+     */
     readonly contentStorage : ContentDeliveryAPI;
 
     /**
@@ -209,14 +213,26 @@ export default interface IEpiserverContext {
   
     /**
      * Retrieve the current path
+     * 
+     * @deprecated Use React-Router instead
      */
     getCurrentPath(): string;
   
     /**
      * Retrieve the currently routed content
+     * 
+     * @deprecated Use React-Router instead
      */
     getRoutedContent(): IContent;
+
+    /**
+     * @deprecated Use React-Router instead
+     */
     hasRoutedContent(): boolean;
+
+    /**
+     * @deprecated Use React-Router instead
+     */
     setRoutedContent(iContent ?: IContent) : IEpiserverContext;
 
     /**

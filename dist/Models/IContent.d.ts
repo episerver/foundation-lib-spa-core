@@ -3,10 +3,11 @@ import ContentLink from './ContentLink';
 import ContentTypePath from './ContentTypePath';
 import Language from './Language';
 import LanguageList from './LanguageList';
+import { IContentDeliveryResponseContext } from '../ContentDelivery/IContentDeliveryAPI';
 export declare type NameProperty = string | StringProperty;
 export declare type GenericProperty = string | null | undefined | Language | LanguageList | ContentTypePath | ContentLink | Property<any>;
 export declare function namePropertyIsString(prop: NameProperty): prop is string;
-export default interface IContent {
+export declare type IContent = {
     contentLink: ContentLink;
     name: NameProperty;
     language?: Language;
@@ -22,7 +23,9 @@ export default interface IContent {
     stopPublish?: string | null;
     saved?: string | null;
     status?: string | null;
-}
+    serverContext?: Property<IContentDeliveryResponseContext>;
+};
+export default IContent;
 export interface IContentData extends IContent {
     [name: string]: GenericProperty;
 }

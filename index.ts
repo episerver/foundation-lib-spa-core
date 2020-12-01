@@ -74,6 +74,11 @@ export const useIContentRepository: () => ContentDeliveryNS.IIContentRepositoryV
 export const useContentDeliveryAPI: () => ContentDeliveryNS.IContentDeliveryAPI_V2 = ContextProvider.useContentDeliveryAPI;
 
 /**
+ * Retrieve the accessor for the server side rendering data
+ */
+export const useServerSideRendering = ContextProvider.useServerSideRendering;
+
+/**
  * Helper method to get the global scope at any location within the SPA, this is either
  * the 'window' or 'global' variable, depending on execution context.
  * 

@@ -1,4 +1,5 @@
 import * as Core from './Library/Core';
+import * as ContextProvider from './Hooks/Context';
 import * as ServerSideRendering from './Library/ServerSideRendering';
 import * as ContentDeliveryNS from './Library/ContentDelivery';
 export * as Core from './Library/Core';
@@ -51,6 +52,10 @@ export declare const useIContentRepository: () => ContentDeliveryNS.IIContentRep
  * from the nearest Provider in the virtual dom
  */
 export declare const useContentDeliveryAPI: () => ContentDeliveryNS.IContentDeliveryAPI_V2;
+/**
+ * Retrieve the accessor for the server side rendering data
+ */
+export declare const useServerSideRendering: typeof ContextProvider.useServerSideRendering;
 /**
  * Helper method to get the global scope at any location within the SPA, this is either
  * the 'window' or 'global' variable, depending on execution context.

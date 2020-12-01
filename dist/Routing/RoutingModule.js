@@ -1,16 +1,12 @@
-"use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
-Object.defineProperty(exports, "__esModule", { value: true });
 // Core interfaces
-const IInitializableModule_1 = require("../Core/IInitializableModule");
-const IServiceContainer_1 = require("../Core/IServiceContainer");
-const RoutedComponent_1 = __importDefault(require("../Components/RoutedComponent"));
-class RoutingModule extends IInitializableModule_1.BaseInitializableModule {
+import { BaseInitializableModule } from '../Core/IInitializableModule';
+import { DefaultServices } from '../Core/IServiceContainer';
+import RoutedComponent from '../Components/RoutedComponent';
+export default class RoutingModule extends BaseInitializableModule {
     constructor() {
         super(...arguments);
         this.name = "Episerver CMS Routing";
+        this.SortOrder = 20;
     }
     /**
      * Ensure the configuration object within the service container contains a "*" route. If
@@ -20,15 +16,14 @@ class RoutingModule extends IInitializableModule_1.BaseInitializableModule {
      * @param {IServiceContainer} container The Service Container to update
      */
     ConfigureContainer(container) {
-        const config = container.getService(IServiceContainer_1.DefaultServices.Config);
+        const config = container.getService(DefaultServices.Config);
         let haveStar = false;
         config.routes = config.routes || [];
         config.routes.forEach(c => haveStar = haveStar || c.path === "*");
         if (!haveStar)
             config.routes.push({
                 path: "*",
-                component: RoutedComponent_1.default
+                component: RoutedComponent
             });
     }
 }
-exports.default = RoutingModule;

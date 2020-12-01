@@ -1,4 +1,3 @@
-"use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -8,8 +7,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.FetchAdapter = void 0;
 /**
  * A basic implementation of an AxiosAdapter to let Axios use the Fetch API to
  * retrieve content.
@@ -17,7 +14,7 @@ exports.FetchAdapter = void 0;
  * @param   { AxiosRequestConfig }  config  The request configuration given by the implementing code
  * @returns { Promise<AxiosResponse> }      The response of the Fetch API Call
  */
-exports.FetchAdapter = (config) => __awaiter(void 0, void 0, void 0, function* () {
+export const FetchAdapter = (config) => __awaiter(void 0, void 0, void 0, function* () {
     const userAgent = 'Axios-Fetch-Adapter/0.0.1';
     const requestUrl = new URL(config.url || '', config.baseURL);
     if (config.auth) {
@@ -43,7 +40,7 @@ exports.FetchAdapter = (config) => __awaiter(void 0, void 0, void 0, function* (
     };
     const request = new Request(requestUrl.href, requestConfig);
     let r;
-    if (exports.FetchAdapter.isCachable && caches && exports.FetchAdapter.isCachable.some(test => test(requestUrl))) {
+    if (FetchAdapter.isCachable && caches && FetchAdapter.isCachable.some(test => test(requestUrl))) {
         const cache = yield caches.open(userAgent);
         const cacheResponse = yield cache.match(request);
         if (!cacheResponse) {
@@ -83,5 +80,5 @@ exports.FetchAdapter = (config) => __awaiter(void 0, void 0, void 0, function* (
     }
     return response;
 });
-exports.FetchAdapter.isCachable = [];
-exports.default = exports.FetchAdapter;
+FetchAdapter.isCachable = [];
+export default FetchAdapter;

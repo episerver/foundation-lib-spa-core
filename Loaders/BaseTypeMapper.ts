@@ -12,9 +12,7 @@ export interface TypeMapperTypeInfo {
  * Static interface for the typemapper, so it can be included
  * in the configuration
  */
-export interface TypeMapperType {
-  new: BaseTypeMapper;
-}
+export type TypeMapperType = new() => BaseTypeMapper;
 
 /**
  * Base implementation for the TypeMapper, which is used to dynamically load
@@ -39,7 +37,7 @@ export abstract class BaseTypeMapper {
 
   public loadType(typeName: string): Promise<IContentType> {
     if (!this.typeExists(typeName)) {
-      throw `The type ${typeName} is not known within Episerver`;
+      throw new Error(`The type ${typeName} is not known within Episerver`);
     }
     if (this.isCached(typeName)) {
       return Promise.resolve(this.getType(typeName, true) as IContentType);
@@ -56,14 +54,14 @@ export abstract class BaseTypeMapper {
   }
 
   public async createInstanceAsync<T extends IContent>(data: T): Promise<BaseIContent<T>> {
-    let typeName = data.contentType.slice(-1)[0];
-    let dataType = await this.loadType(typeName);
+    const typeName = data.contentType.slice(-1)[0];
+    const dataType = await this.loadType(typeName);
     return new dataType(data);
   }
 
   public createInstance<T extends IContent>(data: T): BaseIContent<T> {
-    let typeName = data.contentType.slice(-1)[0];
-    let dataType = this.getType(typeName) as IContentType;
+    const typeName = data.contentType.slice(-1)[0];
+    const dataType = this.getType(typeName) as IContentType;
     return new dataType(data);
   }
 
@@ -72,7 +70,7 @@ export abstract class BaseTypeMapper {
       return this.cache[typeName];
     }
     if (throwOnUnknown) {
-      throw `The type ${typeName} has not been cached!`;
+      throw new Error(`The type ${typeName} has not been cached!`);
     }
     return null;
   }
@@ -81,25 +79,25 @@ export abstract class BaseTypeMapper {
     try {
       return this.cache[typeName] ? true : false;
     } catch (e) {
-      //Ignore exception
+      // Ignore exception
     }
-    return false; //An exception occured, so not pre-loaded
+    return false; // An exception occured, so not pre-loaded
   }
 
   public isLoading(typeName: string): boolean {
     try {
       return this.loading[typeName] ? true : false;
     } catch (e) {
-      //Ignore exception
+      // Ignore exception
     }
-    return false; //An exception occured, so not pre-loaded
+    return false; // An exception occured, so not pre-loaded
   }
 
   public typeExists(typeName: string): boolean {
     try {
       return this.map[typeName] ? true : false;
     } catch (e) {
-      //Ignore exception
+      // Ignore exception
     }
     return false;
   }

@@ -7,12 +7,13 @@ export declare class IndexedDB {
     protected _isAvailable: boolean;
     protected _idb: Database | undefined;
     protected _schemaUpgrade: SchemaUpgrade | undefined;
+    protected _debug: boolean;
     get IsAvailable(): boolean;
     get IsOpen(): boolean;
     get Name(): string;
     get Version(): number;
     get Database(): Database | undefined;
-    constructor(name: string, version: number, schemaUpgrade?: SchemaUpgrade, autoOpen?: boolean);
+    constructor(name: string, version: number, schemaUpgrade?: SchemaUpgrade, autoOpen?: boolean, debug?: boolean);
     open(): Promise<Database>;
 }
 export default IndexedDB;

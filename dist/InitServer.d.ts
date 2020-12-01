@@ -1,4 +1,3 @@
-import 'core-js';
 import IServiceContainer from './Core/IServiceContainer';
 import AppConfig from './AppConfig';
 import SSRResponse from './ServerSideRendering/Response';

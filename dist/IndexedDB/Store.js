@@ -1,4 +1,3 @@
-"use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -8,9 +7,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.Store = void 0;
-class Store {
+export class Store {
     constructor(database, storeName, objectStore) {
         this._storeName = storeName;
         this._database = database;
@@ -100,5 +97,4 @@ class Store {
         });
     }
 }
-exports.Store = Store;
-exports.default = Store;
+export default Store;

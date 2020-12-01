@@ -3,6 +3,7 @@ import IContentDeliveryAPI from '../ContentDelivery/IContentDeliveryAPI';
 import IEpiserverContext from '../Core/IEpiserverContext';
 import IServiceContainer, { DefaultServices } from '../Core/IServiceContainer';
 import IContentRepository from '../Repository/IContentRepository';
+import ServerContextAccessor from '../ServerSideRendering/ServerContextAccessor';
 
 /**
  * The React Context object for the Episerver context
@@ -70,4 +71,9 @@ export function useContentDeliveryAPI() : IContentDeliveryAPI {
 export function useForceUpdate(){
     const [value, setValue] = useState<number>(0); // integer state
     return () => setValue(value + 1); // update the state to force render
+}
+
+export function useServerSideRendering() : ServerContextAccessor {
+    const sc = useServiceContainer();
+    return sc.getService<ServerContextAccessor>(DefaultServices.ServerContext);
 }

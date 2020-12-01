@@ -7,20 +7,20 @@ type ContentLinkOrSerialzed = ContentLink | string;
 type WebsiteOrSerialzed = Website | string;
 
 export function isSerializedIContent(data: IContentOrSerialized): data is string {
-  return typeof data == 'string';
+  return typeof data === 'string';
 }
 export function isSerializedContentLink(data: ContentLinkOrSerialzed): data is string {
-  return typeof data == 'string';
+  return typeof data === 'string';
 }
 export function isSerializedWebsite(data: WebsiteOrSerialzed): data is string {
-  return typeof data == 'string';
+  return typeof data === 'string';
 }
 
 /**
  * The TypeScript definition of the ServerContext being passed from .Net to the
  * React Application.
  */
-export default interface ServerContext {
+export type ServerContext = {
   /**
    * Window.location compatible location object.
    */
@@ -51,3 +51,5 @@ export default interface ServerContext {
    */
   StartPageData: IContentOrSerialized;
 }
+
+export default ServerContext;
