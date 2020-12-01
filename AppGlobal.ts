@@ -12,7 +12,7 @@ const fallback : any = {};
  * The global variable scope, as defined by the Episerver SPA
  */
 export type GlobalContext = {
-    __INITIAL_DATA__ ?: ServerContext
+    __INITIAL__DATA__ ?: ServerContext
     EpiserverSpa ?: {
         Context: IEpiserverContext
         serviceContainer: IServiceContainer

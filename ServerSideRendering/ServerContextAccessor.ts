@@ -17,7 +17,7 @@ export class ServerContextAccessor
     constructor() 
     {
         const ctx = getGlobal();
-        this._context = ctx.__INITIAL_DATA__;
+        this._context = ctx.__INITIAL__DATA__;
     }
 
     public get IsAvailable() : boolean

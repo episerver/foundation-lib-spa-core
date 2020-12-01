@@ -8,7 +8,7 @@ import { isSerializedIContent, isSerializedWebsite } from './ServerContext';
 export class ServerContextAccessor {
     constructor() {
         const ctx = getGlobal();
-        this._context = ctx.__INITIAL_DATA__;
+        this._context = ctx.__INITIAL__DATA__;
     }
     get IsAvailable() {
         return this.hasContext();

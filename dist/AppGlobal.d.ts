@@ -6,7 +6,7 @@ import IServiceContainer from './Core/IServiceContainer';
  * The global variable scope, as defined by the Episerver SPA
  */
 export declare type GlobalContext = {
-    __INITIAL_DATA__?: ServerContext;
+    __INITIAL__DATA__?: ServerContext;
     EpiserverSpa?: {
         Context: IEpiserverContext;
         serviceContainer: IServiceContainer;
