@@ -8,6 +8,7 @@ ctx.epi.isServerSideRendering = true;
 import ReactDOMServer from 'react-dom/server';
 import { Helmet } from 'react-helmet';
 import React from 'react';
+import { StaticRouterContext } from 'react-router';
 
 // Episerver Libraries
 import IServiceContainer from './Core/IServiceContainer';
@@ -28,7 +29,9 @@ export default function RenderServerSide(config: AppConfig, serviceContainer?: I
     config.enableDebug = true;
     EpiSpaContext.init(config, serviceContainer, true);
 
-    const body = ReactDOMServer.renderToString(<CmsSite context={EpiSpaContext}/>);
+    let staticContext : StaticRouterContext = {};
+
+    const body = ReactDOMServer.renderToString(<CmsSite context={ EpiSpaContext } staticContext={ staticContext } />);
     const meta = Helmet.renderStatic();
 
     return {

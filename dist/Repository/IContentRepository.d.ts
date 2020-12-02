@@ -79,8 +79,8 @@ export declare class IContentRepository extends EventEmitter<IPatchableRepositor
     getByReference(reference: string, website?: Website): Promise<IContent | null>;
     patch(reference: ContentReference, patch: (item: Readonly<IContent>) => IContent): Promise<IContent | null>;
     getWebsites(): Promise<WebsiteList>;
-    getWebsite(hostname: string, language?: string, matchWildCard?: boolean): Promise<Website | null>;
-    getCurrentWebsite(): Promise<Website | null>;
+    getWebsite(hostname: string, language?: string, matchWildCard?: boolean): Promise<Readonly<Website> | null>;
+    getCurrentWebsite(): Promise<Readonly<Website> | null>;
     protected ingestIContent(iContent: IContent): Promise<IContent | null>;
     protected ingestWebsite(website: Website): Promise<Website | null>;
     /**

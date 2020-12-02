@@ -1,5 +1,6 @@
 // Import libraries
 import EventEmitter from 'eventemitter3';
+import { cloneDeep } from 'lodash';
 
 // Import framework
 import IContentDeliveryAPI from '../ContentDelivery/IContentDeliveryAPI';
@@ -253,13 +254,13 @@ export class IContentRepository extends EventEmitter<IPatchableRepositoryEvents<
         return websites;
     }
 
-    public async getWebsite(hostname: string, language ?: string, matchWildCard : boolean = true) : Promise<Website | null>
+    public async getWebsite(hostname: string, language ?: string, matchWildCard : boolean = true) : Promise<Readonly<Website> | null>
     {
         const websites = (await this.getWebsites()).filter(w => hostnameFilter(w, hostname, language, matchWildCard));
         return websites && websites.length === 1 ? websites[0] : null;
     }
 
-    public getCurrentWebsite() : Promise<Website | null>
+    public getCurrentWebsite() : Promise<Readonly<Website> | null>
     {
         let hostname : string = '*';
         try {

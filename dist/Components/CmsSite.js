@@ -6,17 +6,17 @@ import EpiserverContext from '../Hooks/Context';
 // Import Episerver Taxonomy
 import Layout from './Layout';
 // Import Episerver Components
-import * as EpiSpaRouter from '../Routing/EpiSpaRouter';
+import EpiRouter, { RoutedContent } from '../Routing/EpiSpaRouter';
 import { DefaultServices } from '../Core/IServiceContainer';
 export const EpiserverWebsite = (props) => {
     const SiteLayout = getLayout(props.context.config());
     const ssr = props.context.serviceContainer.getService(DefaultServices.ServerContext);
     const location = (props.context.isServerSideRendering() ? ssr.Path : window.location.pathname) || undefined;
     const mainSite = React.createElement(EpiserverContext.Provider, { value: props.context },
-        React.createElement(EpiSpaRouter.Router, { location: location, basename: props.context.config().basePath },
+        React.createElement(EpiRouter, { location: location, context: props.staticContext },
             React.createElement(Helmet, null),
             React.createElement(SiteLayout, { context: props.context },
-                React.createElement(EpiSpaRouter.RoutedContent, { config: props.context.config().routes || [], keyPrefix: "CmsSite-RoutedContent" }),
+                React.createElement(RoutedContent, { config: props.context.config().routes || [], keyPrefix: "CmsSite-RoutedContent" }),
                 props.children)));
     return props.context.isServerSideRendering() ? mainSite : React.createElement(ReduxProvider, { store: props.context.getStore() }, mainSite);
 };

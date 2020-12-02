@@ -18,7 +18,8 @@ export default function RenderServerSide(config, serviceContainer) {
     config.noAjax = true;
     config.enableDebug = true;
     EpiSpaContext.init(config, serviceContainer, true);
-    const body = ReactDOMServer.renderToString(React.createElement(CmsSite, { context: EpiSpaContext }));
+    let staticContext = {};
+    const body = ReactDOMServer.renderToString(React.createElement(CmsSite, { context: EpiSpaContext, staticContext: staticContext }));
     const meta = Helmet.renderStatic();
     return {
         Body: body,

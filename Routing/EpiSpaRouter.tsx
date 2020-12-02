@@ -2,7 +2,8 @@ import React, { useEffect } from 'react';
 import { StaticRouter, StaticRouterProps, useHistory, useLocation, Switch, SwitchProps, Route, RouteProps, RouteComponentProps } from 'react-router';
 import { BrowserRouter, BrowserRouterProps } from 'react-router-dom';
 import IRouteConfig, { IRouteConfigItem } from './IRouteConfig';
-import { useEpiserver, Core } from '../index';
+import IEpiserverContext from '../Core/IEpiserverContext';
+import { useEpiserver } from '../Hooks/Context';
 
 export interface RouterProps extends StaticRouterProps, BrowserRouterProps {}
 export const Router : React.FunctionComponent<RouterProps> = (props) =>
@@ -78,7 +79,7 @@ const ElementNavigation : React.FunctionComponent<{}> = (props) : React.ReactEle
         }
 
         if (epi.isDebugActive()) console.info('ElementNavigation: Attaching listener');
-        document.addEventListener('click', onWindowClick)
+        document.addEventListener('click', onWindowClick);
         return () => {
             if (epi.isDebugActive()) console.info('ElementNavigation: Removing listener');
             document.removeEventListener('click', onWindowClick);
@@ -88,29 +89,28 @@ const ElementNavigation : React.FunctionComponent<{}> = (props) : React.ReactEle
     return props.children as React.ReactElement;
 }
 
-export interface RoutedContentProps extends SwitchProps
-{
+export type RoutedContentProps = SwitchProps & {
     keyPrefix ?:    string,
     config ?:       IRouteConfig,
     basePath ?:     string
 }
+
 export const RoutedContent : React.FunctionComponent<RoutedContentProps> = (props) => {
     const ctx = useEpiserver();
-    const switchProps : SwitchProps = {
-        location: props.location
-    }
+    const switchProps : SwitchProps = { location: props.location }
     return <Switch {...switchProps}>
         { props.children }
         { (props.config || []).map( (item, idx) => createRouteNode(item, props.basePath, `${props.keyPrefix}-route-${idx}`, ctx) ) }
     </Switch>
 }
 
-function createRouteNode(route: IRouteConfigItem, basePath : string = "", key ?: string, ctx ?: Core.IEpiserverContext) : React.ReactElement<RouteProps> {
+function createRouteNode(route: IRouteConfigItem, basePath : string = "", key ?: string, ctx ?: IEpiserverContext) : React.ReactElement<RouteProps> {
     
     let createdRoute : string = basePath ? (basePath.substr(-1) === "/" ? basePath.substr(0, -1) : basePath) : "";
     createdRoute = createdRoute + "/" + (route.path ? (route.path.substr(0,1) === "/" ? route.path.substr(1) : route.path) : "")
 
     if (ctx?.isDebugActive()) console.log('Generating Route Virtual DOM Node', createdRoute, route, key);
+
     const newRouteProps : RouteProps = {
         children: route.children,
         exact: route.exact,
@@ -118,14 +118,8 @@ function createRouteNode(route: IRouteConfigItem, basePath : string = "", key ?:
         path: createdRoute,
         sensitive: route.sensitive,
         strict: route.strict,
-        render: (props: RouteComponentProps) : React.ReactNode => {
-            if (ctx?.isDebugActive()) console.log('Executing Route Node', route, key, props);
-            if (route.render) return route.render({ ...props, routes: route.routes, path: route.path });
-            if (route.component) {
-                const RouteComponent = route.component;
-                return <RouteComponent { ...props } routes={ route.routes } path={ route.path } />
-            }
-        }
+        render: route.render ? (props: RouteComponentProps) => { return route.render ? route.render({ ...props, routes: route.routes, path: route.path }) : <div/> } : undefined,
+        component: route.component ? (props: RouteComponentProps) => { const RouteComponent = route.component || 'div'; return <RouteComponent { ...props } routes={ route.routes } path={ route.path } />} : undefined
     }
     return <Route { ...newRouteProps } key={ key } />
 }

@@ -6,9 +6,9 @@ export interface RouterProps extends StaticRouterProps, BrowserRouterProps {
 }
 export declare const Router: React.FunctionComponent<RouterProps>;
 export default Router;
-export interface RoutedContentProps extends SwitchProps {
+export declare type RoutedContentProps = SwitchProps & {
     keyPrefix?: string;
     config?: IRouteConfig;
     basePath?: string;
-}
+};
 export declare const RoutedContent: React.FunctionComponent<RoutedContentProps>;

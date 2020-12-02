@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { StaticRouter, useHistory, useLocation, Switch, Route } from 'react-router';
 import { BrowserRouter } from 'react-router-dom';
-import { useEpiserver } from '../index';
+import { useEpiserver } from '../Hooks/Context';
 export const Router = (props) => {
     const epi = useEpiserver();
     if (epi.isServerSideRendering()) {
@@ -81,9 +81,7 @@ const ElementNavigation = (props) => {
 };
 export const RoutedContent = (props) => {
     const ctx = useEpiserver();
-    const switchProps = {
-        location: props.location
-    };
+    const switchProps = { location: props.location };
     return React.createElement(Switch, Object.assign({}, switchProps),
         props.children,
         (props.config || []).map((item, idx) => createRouteNode(item, props.basePath, `${props.keyPrefix}-route-${idx}`, ctx)));
@@ -100,16 +98,8 @@ function createRouteNode(route, basePath = "", key, ctx) {
         path: createdRoute,
         sensitive: route.sensitive,
         strict: route.strict,
-        render: (props) => {
-            if (ctx === null || ctx === void 0 ? void 0 : ctx.isDebugActive())
-                console.log('Executing Route Node', route, key, props);
-            if (route.render)
-                return route.render(Object.assign(Object.assign({}, props), { routes: route.routes, path: route.path }));
-            if (route.component) {
-                const RouteComponent = route.component;
-                return React.createElement(RouteComponent, Object.assign({}, props, { routes: route.routes, path: route.path }));
-            }
-        }
+        render: route.render ? (props) => { return route.render ? route.render(Object.assign(Object.assign({}, props), { routes: route.routes, path: route.path })) : React.createElement("div", null); } : undefined,
+        component: route.component ? (props) => { const RouteComponent = route.component || 'div'; return React.createElement(RouteComponent, Object.assign({}, props, { routes: route.routes, path: route.path })); } : undefined
     };
     return React.createElement(Route, Object.assign({}, newRouteProps, { key: key }));
 }
