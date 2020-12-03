@@ -56,8 +56,7 @@ export class IContentRepository extends EventEmitter {
                 this.ingestIContent(serverContext.IContent);
             if (serverContext.StartPage)
                 this.ingestIContent(serverContext.StartPage);
-            if (serverContext.Website)
-                this.ingestWebsite(serverContext.Website);
+            // if (serverContext.Website) this.ingestWebsite(serverContext.Website); // Server side the website does not contain the hosts field
         }
     }
     /**
