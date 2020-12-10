@@ -30,7 +30,9 @@ export var InitStatus;
 (function (InitStatus) {
     InitStatus[InitStatus["NotInitialized"] = 0] = "NotInitialized";
     InitStatus[InitStatus["Initializing"] = 1] = "Initializing";
-    InitStatus[InitStatus["Initialized"] = 2] = "Initialized";
+    InitStatus[InitStatus["CoreServicesReady"] = 2] = "CoreServicesReady";
+    InitStatus[InitStatus["ContainerReady"] = 3] = "ContainerReady";
+    InitStatus[InitStatus["Initialized"] = 4] = "Initialized";
 })(InitStatus || (InitStatus = {}));
 export class EpiserverSpaContext {
     constructor() {
@@ -51,25 +53,39 @@ export class EpiserverSpaContext {
     init(config, serviceContainer, isServerSideRendering = false) {
         // Generic init
         this._initialized = InitStatus.Initializing;
-        this._isServerSideRendering = isServerSideRendering;
+        // this._isServerSideRendering = isServerSideRendering;
         this._serviceContainer = serviceContainer;
-        const executionContext = { isServerSideRendering };
-        config.enableDebug = process.env.NODE_ENV === 'production' ? false : config.enableDebug;
+        const executionContext = {
+            isServerSideRendering: (() => {
+                try {
+                    return isServerSideRendering || (ctx.epi.isServerSideRendering === true);
+                }
+                catch (e) {
+                    return false;
+                }
+            })(),
+            isDebugActive: process.env.NODE_ENV === 'production' ? false : (typeof (config.enableDebug) === 'boolean' ? config.enableDebug : false),
+            isEditable: false,
+            isInEditMode: false,
+        };
+        config.enableDebug = executionContext.isDebugActive;
         // Create module list
         this._modules.push(new RepositoryModule(), new RoutingModule(), new LoadersModule());
         this._modules.sort((a, b) => a.SortOrder - b.SortOrder);
         if (config.modules)
             this._modules = this._modules.concat(config.modules);
         if (config.enableDebug)
-            console.debug('Spa modules:', this._modules.map((m) => m.GetName()));
+            console.debug(`Episerver SPA modules: ${this._modules.map((m) => m.GetName()).join(', ')}`);
         // Register core services
         this._serviceContainer.addService(DefaultServices.Context, this);
         this._serviceContainer.addService(DefaultServices.Config, config);
         this._serviceContainer.addService(DefaultServices.ExecutionContext, executionContext);
         this._serviceContainer.addService(DefaultServices.ServerContext, new ServerContextAccessor());
         this._serviceContainer.addService(DefaultServices.EventEngine, new DefaultEventEngine());
+        this._initialized = InitStatus.CoreServicesReady;
         // Have modules add services of their own
         this._modules.forEach(x => x.ConfigureContainer(this._serviceContainer));
+        this._initialized = InitStatus.ContainerReady;
         // Redux init
         this._initRedux();
         // EpiEditMode init
@@ -92,7 +108,7 @@ export class EpiserverSpaContext {
     _initEditMode() {
         if (this.isDebugActive())
             console.debug(`Initializing edit mode in ${this.initialEditMode() ? 'enabled' : 'disabled'} state`);
-        if (!this._isServerSideRendering && this.initialEditMode()) {
+        if (!this.isServerSideRendering() && this.initialEditMode()) {
             // if (this.isDebugActive()) console.debug('Adding edit mode event handlers');
             // this.contentDeliveryApi().setInEditMode(true);
             this.serviceContainer.getService(DefaultServices.ContentDeliveryAPI_V2).InEditMode = true;
@@ -154,23 +170,16 @@ export class EpiserverSpaContext {
         return this._initialized === InitStatus.Initialized;
     }
     isDebugActive() {
-        var _a;
         this.enforceInitialized();
-        return ((_a = this.config()) === null || _a === void 0 ? void 0 : _a.enableDebug) || false;
+        return this.serviceContainer.getService(DefaultServices.ExecutionContext).isDebugActive;
     }
     isServerSideRendering() {
-        if (this._isServerSideRendering == null) {
-            try {
-                this._isServerSideRendering = ctx.epi.isServerSideRendering === true;
-            }
-            catch (e) {
-                return false;
-            }
-        }
-        return this._isServerSideRendering;
+        this.enforceInitialized();
+        return this.serviceContainer.getService(DefaultServices.ExecutionContext).isServerSideRendering;
     }
     enforceInitialized() {
-        if (!this._initialized) {
+        const initializedStatuses = [InitStatus.ContainerReady, InitStatus.Initialized];
+        if (initializedStatuses.indexOf(this._initialized) < 0) {
             throw new Error('The Episerver SPA Context has not yet been initialized');
         }
     }

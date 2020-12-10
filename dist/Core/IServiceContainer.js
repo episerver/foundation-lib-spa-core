@@ -25,7 +25,7 @@ export var DefaultServices;
      * The wrapper for the Episerver ContentDelivery API, use this as a
      * low level library to connect with the ContentDelivery API
      */
-    DefaultServices["ContentDeliveryAPI_V2"] = "ContentDeliveryAPI_V2";
+    DefaultServices["ContentDeliveryAPI_V2"] = "IContentDeliveryAPI";
     /**
      * The high level icontent (and website) repository, this will be
      * configured to match the execution context of the SPA and may or
@@ -38,4 +38,8 @@ export var DefaultServices;
      * IContentRepository.
      */
     DefaultServices["TypeMapper"] = "TypeMapper";
+    /**
+     * Authorization services
+     */
+    DefaultServices["AuthService"] = "AuthService";
 })(DefaultServices || (DefaultServices = {}));

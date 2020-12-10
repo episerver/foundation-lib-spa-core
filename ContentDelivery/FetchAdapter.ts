@@ -39,6 +39,7 @@ export const FetchAdapter : CachingFetchAdapter = async (config: AxiosRequestCon
         credentials: config.withCredentials ? "include" : "omit",
         method: config.method,
         redirect: config.maxRedirects ? "follow" : "error", // @ToDo: Implement the actual maximum number of redirects
+        body: config.data
     }
 
     const request = new Request(requestUrl.href, requestConfig);

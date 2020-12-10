@@ -55,7 +55,7 @@ export declare class ComponentLoader {
      * by the server side rendering.
      */
     constructor();
-    addLoader(loader: IComponentLoader): void;
+    addLoader(loader: IComponentLoader): IComponentLoader;
     addLoaders(loaders: IComponentLoaderList): void;
     createLoader(loaderType: IComponentLoaderType, add?: boolean): IComponentLoader;
     setDebug(debug: boolean): void;

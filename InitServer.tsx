@@ -1,8 +1,5 @@
 // Set SSR
 import getGlobal from './AppGlobal';
-const ctx = getGlobal();
-ctx.epi = ctx.epi || {};
-ctx.epi.isServerSideRendering = true;
 
 // Global Libraries && Poly-fills
 import ReactDOMServer from 'react-dom/server';
@@ -21,8 +18,12 @@ import AppConfig from './AppConfig';
 import SSRResponse from './ServerSideRendering/Response';
 
 export default function RenderServerSide(config: AppConfig, serviceContainer?: IServiceContainer): SSRResponse {
+    // Update context
+    const ctx = getGlobal();
+    ctx.epi = ctx.epi || {};
+    ctx.epi.isServerSideRendering = true;
+
     // Initialize Episerver Context, for Server Side Rendering
-    // EpiContext.Instance = new SSRContext(new SSRPathProvider());
     serviceContainer = serviceContainer || new DefaultServiceContainer();
     config.enableSpinner = false;
     config.noAjax = true;

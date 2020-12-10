@@ -3,6 +3,7 @@ import IInitializableModule, { BaseInitializableModule } from '../Core/IInitiali
 import IServiceContainer, { DefaultServices } from '../Core/IServiceContainer';
 import IEpiserverContext from '../Core/IEpiserverContext';
 import IEventEngine from '../Core/IEventEngine';
+import IExecutionContext from '../Core/IExecutionContext';
 
 // Configuration
 import AppConfig from '../AppConfig';
@@ -11,13 +12,22 @@ import AppConfig from '../AppConfig';
 import ContentDeliveryAPI from '../ContentDeliveryAPI';
 
 // Module resources
+import { IRepositoryConfig, IRepositoryPolicy } from './IRepository';
 import IContentRepositoryV2 from './IContentRepository';
+import IIContentRepository from './IIContentRepository';
 import EditIContentRepositoryV2 from './PassthroughIContentRepository';
 import ContentDeliveryApiV2 from '../ContentDelivery/ContentDeliveryAPI';
 import IContentDeliveryAPI from '../ContentDelivery/IContentDeliveryAPI';
-import IIContentRepository from './IIContentRepository';
+import IContentDeliveryConfig from '../ContentDelivery/Config';
+
+// Authorization
+import DefaultAuthService from '../ContentDelivery/DefaultAuthService';
+import IAuthStorage from '../ContentDelivery/IAuthStorage';
+import BrowserAuthStorage from '../ContentDelivery/BrowserAuthStorage';
+import ServerAuthStorage from '../ContentDelivery/ServerAuthStorage';
+
+// Server side rendering support
 import ServerContextAccessor from '../ServerSideRendering/ServerContextAccessor';
-import { IRepositoryConfig, IRepositoryPolicy } from './IRepository';
 
 // Private types
 type EpiReadyEvent = {
@@ -41,21 +51,23 @@ export default class RepositoryModule extends BaseInitializableModule implements
     {
         // Get Application Config
         const config = container.getService<AppConfig>(DefaultServices.Config);
-        const context = container.getService<IEpiserverContext>(DefaultServices.Context);
+        const epiContext = container.getService<IEpiserverContext>(DefaultServices.Context);
         const ssr = container.getService<ServerContextAccessor>(DefaultServices.ServerContext);
+        const context = container.getService<IExecutionContext>(DefaultServices.ExecutionContext);
 
         // Build New ContentDeliveryAPI Connector
-        const newAPI = new ContentDeliveryApiV2({
+        const newApiClassicConfig : Partial<IContentDeliveryConfig> = {
             Adapter: config.networkAdapter,
             BaseURL: config.epiBaseUrl,
             AutoExpandAll: config.autoExpandRequests,
             Debug: config.enableDebug,
             EnableExtensions: true,
             Language: config.defaultLanguage
-        });
+        };
+        const newAPI = new ContentDeliveryApiV2(config.iContentDelivery ? { ...newApiClassicConfig, ...config.iContentDelivery } : newApiClassicConfig);
         
         // Build Old ContentDeliveryAPI Connector
-        const oldAPI = new ContentDeliveryAPI(context, config);
+        const oldAPI = new ContentDeliveryAPI(epiContext, config);
         oldAPI.setInEditMode(newAPI.InEpiserverShell);
 
         // Build repository configuration
@@ -74,6 +86,10 @@ export default class RepositoryModule extends BaseInitializableModule implements
         // Configure module
         this._shellActive = newAPI.InEpiserverShell;
 
+        // Configure Authentication
+        const authStorage : IAuthStorage = context.isServerSideRendering ? new ServerAuthStorage() : new BrowserAuthStorage();
+        container.addService(DefaultServices.AuthService, new DefaultAuthService(newAPI, authStorage));
+
         // Add Services to container
         container.addService(DefaultServices.ContentDeliveryApi, oldAPI);
         container.addService(DefaultServices.ContentDeliveryAPI_V2, newAPI);
@@ -90,6 +106,8 @@ export default class RepositoryModule extends BaseInitializableModule implements
             if (context.isDebugActive()) console.log(`${ this.name }: OnEpiReady`, eventData);
             if (!this._shellActive && eventData.isEditable) {
                 this._shellActive = true;
+                context.serviceContainer.getService<IExecutionContext>(DefaultServices.ExecutionContext).isEditable = true;
+                context.serviceContainer.getService<IExecutionContext>(DefaultServices.ExecutionContext).isInEditMode = true;
                 context.serviceContainer.getService<IContentDeliveryAPI>(DefaultServices.ContentDeliveryAPI_V2).InEditMode = true;
                 context.serviceContainer.getService<ContentDeliveryAPI>(DefaultServices.ContentDeliveryApi).setInEditMode(true);
             }

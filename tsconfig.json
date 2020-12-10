@@ -13,5 +13,6 @@
     "lib": ["ES6", "DOM", "DOM.Iterable"],
     "removeComments": false
   },
-  "exclude": ["node_modules", "tests", "dist"]
+  "exclude": ["node_modules", "tests", "dist"],
+  "include": ["bin"]
 }

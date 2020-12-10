@@ -37,8 +37,10 @@ const ElementNavigation : React.FunctionComponent<{}> = (props) : React.ReactEle
 
     useEffect(() => {
         if (epi.isInEditMode() || epi.isServerSideRendering()) {
-            if (config.enableDebug) console.info('ElementNavigation: Edit mode, or SSR, so not attaching events');
+            if (epi.isDebugActive()) console.info('ElementNavigation: Edit mode, or SSR, so not attaching events');
             return;
+        } else {
+            if (epi.isDebugActive()) console.info('ElementNavigation: Enabling catch-all click handling for navigation');
         }
         const onWindowClick = (event: MouseEvent) => {
             const target: HTMLElement = (event.target as any) as HTMLElement;
@@ -78,10 +80,8 @@ const ElementNavigation : React.FunctionComponent<{}> = (props) : React.ReactEle
             }
         }
 
-        if (epi.isDebugActive()) console.info('ElementNavigation: Attaching listener');
         document.addEventListener('click', onWindowClick);
         return () => {
-            if (epi.isDebugActive()) console.info('ElementNavigation: Removing listener');
             document.removeEventListener('click', onWindowClick);
         }
     });

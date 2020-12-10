@@ -81,11 +81,12 @@ export class ComponentLoader
         }
     }
 
-    public addLoader(loader: IComponentLoader)
+    public addLoader(loader: IComponentLoader) : IComponentLoader
     {
         loader.setDebug(this.debug);
         this.loaders.push(loader);
         this.loaders.sort((a, b) => a.order - b.order);
+        return loader;
     }
 
     public addLoaders(loaders: IComponentLoaderList)

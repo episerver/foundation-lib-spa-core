@@ -73,20 +73,33 @@ export class ContentDeliveryAPI {
         return false;
     }
     login(username, password) {
+        const params = {
+            client_id: 'Default',
+            grant_type: 'password',
+            username,
+            password
+        };
+        return this.doOAuthRequest(params);
+    }
+    refreshToken(refreshToken) {
+        const params = {
+            client_id: 'Default',
+            grant_type: 'refresh_token',
+            refresh_token: refreshToken
+        };
+        return this.doOAuthRequest(params);
+    }
+    doOAuthRequest(request) {
         return __awaiter(this, void 0, void 0, function* () {
-            const params = new URLSearchParams();
-            params.append('grant_type', 'password');
-            params.append('username', username);
-            params.append('password', password);
-            params.append('client_id', 'Default');
-            this.doRequest(this.AuthService, {
+            const [response, info] = yield this.doAdvancedRequest(this.AuthService, {
                 method: "POST",
-                data: params,
-                headers: this.getHeaders({
-                    "Content-Type": "application/x-www-form-urlencoded"
-                })
-            });
-            return Promise.resolve(true);
+                data: request,
+                transformRequest: (data, headers) => {
+                    headers["Content-Type"] = "application/x-www-form-urlencoded";
+                    return Object.entries(data).map(x => `${encodeURIComponent(x[0])}=${encodeURIComponent(x[1])}`).join('&');
+                }
+            }, false, true);
+            return response;
         });
     }
     getWebsites() {
@@ -303,60 +316,75 @@ export class ContentDeliveryAPI {
         serviceUrls === null || serviceUrls === void 0 ? void 0 : serviceUrls.forEach(u => isServiceURL = isServiceURL || reqUrl.href.startsWith(u.href));
         return isServiceURL;
     }
+    raw(url, options = {}, addDefaultQueryParams = true) {
+        return this.doAdvancedRequest(url, options, addDefaultQueryParams, true);
+    }
     apiIdIsGuid(apiId) {
         const guidRegex = /^[0-9a-z]{8}-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{12}$/;
         return apiId.match(guidRegex) ? true : false;
     }
-    doRequest(url, options = {}) {
+    doRequest(url, options = {}, addDefaultQueryParams = true) {
         return __awaiter(this, void 0, void 0, function* () {
-            const [responseData, responseInfo] = yield this.doAdvancedRequest(url, options);
+            const [responseData, responseInfo] = yield this.doAdvancedRequest(url, options, addDefaultQueryParams);
             return responseData;
         });
     }
-    doAdvancedRequest(url, options = {}) {
-        var _a;
+    doAdvancedRequest(url, options = {}, addDefaultQueryParams = true, returnOnError = false) {
+        var _a, _b;
         return __awaiter(this, void 0, void 0, function* () {
             // Pre-process URL
             const requestUrl = typeof (url) === "string" ? new URL(url.toLowerCase(), this.BaseURL) : url;
-            if (this.InEditMode) {
-                requestUrl.searchParams.set('epieditmode', 'True');
-                requestUrl.searchParams.set('preventcache', Math.round(Math.random() * 100000000).toString());
-                // Propagate the VisitorGroup Preview
-                try {
-                    if (!requestUrl.searchParams.has('visitorgroupsByID')) {
-                        const windowSearchParams = new URLSearchParams((_a = window === null || window === void 0 ? void 0 : window.location) === null || _a === void 0 ? void 0 : _a.search);
-                        if (windowSearchParams.has('visitorgroupsByID')) {
-                            requestUrl.searchParams.set('visitorgroupsByID', windowSearchParams.get('visitorgroupsByID'));
+            if (addDefaultQueryParams) {
+                if (this.InEditMode) {
+                    requestUrl.searchParams.set('epieditmode', 'True');
+                    requestUrl.searchParams.set('preventcache', Math.round(Math.random() * 100000000).toString());
+                    // Propagate the VisitorGroup Preview
+                    try {
+                        if (!requestUrl.searchParams.has('visitorgroupsByID')) {
+                            const windowSearchParams = new URLSearchParams((_a = window === null || window === void 0 ? void 0 : window.location) === null || _a === void 0 ? void 0 : _a.search);
+                            if (windowSearchParams.has('visitorgroupsByID')) {
+                                requestUrl.searchParams.set('visitorgroupsByID', windowSearchParams.get('visitorgroupsByID'));
+                            }
                         }
                     }
+                    catch (e) {
+                        // Ignore on purpose
+                    }
                 }
-                catch (e) {
-                    // Ignore on purpose
+                if (requestUrl.pathname.indexOf(this.ContentService) && this._config.AutoExpandAll && !requestUrl.searchParams.has('expand')) {
+                    requestUrl.searchParams.set('expand', '*');
                 }
-            }
-            if (requestUrl.pathname.indexOf(this.ContentService) && this._config.AutoExpandAll && !requestUrl.searchParams.has('expand')) {
-                requestUrl.searchParams.set('expand', '*');
             }
             // Create request configuration
             const requestConfig = Object.assign(Object.assign({}, this.getDefaultRequestConfig()), options);
             requestConfig.url = requestUrl.href;
             // Add the token if needed
-            /*if (this.Token) {
-                requestConfig.headers = requestConfig.headers || {};
-                requestConfig.headers['Authorization'] = `Bearer ${ this.Token}`;
-            }*/
+            if (requestUrl.href.indexOf(this.AuthService) < 0) { // Do not add for the auth service itself
+                const currentToken = this.TokenProvider ? yield this.TokenProvider.getCurrentToken() : undefined;
+                if (currentToken) { // Only if we have a current token
+                    requestConfig.headers = requestConfig.headers || {};
+                    requestConfig.headers.Authorization = `Bearer ${currentToken.access_token}`;
+                }
+            }
+            else {
+                console.log('AUTH SERVICE');
+            }
             // Execute request
             try {
                 if (this._config.Debug)
                     console.info('ContentDeliveryAPI Requesting', requestConfig.method + ' ' + requestConfig.url, requestConfig.data);
                 const response = yield this.Axios.request(requestConfig);
-                if (response.status >= 400) {
+                if (response.status >= 400 && !returnOnError) {
                     if (this._config.Debug)
                         console.info(`ContentDeliveryAPI Error ${response.status}: ${response.statusText}`, requestConfig.method + ' ' + requestConfig.url);
                     throw new Error(`${response.status}: ${response.statusText}`);
                 }
                 const data = response.data;
-                const ctx = {};
+                const ctx = {
+                    status: response.status,
+                    statusText: response.statusText,
+                    method: ((_b = requestConfig.method) === null || _b === void 0 ? void 0 : _b.toLowerCase()) || 'default'
+                };
                 for (const key of Object.keys(response.headers)) {
                     switch (key) {
                         case 'etag':

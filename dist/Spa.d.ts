@@ -13,12 +13,13 @@ import IInitializableModule from './Core/IInitializableModule';
 export declare enum InitStatus {
     NotInitialized = 0,
     Initializing = 1,
-    Initialized = 2
+    CoreServicesReady = 2,
+    ContainerReady = 3,
+    Initialized = 4
 }
 export declare class EpiserverSpaContext implements IEpiserverContext, PathProvider {
     protected _initialized: InitStatus;
     protected _state: EnhancedStore;
-    protected _isServerSideRendering: boolean;
     protected _componentLoader: ComponentLoader;
     protected _serviceContainer: IServiceContainer;
     protected _modules: IInitializableModule[];

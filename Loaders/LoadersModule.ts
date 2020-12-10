@@ -37,26 +37,19 @@ export default class LoadersModule extends BaseInitializableModule implements II
 
     private addTypeMapperToContainer(container: IServiceContainer, config: AppConfig) : void
     {
-      if (config.typeMapper) {
-        const tm : BaseTypeMapper = new config.typeMapper();
-        container.addService(DefaultServices.TypeMapper, tm);
-      }
+        if (config.typeMapper) {
+          const tm : BaseTypeMapper = new config.typeMapper();
+          container.addService(DefaultServices.TypeMapper, tm);
+        }
     }
 
     private addComponentLoaderToContainer(container: IServiceContainer, config: AppConfig) : void
     {
         const cl = new ComponentLoader();
-        cl.setDebug(config.enableDebug || false);
+        const clDebug = (typeof(config.componentLoaders?.debug) === 'undefined' ? config.enableDebug : config.componentLoaders?.debug) || false;
+        cl.setDebug(clDebug);
         if (config.componentLoaders) {
-          config.componentLoaders.forEach(loader => {
-            if (isIComponentLoader(loader)) {
-              loader.setDebug(config.componentLoaders?.debug || config.enableDebug || false);
-              cl.addLoader(loader);
-            } else {
-              const loaderInstance = cl.createLoader(loader, true);
-              loaderInstance.setDebug(config.componentLoaders?.debug || config.enableDebug || false);
-            }
-          })
+          config.componentLoaders.forEach(loader => isIComponentLoader(loader) ? cl.addLoader(loader) : cl.createLoader(loader, true))
         }
         container.addService(DefaultServices.ComponentLoader, cl);
     }

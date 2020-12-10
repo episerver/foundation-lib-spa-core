@@ -7,6 +7,8 @@ import IContent from '../Models/IContent';
 import { ContentReference } from '../Models/ContentLink';
 import { PathResponse, NetworkErrorData } from '../ContentDeliveryAPI';
 import ActionResponse from '../Models/ActionResponse';
+import { IOAuthRequest, IOAuthResponse } from './IAuthService';
+import IAuthTokenProvider from './IAuthTokenProvider';
 export declare class ContentDeliveryAPI implements IContentDeliveryAPi {
     readonly ContentService: string;
     readonly SiteService: string;
@@ -19,6 +21,10 @@ export declare class ContentDeliveryAPI implements IContentDeliveryAPi {
     constructor(config: Partial<ContentDeliveryApiConfig>);
     protected get Axios(): AxiosInstance;
     CurrentWebsite?: Website;
+    /**
+     * If set, this is the token to be used when authorizing requests
+     */
+    TokenProvider?: IAuthTokenProvider;
     get InEditMode(): boolean;
     set InEditMode(value: boolean);
     get Language(): string;
@@ -26,7 +32,9 @@ export declare class ContentDeliveryAPI implements IContentDeliveryAPi {
     get BaseURL(): string;
     get OnLine(): boolean;
     get InEpiserverShell(): boolean;
-    login(username: string, password: string): Promise<boolean>;
+    login(username: string, password: string): Promise<IOAuthResponse>;
+    refreshToken(refreshToken: string): Promise<IOAuthResponse>;
+    protected doOAuthRequest(request: IOAuthRequest): Promise<IOAuthResponse>;
     getWebsites(): Promise<WebsiteList>;
     getWebsite(hostname?: string | URL): Promise<Website | undefined>;
     getCurrentWebsite(): Promise<Website | undefined>;
@@ -51,9 +59,10 @@ export declare class ContentDeliveryAPI implements IContentDeliveryAPi {
     getChildren(id: ContentReference, select?: string[], expand?: string[]): Promise<IContent[]>;
     invoke<TypeOut extends unknown = any, TypeIn extends unknown = any>(content: ContentReference, method: string, verb?: Method, data?: TypeIn, requestTransformer?: AxiosTransformer): Promise<ActionResponse<TypeOut | NetworkErrorData, IContent>>;
     isServiceURL(url: URL | string): boolean;
+    raw<TypeOut>(url: string | URL, options?: Partial<AxiosRequestConfig>, addDefaultQueryParams?: boolean): Promise<IContentDeliveryResponse<TypeOut>>;
     protected apiIdIsGuid(apiId: string): boolean;
     private doRequest;
-    protected doAdvancedRequest<T>(url: string | URL, options?: Partial<AxiosRequestConfig>): Promise<IContentDeliveryResponse<T>>;
+    protected doAdvancedRequest<T>(url: string | URL, options?: Partial<AxiosRequestConfig>, addDefaultQueryParams?: boolean, returnOnError?: boolean): Promise<IContentDeliveryResponse<T>>;
     protected getDefaultRequestConfig(): AxiosRequestConfig;
     protected getHeaders(customHeaders?: AxiosHeaders): AxiosHeaders;
     protected errorCounter: number;

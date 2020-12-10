@@ -21,6 +21,12 @@ import * as IIContentRepositoryNS from '../Repository/IIContentRepository';
 import IContentDeliveryAPI from '../ContentDelivery/IContentDeliveryAPI';
 import ContentDeliveryAPI_V2 from '../ContentDelivery/ContentDeliveryAPI';
 import IContentDeliveryAPIConfig from '../ContentDelivery/Config';
+import * as DefaultAuthServiceNS from '../ContentDelivery/DefaultAuthService';
+import * as IAuthServiceNS from '../ContentDelivery/IAuthService';
+import * as IAuthStorageNS from '../ContentDelivery/IAuthStorage';
+import * as IAuthTokenProviderNS from '../ContentDelivery/IAuthTokenProvider';
+import * as BrowserAuthStorageNS from '../ContentDelivery/BrowserAuthStorage';
+import * as ServerAuthStorageNS from '../ContentDelivery/ServerAuthStorage';
 
 export const PathResponseIsIContent = BasePathResponseIsIContent;
 export const FetchAdapter = _FetchAdapter;
@@ -48,3 +54,17 @@ export type ConfigV2 = IContentDeliveryAPIConfig;
 export type IIContentRepositoryV2 = IIContentRepositoryNS.IIContentRepository;
 export const RepositoryV2 = IContentRepositoryNS.IContentRepository;
 export const API_V2 = ContentDeliveryAPI_V2;
+
+// V2 Auth API
+export type IAuthService = IAuthServiceNS.IAuthService
+export type IAuthServiceStatic = IAuthServiceNS.IAuthServiceStatic
+export type IOAuthRequest = IAuthServiceNS.IOAuthRequest
+export type IOAuthResponse = IAuthServiceNS.IOAuthResponse
+export type IOAuthErrorResponse = IAuthServiceNS.IOAuthErrorResponse
+export type IOAuthSuccessResponse = IAuthServiceNS.IOAuthSuccessResponse
+export type IAuthStorage = IAuthStorageNS.IAuthStorage
+export type IAuthToken = IAuthTokenProviderNS.IAuthToken
+export type IAuthTokenProvider = IAuthTokenProviderNS.IAuthTokenProvider
+export const DefaultAuthService = DefaultAuthServiceNS.DefaultAuthService
+export const BrowserAuthStorage = BrowserAuthStorageNS.BrowserAuthStorage
+export const ServerAuthStorage = ServerAuthStorageNS.ServerAuthStorage

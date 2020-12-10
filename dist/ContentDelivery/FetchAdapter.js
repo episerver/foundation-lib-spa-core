@@ -37,6 +37,7 @@ export const FetchAdapter = (config) => __awaiter(void 0, void 0, void 0, functi
         credentials: config.withCredentials ? "include" : "omit",
         method: config.method,
         redirect: config.maxRedirects ? "follow" : "error",
+        body: config.data
     };
     const request = new Request(requestUrl.href, requestConfig);
     let r;

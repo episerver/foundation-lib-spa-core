@@ -29,9 +29,13 @@ const ElementNavigation = (props) => {
     const config = epi.config();
     useEffect(() => {
         if (epi.isInEditMode() || epi.isServerSideRendering()) {
-            if (config.enableDebug)
+            if (epi.isDebugActive())
                 console.info('ElementNavigation: Edit mode, or SSR, so not attaching events');
             return;
+        }
+        else {
+            if (epi.isDebugActive())
+                console.info('ElementNavigation: Enabling catch-all click handling for navigation');
         }
         const onWindowClick = (event) => {
             const target = event.target;
@@ -68,12 +72,8 @@ const ElementNavigation = (props) => {
                 return false;
             }
         };
-        if (epi.isDebugActive())
-            console.info('ElementNavigation: Attaching listener');
         document.addEventListener('click', onWindowClick);
         return () => {
-            if (epi.isDebugActive())
-                console.info('ElementNavigation: Removing listener');
             document.removeEventListener('click', onWindowClick);
         };
     });

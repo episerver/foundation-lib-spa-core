@@ -56,6 +56,7 @@ export class ComponentLoader {
         loader.setDebug(this.debug);
         this.loaders.push(loader);
         this.loaders.sort((a, b) => a.order - b.order);
+        return loader;
     }
     addLoaders(loaders) {
         const me = this;

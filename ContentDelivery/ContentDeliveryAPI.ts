@@ -9,6 +9,8 @@ import { ContentReference, ContentLinkService } from '../Models/ContentLink';
 import { PathResponse, NetworkErrorData } from '../ContentDeliveryAPI';
 import ContentRoutingResponse from './ContentRoutingResponse';
 import ActionResponse, { ResponseType } from '../Models/ActionResponse';
+import { IOAuthRequest, IOAuthResponse } from './IAuthService';
+import IAuthTokenProvider from './IAuthTokenProvider';
 
 export class ContentDeliveryAPI implements IContentDeliveryAPi
 {
@@ -34,6 +36,11 @@ export class ContentDeliveryAPI implements IContentDeliveryAPi
     }
 
     public CurrentWebsite?: Website;
+
+    /**
+     * If set, this is the token to be used when authorizing requests
+     */
+    public TokenProvider ?: IAuthTokenProvider;
 
     public get InEditMode() : boolean
     {
@@ -84,22 +91,40 @@ export class ContentDeliveryAPI implements IContentDeliveryAPi
         return false;
     }
 
-    public async login(username: string, password: string) : Promise<boolean>
+    public login(username: string, password: string) : Promise<IOAuthResponse>
     {
-        const params = new URLSearchParams();
-        params.append('grant_type', 'password')
-        params.append('username', username)
-        params.append('password', password)
-        params.append('client_id', 'Default')
+        const params : IOAuthRequest = {
+            client_id: 'Default',
+            grant_type: 'password',
+            username,
+            password
+        }
 
-        this.doRequest(this.AuthService, {
+        return this.doOAuthRequest(params);
+    }
+
+    public refreshToken(refreshToken: string) : Promise<IOAuthResponse>
+    {
+        const params : IOAuthRequest = {
+            client_id: 'Default',
+            grant_type: 'refresh_token',
+            refresh_token: refreshToken
+        }
+
+        return this.doOAuthRequest(params);
+    }
+
+    protected async doOAuthRequest(request: IOAuthRequest) : Promise<IOAuthResponse>
+    {
+        const [ response, info ] = await this.doAdvancedRequest<IOAuthResponse>(this.AuthService, {
             method: "POST",
-            data: params,
-            headers: this.getHeaders({
-                "Content-Type": "application/x-www-form-urlencoded"
-            })
-        });
-        return Promise.resolve(true);
+            data: request,
+            transformRequest: (data: object, headers: AxiosHeaders) : string => {
+                headers["Content-Type"] = "application/x-www-form-urlencoded";
+                return Object.entries(data).map(x => `${encodeURIComponent(x[0])}=${encodeURIComponent(x[1])}`).join('&')
+            }
+        }, false, true);
+        return response;
     }
 
     public getWebsites() : Promise<WebsiteList>
@@ -317,6 +342,10 @@ export class ContentDeliveryAPI implements IContentDeliveryAPi
         return isServiceURL;
     }
 
+    public raw<TypeOut>(url: string | URL, options: Partial<AxiosRequestConfig> = {}, addDefaultQueryParams: boolean = true): Promise<IContentDeliveryResponse<TypeOut>> {
+        return this.doAdvancedRequest(url, options, addDefaultQueryParams, true);
+    }
+
     protected apiIdIsGuid(apiId : string) : boolean 
     {
         const guidRegex = /^[0-9a-z]{8}-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{12}$/
@@ -324,35 +353,36 @@ export class ContentDeliveryAPI implements IContentDeliveryAPi
     }
 
     
-    private async doRequest<T>(url: string | URL, options: Partial<AxiosRequestConfig> = {}) : Promise<T>
+    private async doRequest<T>(url: string | URL, options: Partial<AxiosRequestConfig> = {}, addDefaultQueryParams : boolean = true) : Promise<T>
     {
-        const [ responseData, responseInfo ] = await this.doAdvancedRequest<T>(url, options);
+        const [ responseData, responseInfo ] = await this.doAdvancedRequest<T>(url, options, addDefaultQueryParams);
         return responseData;
     }
 
-    protected async doAdvancedRequest<T>(url: string | URL, options: Partial<AxiosRequestConfig> = {}) : Promise<IContentDeliveryResponse<T>>
+    protected async doAdvancedRequest<T>(url: string | URL, options: Partial<AxiosRequestConfig> = {}, addDefaultQueryParams : boolean = true, returnOnError : boolean = false) : Promise<IContentDeliveryResponse<T>>
     {
         // Pre-process URL
-
         const requestUrl : URL = typeof(url) === "string" ? new URL(url.toLowerCase(), this.BaseURL) : url;
-        if (this.InEditMode) {
-            requestUrl.searchParams.set('epieditmode', 'True');
-            requestUrl.searchParams.set('preventcache', Math.round(Math.random() * 100000000).toString());
+        if (addDefaultQueryParams) {
+            if (this.InEditMode) {
+                requestUrl.searchParams.set('epieditmode', 'True');
+                requestUrl.searchParams.set('preventcache', Math.round(Math.random() * 100000000).toString());
 
-            // Propagate the VisitorGroup Preview
-            try {
-                if (!requestUrl.searchParams.has('visitorgroupsByID')) {
-                    const windowSearchParams = new URLSearchParams(window?.location?.search);
-                    if (windowSearchParams.has('visitorgroupsByID')) {
-                        requestUrl.searchParams.set('visitorgroupsByID', windowSearchParams.get('visitorgroupsByID') as string);
+                // Propagate the VisitorGroup Preview
+                try {
+                    if (!requestUrl.searchParams.has('visitorgroupsByID')) {
+                        const windowSearchParams = new URLSearchParams(window?.location?.search);
+                        if (windowSearchParams.has('visitorgroupsByID')) {
+                            requestUrl.searchParams.set('visitorgroupsByID', windowSearchParams.get('visitorgroupsByID') as string);
+                        }
                     }
+                } catch (e) {
+                    // Ignore on purpose
                 }
-            } catch (e) {
-                // Ignore on purpose
             }
-        }
-        if (requestUrl.pathname.indexOf(this.ContentService) && this._config.AutoExpandAll && !requestUrl.searchParams.has('expand')) {
-            requestUrl.searchParams.set('expand', '*');
+            if (requestUrl.pathname.indexOf(this.ContentService) && this._config.AutoExpandAll && !requestUrl.searchParams.has('expand')) {
+                requestUrl.searchParams.set('expand', '*');
+            }
         }
 
         // Create request configuration
@@ -360,21 +390,28 @@ export class ContentDeliveryAPI implements IContentDeliveryAPi
         requestConfig.url = requestUrl.href;
 
         // Add the token if needed
-        /*if (this.Token) {
-            requestConfig.headers = requestConfig.headers || {};
-            requestConfig.headers['Authorization'] = `Bearer ${ this.Token}`;
-        }*/
+        if (requestUrl.href.indexOf(this.AuthService) < 0) { // Do not add for the auth service itself
+            const currentToken = this.TokenProvider ? await this.TokenProvider.getCurrentToken() : undefined;
+            if (currentToken) { // Only if we have a current token
+                requestConfig.headers = requestConfig.headers || {};
+                requestConfig.headers.Authorization = `Bearer ${ currentToken.access_token }`;
+            }
+        }
 
         // Execute request
         try {
             if (this._config.Debug) console.info('ContentDeliveryAPI Requesting', requestConfig.method+' '+requestConfig.url, requestConfig.data);
             const response = await this.Axios.request<T>(requestConfig);
-            if (response.status >= 400) {
+            if (response.status >= 400 && !returnOnError) {
                 if (this._config.Debug) console.info(`ContentDeliveryAPI Error ${ response.status }: ${ response.statusText }`, requestConfig.method+' '+requestConfig.url);
                 throw new Error(`${ response.status }: ${ response.statusText }`);
             }
             const data = response.data;
-            const ctx : IContentDeliveryResponseContext = {};
+            const ctx : IContentDeliveryResponseContext = {
+                status: response.status,
+                statusText: response.statusText,
+                method: requestConfig.method?.toLowerCase() || 'default'
+            };
             for (const key of Object.keys(response.headers)) {
                 switch (key) {
                     case 'etag':

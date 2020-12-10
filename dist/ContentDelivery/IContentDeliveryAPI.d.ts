@@ -1,15 +1,20 @@
-import { Method, AxiosTransformer } from 'axios';
+import { Method, AxiosTransformer, AxiosRequestConfig } from 'axios';
 import ActionResponse from '../Models/ActionResponse';
 import { ContentReference } from '../Models/ContentLink';
 import IContent from '../Models/IContent';
 import Website from '../Models/Website';
 import WebsiteList from '../Models/WebsiteList';
 import { PathResponse, NetworkErrorData } from '../ContentDeliveryAPI';
+import { IOAuthResponse } from './IAuthService';
+import IAuthTokenProvider from './IAuthTokenProvider';
 export declare type IContentDeliveryResponse<T> = [T, IContentDeliveryResponseContext];
 export declare type IContentDeliveryResponseContext = {
     etag?: string;
     date?: string;
     cacheControl?: string[];
+    status: number;
+    statusText: string;
+    method: string;
 };
 /**
  * Service definition for the Episerver Content Delivery API. This is a
@@ -49,6 +54,10 @@ export declare type IContentDeliveryAPI = {
      */
     CurrentWebsite?: Website;
     /**
+     * The provider that grants access to the current authentication token
+     */
+    TokenProvider?: IAuthTokenProvider;
+    /**
      * Check if we're currenlty online, if this returns false the browser is aware of an off-line status, if it returns true
      * network connectivity might still fail.
      *
@@ -62,7 +71,13 @@ export declare type IContentDeliveryAPI = {
      * @param {string}  password    The password provided
      * @returns {boolean} A boolean result,
      */
-    login(username: string, password: string): Promise<boolean>;
+    login(username: string, password: string): Promise<IOAuthResponse>;
+    /**
+     * Prolongate the current session
+     *
+     * @param {string} token The current session prolongation token
+     */
+    refreshToken(token: string): Promise<IOAuthResponse>;
     /**
      * Retrieve the list of all websites registered within Episerver CMS
      */
@@ -149,5 +164,14 @@ export declare type IContentDeliveryAPI = {
      * @returns { Promise<ActionResponse<TypeOut>> }    The response from the service
      */
     invoke<TypeOut extends unknown = any, TypeIn extends unknown = any>(content: ContentReference, method: string, verb?: Method, data?: TypeIn, requestTransformer?: AxiosTransformer): Promise<ActionResponse<TypeOut | NetworkErrorData>>;
+    /**
+     * Enable raw access to the Episerver installation to perform authenticated calls to the system
+     *
+     * @param { string | URL }                  url                     The URL to invoke, if provided as string, this will be relative to the configured base URL
+     * @param { Partial<AxiosRequestConfig> }   [options]               The request options to override, this is a shallow override, so if you provide headers, these will override all header set by the API
+     * @param { boolean }                       [addDefaultQueryParams] Episerver supports a number of query string parameters that allow it to understand which content to load, if set to false, these will not be added
+     * @returns { Promise<IContentDeliveryResponse<TypeOut>> }          Both the returned data as well as part of the response headers
+     */
+    raw<TypeOut>(url: string | URL, options?: Partial<AxiosRequestConfig>, addDefaultQueryParams?: boolean): Promise<IContentDeliveryResponse<TypeOut>>;
 };
 export default IContentDeliveryAPI;

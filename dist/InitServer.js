@@ -1,8 +1,5 @@
 // Set SSR
 import getGlobal from './AppGlobal';
-const ctx = getGlobal();
-ctx.epi = ctx.epi || {};
-ctx.epi.isServerSideRendering = true;
 // Global Libraries && Poly-fills
 import ReactDOMServer from 'react-dom/server';
 import { Helmet } from 'react-helmet';
@@ -11,8 +8,11 @@ import DefaultServiceContainer from './Core/DefaultServiceContainer';
 import EpiSpaContext from './Spa';
 import CmsSite from './Components/CmsSite';
 export default function RenderServerSide(config, serviceContainer) {
+    // Update context
+    const ctx = getGlobal();
+    ctx.epi = ctx.epi || {};
+    ctx.epi.isServerSideRendering = true;
     // Initialize Episerver Context, for Server Side Rendering
-    // EpiContext.Instance = new SSRContext(new SSRPathProvider());
     serviceContainer = serviceContainer || new DefaultServiceContainer();
     config.enableSpinner = false;
     config.noAjax = true;

@@ -36,20 +36,12 @@ export default class LoadersModule extends BaseInitializableModule {
         }
     }
     addComponentLoaderToContainer(container, config) {
+        var _a, _b;
         const cl = new ComponentLoader();
-        cl.setDebug(config.enableDebug || false);
+        const clDebug = (typeof ((_a = config.componentLoaders) === null || _a === void 0 ? void 0 : _a.debug) === 'undefined' ? config.enableDebug : (_b = config.componentLoaders) === null || _b === void 0 ? void 0 : _b.debug) || false;
+        cl.setDebug(clDebug);
         if (config.componentLoaders) {
-            config.componentLoaders.forEach(loader => {
-                var _a, _b;
-                if (isIComponentLoader(loader)) {
-                    loader.setDebug(((_a = config.componentLoaders) === null || _a === void 0 ? void 0 : _a.debug) || config.enableDebug || false);
-                    cl.addLoader(loader);
-                }
-                else {
-                    const loaderInstance = cl.createLoader(loader, true);
-                    loaderInstance.setDebug(((_b = config.componentLoaders) === null || _b === void 0 ? void 0 : _b.debug) || config.enableDebug || false);
-                }
-            });
+            config.componentLoaders.forEach(loader => isIComponentLoader(loader) ? cl.addLoader(loader) : cl.createLoader(loader, true));
         }
         container.addService(DefaultServices.ComponentLoader, cl);
     }

@@ -23,7 +23,7 @@ export declare enum DefaultServices {
      * The wrapper for the Episerver ContentDelivery API, use this as a
      * low level library to connect with the ContentDelivery API
      */
-    ContentDeliveryAPI_V2 = "ContentDeliveryAPI_V2",
+    ContentDeliveryAPI_V2 = "IContentDeliveryAPI",
     /**
      * The high level icontent (and website) repository, this will be
      * configured to match the execution context of the SPA and may or
@@ -35,7 +35,11 @@ export declare enum DefaultServices {
      * data retrieved through the ContentDeliveryAPI and/or
      * IContentRepository.
      */
-    TypeMapper = "TypeMapper"
+    TypeMapper = "TypeMapper",
+    /**
+     * Authorization services
+     */
+    AuthService = "AuthService"
 }
 export interface IContainerAwareService {
     setServiceContainer(container: IServiceContainer): void;
