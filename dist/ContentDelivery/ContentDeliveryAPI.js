@@ -366,9 +366,6 @@ export class ContentDeliveryAPI {
                     requestConfig.headers.Authorization = `Bearer ${currentToken.access_token}`;
                 }
             }
-            else {
-                console.log('AUTH SERVICE');
-            }
             // Execute request
             try {
                 if (this._config.Debug)

@@ -58,7 +58,7 @@ export class DefaultAuthService implements IAuthService, IAuthTokenProvider {
         if (Date.parse(token['.expires']) >= Date.now()) {
             return Promise.resolve(true);
         }
-        return this._api.refreshToken(token.refresh_token).then(r => IOAuthResponseIsSuccess(r) && this._storage.storeToken(r));
+        return this._api.refreshToken(token.refresh_token).then(r => IOAuthResponseIsSuccess(r) && this._storage.storeToken(r)).catch(() => false);
     }
 }
 export default DefaultAuthService;
