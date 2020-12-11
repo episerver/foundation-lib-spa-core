@@ -56,7 +56,11 @@ export class DefaultAuthService {
         if (Date.parse(token['.expires']) >= Date.now()) {
             return Promise.resolve(true);
         }
-        return this._api.refreshToken(token.refresh_token).then(r => IOAuthResponseIsSuccess(r) && this._storage.storeToken(r)).catch(() => false);
+        return this._api.refreshToken(token.refresh_token).then(r => IOAuthResponseIsSuccess(r) && this._storage.storeToken(r)).catch(() => false).then(auth => {
+            if (!auth)
+                this._storage.clearToken();
+            return auth;
+        });
     }
 }
 export default DefaultAuthService;
