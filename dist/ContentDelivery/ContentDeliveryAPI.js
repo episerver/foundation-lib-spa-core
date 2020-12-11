@@ -90,17 +90,14 @@ export class ContentDeliveryAPI {
         return this.doOAuthRequest(params);
     }
     doOAuthRequest(request) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const [response, info] = yield this.doAdvancedRequest(this.AuthService, {
-                method: "POST",
-                data: request,
-                transformRequest: (data, headers) => {
-                    headers["Content-Type"] = "application/x-www-form-urlencoded";
-                    return Object.entries(data).map(x => `${encodeURIComponent(x[0])}=${encodeURIComponent(x[1])}`).join('&');
-                }
-            }, false, true);
-            return response;
-        });
+        return this.doAdvancedRequest(this.AuthService, {
+            method: "POST",
+            data: request,
+            transformRequest: (data, headers) => {
+                headers["Content-Type"] = "application/x-www-form-urlencoded";
+                return Object.entries(data).map(x => `${encodeURIComponent(x[0])}=${encodeURIComponent(x[1])}`).join('&');
+            }
+        }, false, true).then(r => r[0]);
     }
     getWebsites() {
         return this.doRequest(this.SiteService).catch(() => []);

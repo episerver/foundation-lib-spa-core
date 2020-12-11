@@ -114,17 +114,16 @@ export class ContentDeliveryAPI implements IContentDeliveryAPi
         return this.doOAuthRequest(params);
     }
 
-    protected async doOAuthRequest(request: IOAuthRequest) : Promise<IOAuthResponse>
+    protected doOAuthRequest(request: IOAuthRequest) : Promise<IOAuthResponse>
     {
-        const [ response, info ] = await this.doAdvancedRequest<IOAuthResponse>(this.AuthService, {
+        return this.doAdvancedRequest<IOAuthResponse>(this.AuthService, {
             method: "POST",
             data: request,
             transformRequest: (data: object, headers: AxiosHeaders) : string => {
                 headers["Content-Type"] = "application/x-www-form-urlencoded";
                 return Object.entries(data).map(x => `${encodeURIComponent(x[0])}=${encodeURIComponent(x[1])}`).join('&')
             }
-        }, false, true);
-        return response;
+        }, false, true).then(r => r[0]);
     }
 
     public getWebsites() : Promise<WebsiteList>
