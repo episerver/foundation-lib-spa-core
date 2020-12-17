@@ -369,12 +369,13 @@ export class ContentDeliveryAPI implements IContentDeliveryAPi
 
                 // Propagate the VisitorGroup Preview
                 try {
-                    if (!requestUrl.searchParams.has('visitorgroupsByID')) {
-                        const windowSearchParams = new URLSearchParams(window?.location?.search);
-                        if (windowSearchParams.has('visitorgroupsByID')) {
-                            requestUrl.searchParams.set('visitorgroupsByID', windowSearchParams.get('visitorgroupsByID') as string);
+                    const windowSearchParams = new URLSearchParams(window?.location?.search);
+                    const toTransfer = ['visitorgroupsByID','epiprojects','commondrafts'];
+                    toTransfer.forEach(param => {
+                        if (!requestUrl.searchParams.has(param) && windowSearchParams.has(param)) {
+                            requestUrl.searchParams.set(param, windowSearchParams.get(param) as string);
                         }
-                    }
+                    });
                 } catch (e) {
                     // Ignore on purpose
                 }

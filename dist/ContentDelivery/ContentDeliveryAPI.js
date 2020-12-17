@@ -337,12 +337,13 @@ export class ContentDeliveryAPI {
                     requestUrl.searchParams.set('preventcache', Math.round(Math.random() * 100000000).toString());
                     // Propagate the VisitorGroup Preview
                     try {
-                        if (!requestUrl.searchParams.has('visitorgroupsByID')) {
-                            const windowSearchParams = new URLSearchParams((_a = window === null || window === void 0 ? void 0 : window.location) === null || _a === void 0 ? void 0 : _a.search);
-                            if (windowSearchParams.has('visitorgroupsByID')) {
-                                requestUrl.searchParams.set('visitorgroupsByID', windowSearchParams.get('visitorgroupsByID'));
+                        const windowSearchParams = new URLSearchParams((_a = window === null || window === void 0 ? void 0 : window.location) === null || _a === void 0 ? void 0 : _a.search);
+                        const toTransfer = ['visitorgroupsByID', 'epiprojects', 'commondrafts'];
+                        toTransfer.forEach(param => {
+                            if (!requestUrl.searchParams.has(param) && windowSearchParams.has(param)) {
+                                requestUrl.searchParams.set(param, windowSearchParams.get(param));
                             }
-                        }
+                        });
                     }
                     catch (e) {
                         // Ignore on purpose
