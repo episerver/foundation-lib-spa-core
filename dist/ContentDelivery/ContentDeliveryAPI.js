@@ -55,17 +55,8 @@ export class ContentDeliveryAPI {
         return true;
     }
     get InEpiserverShell() {
-        var _a;
-        if (this.InEditMode)
-            return true;
         try {
-            const searchParams = new URLSearchParams(window.location.search);
-            if (searchParams.has('visitorgroupsByID'))
-                return true;
-            if (searchParams.has('commondrafts'))
-                return true;
-            if (searchParams.has('epieditmode') && ((_a = searchParams.get('epieditmode')) === null || _a === void 0 ? void 0 : _a.toLowerCase()) === 'true')
-                return true;
+            return window !== (window === null || window === void 0 ? void 0 : window.top) && (window === null || window === void 0 ? void 0 : window.name) === 'sitePreview';
         }
         catch (e) {
             // Ignored on purpose
@@ -191,7 +182,7 @@ export class ContentDeliveryAPI {
      */
     getContent(id, select, expand) {
         // Create base URL
-        const apiId = ContentLinkService.createApiId(id, true);
+        const apiId = ContentLinkService.createApiId(id, !this.InEditMode, this.InEditMode);
         const url = new URL(this.ContentService + apiId, this.BaseURL);
         // Handle additional parameters
         if (select)
@@ -219,7 +210,7 @@ export class ContentDeliveryAPI {
         const refs = [];
         const guids = [];
         ids === null || ids === void 0 ? void 0 : ids.forEach(id => {
-            const apiId = ContentLinkService.createApiId(id, true);
+            const apiId = ContentLinkService.createApiId(id, !this.InEditMode, this.InEditMode);
             if (this.apiIdIsGuid(apiId)) {
                 guids.push(apiId);
             }
@@ -241,7 +232,7 @@ export class ContentDeliveryAPI {
     }
     getAncestors(id, select, expand) {
         // Create base URL
-        const apiId = ContentLinkService.createApiId(id, true);
+        const apiId = ContentLinkService.createApiId(id, !this.InEditMode, this.InEditMode);
         const url = new URL(this.ContentService + apiId + '/ancestors', this.BaseURL);
         // Handle additional parameters
         if (select)
@@ -253,7 +244,7 @@ export class ContentDeliveryAPI {
     }
     getChildren(id, select, expand) {
         // Create base URL
-        const apiId = ContentLinkService.createApiId(id, true);
+        const apiId = ContentLinkService.createApiId(id, !this.InEditMode, this.InEditMode);
         const url = new URL(this.ContentService + apiId + '/children', this.BaseURL);
         // Handle additional parameters
         if (select)
@@ -268,7 +259,7 @@ export class ContentDeliveryAPI {
             if (!this._config.EnableExtensions)
                 return Promise.reject('Extensions must be enabled to use the invoke method');
             // Base configuration
-            const apiId = ContentLinkService.createApiId(content, true);
+            const apiId = ContentLinkService.createApiId(content, !this.InEditMode, this.InEditMode);
             const url = new URL(this.MethodService + apiId + '/' + method, this.BaseURL);
             // Default JSON Transformer for request data
             const defaultTransformer = (reqData, reqHeaders) => {
@@ -335,10 +326,10 @@ export class ContentDeliveryAPI {
                 if (this.InEditMode) {
                     requestUrl.searchParams.set('epieditmode', 'True');
                     requestUrl.searchParams.set('preventcache', Math.round(Math.random() * 100000000).toString());
-                    // Propagate the VisitorGroup Preview
+                    // Propagate the view configurations
                     try {
                         const windowSearchParams = new URLSearchParams((_a = window === null || window === void 0 ? void 0 : window.location) === null || _a === void 0 ? void 0 : _a.search);
-                        const toTransfer = ['visitorgroupsByID', 'epiprojects', 'commondrafts'];
+                        const toTransfer = ['visitorgroupsByID', 'epiprojects', 'commondrafts', 'epichannel'];
                         toTransfer.forEach(param => {
                             if (!requestUrl.searchParams.has(param) && windowSearchParams.has(param)) {
                                 requestUrl.searchParams.set(param, windowSearchParams.get(param));

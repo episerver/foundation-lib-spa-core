@@ -1,4 +1,4 @@
-import ContentLink from '../Models/ContentLink';
+import ContentLink, { ContentLinkService } from '../Models/ContentLink';
 import React, { Component, ReactNode, ReactElement, ReactNodeArray } from 'react';
 import EpiComponent, { EpiComponentType } from './EpiComponent';
 import { ContentAreaProperty } from '../Property';
@@ -173,11 +173,13 @@ export default class ContentArea extends Component<ContentAreaProps>
         // Build component
         const ConnectedEpiComponent : EpiComponentType = EpiComponent.CreateComponent(this.props.context);
         const component = <ConnectedEpiComponent context={this.props.context} contentLink={ item.contentLink } contentType={ this.getComponentType() } key={ item.contentLink.guidValue } expandedValue={ expandedValue } />;
+        const blockId = ContentLinkService.createApiId(item.contentLink, false, true);
+        const blockKey = `${ ContentLinkService.createApiId(item.contentLink, true, false) }-${ idx }-container`
 
         // Return if no wrapping
         if (this.props.noWrap === true) {
             if (this.props.context.isEditable()) {
-                return <div data-epi-block-id={ item.contentLink.id } key={ item.contentLink.guidValue+"-container"}>{ component }</div>
+                return <div data-epi-block-id={ blockId } key={ blockKey }>{ component }</div>
             }
             return component
         }
@@ -188,10 +190,10 @@ export default class ContentArea extends Component<ContentAreaProps>
             "data-displayoption": displayOption,
             "data-tag": item.tag,
             "className": this.getBlockClasses(displayOption).join(' '),
-            "key": `${item.contentLink.guidValue}-container`,
+            "key": blockKey,
             "children": component
         };
-        if (this.props.context.isEditable()) props["data-epi-block-id"] = item.contentLink.id;
+        if (this.props.context.isEditable()) props["data-epi-block-id"] = blockId;
         return React.createElement('div', props);
     }
 

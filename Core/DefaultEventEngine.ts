@@ -9,6 +9,15 @@ export default class DefaultEventEngine implements IEventEngine {
     protected _eventEmitter : EventEmitter<string, any>;
     protected _listeners : { [key: string] : (...args: any[]) => void } = {};
     protected _events : string[] = [];
+    protected _debug : boolean = false;
+
+    public get debug() {
+        return this._debug;
+    }
+    public set debug(val : boolean)
+    {
+        this._debug = val;
+    }
 
     public constructor() {
         this._eventEmitter = new EventEmitter<string, any>();
@@ -17,6 +26,11 @@ export default class DefaultEventEngine implements IEventEngine {
         if (ctx.addEventListener) {
           ctx.addEventListener('message', this.onPostMessageReceived.bind(this), false);
         }
+    }
+
+    protected log(...args : any[])
+    {
+        if (this.debug) console.debug(...args);
     }
 
     protected onPostMessageReceived(event: MessageEvent) {
@@ -29,6 +43,7 @@ export default class DefaultEventEngine implements IEventEngine {
 
     public registerEvent(event: string): IEventEngine {
         if (!this.hasEvent(event)) {
+            this.log('Registering event', event);
             this._events.push(event);
         }
         return this;
@@ -51,6 +66,7 @@ export default class DefaultEventEngine implements IEventEngine {
             }
         }
 
+        this.log('Registering event handler', event, id, handler);
         this._listeners[id] = handler;
         this._eventEmitter.addListener(event, handler);
         return this;
@@ -58,15 +74,16 @@ export default class DefaultEventEngine implements IEventEngine {
 
     public dispatch(event: string, ...args: any[]): void {
         if (!this.hasEvent(event)) this.registerEvent(event);
-        const emitArgs : [ event: string, ...args: any[] ] = [ event ];
-        for (const arg of args) emitArgs.push(arg);
-        this._eventEmitter.emit.apply(this._eventEmitter, emitArgs);
+        this.log('Dispatching event', event, args);
+        const emitArgs : [ event: string, ...args: any[] ] = [ event, ...args ];
+        this._eventEmitter.emit( ...emitArgs );
     }
 
     public removeListener(event: string, id: string): IEventEngine {
-        if (!this._listeners[id]) {
+        if (!this._listeners[id])
             throw new Error(`There's no listner with ${ id } present`);
-        }
+        
+        this.log('Removing event handler', event, id);
         this._eventEmitter.removeListener(event, this._listeners[id]);
         delete this._listeners[id];
         return this;

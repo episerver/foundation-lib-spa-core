@@ -1,9 +1,17 @@
+// Lodash
+import merge from 'lodash/merge';
+import clone from 'lodash/clone';
+
 // Core libraries
 import IInitializableModule, { BaseInitializableModule } from '../Core/IInitializableModule';
 import IServiceContainer, { DefaultServices } from '../Core/IServiceContainer';
 import IEpiserverContext from '../Core/IEpiserverContext';
 import IEventEngine from '../Core/IEventEngine';
 import IExecutionContext from '../Core/IExecutionContext';
+
+// Data model
+import IContent from '../Models/IContent';
+import IContentProperty from '../Property';
 
 // Configuration
 import AppConfig from '../AppConfig';
@@ -33,11 +41,25 @@ import ServerContextAccessor from '../ServerSideRendering/ServerContextAccessor'
 type EpiReadyEvent = {
     isEditable: boolean
 }
+type EpiContentSavedEvent = {
+    successful: boolean
+    contentLink: string
+    hasContentLinkChanged: boolean
+    savedContentLink: string
+    publishedContentLink: string
+    properties: {
+        name: string;
+        successful: boolean;
+        validationErrors: any;
+        value: any;
+    }[]
+    validationErrors: any[]
+    oldContentLink: string
+}
 
 export default class RepositoryModule extends BaseInitializableModule implements IInitializableModule
 {
     protected name : string = "Episerver Content Delivery & Repository";
-    private _shellActive : boolean = false;
     public readonly SortOrder : number = 10;
 
     /**
@@ -81,10 +103,7 @@ export default class RepositoryModule extends BaseInitializableModule implements
         const repository : IIContentRepository = newAPI.InEpiserverShell ?
                                 new EditIContentRepositoryV2(newAPI, repositoryConfig) :
                                 new IContentRepositoryV2(newAPI, repositoryConfig, ssr);
-        if (config.enableDebug && newAPI.InEpiserverShell) console.info(`${ this.name }: Detected Episerver Shell - Disabling IndexedDB`);
-
-        // Configure module
-        this._shellActive = newAPI.InEpiserverShell;
+        if (config.enableDebug && newAPI.InEpiserverShell) this.log(`${ this.name }: Detected Episerver Shell - Disabling IndexedDB`);
 
         // Configure Authentication
         const authStorage : IAuthStorage = context.isServerSideRendering ? new ServerAuthStorage() : new BrowserAuthStorage();
@@ -99,23 +118,89 @@ export default class RepositoryModule extends BaseInitializableModule implements
     public StartModule(context: IEpiserverContext)
     {
         super.StartModule(context);
+        const debug = context.isDebugActive();
+        const _ = this;
 
         // Define event listeners
         const onEpiReady : (eventData: EpiReadyEvent) => void = (eventData) =>
         {
-            if (context.isDebugActive()) console.log(`${ this.name }: OnEpiReady`, eventData);
-            if (!this._shellActive && eventData.isEditable) {
-                this._shellActive = true;
-                context.serviceContainer.getService<IExecutionContext>(DefaultServices.ExecutionContext).isEditable = true;
+            if (debug) _.log(`${ _.name }: OnEpiReady`, eventData);
+            if (eventData.isEditable) {
+                // Determine window name
+                let windowName = 'server';
+                try {
+                    windowName = window?.name || 'server';
+                } catch (e) {
+                    windowName = 'server';
+                }
+
+                // Set editable / editmode values
+                context.serviceContainer.getService<IExecutionContext>(DefaultServices.ExecutionContext).isEditable = windowName !== 'compareView';
                 context.serviceContainer.getService<IExecutionContext>(DefaultServices.ExecutionContext).isInEditMode = true;
                 context.serviceContainer.getService<IContentDeliveryAPI>(DefaultServices.ContentDeliveryAPI_V2).InEditMode = true;
                 context.serviceContainer.getService<ContentDeliveryAPI>(DefaultServices.ContentDeliveryApi).setInEditMode(true);
+
+            }
+        }
+
+        const onEpiContentSaved : (eventData : EpiContentSavedEvent) => void = (event) =>
+        {
+            if (debug) _.log('EpiContentSaved: Received updated content from the Episerver Shell', event);
+            if (event.successful) {
+                if (debug) _.log('EpiContentSaved: Epi reported success, starting patching process');
+                const repo = context.serviceContainer.getService<IIContentRepository>(DefaultServices.IContentRepository_V2);
+                const baseId = event.savedContentLink;
+                _.patchContentRepository(repo, baseId, event, debug);
             }
         }
 
         // Bind event listener
         const eventEngine = context.serviceContainer.getService<IEventEngine>(DefaultServices.EventEngine);
-        eventEngine.addListener('beta/epiReady', 'onBetaEpiReady', onEpiReady, true);
-        eventEngine.addListener('epiReady', 'onEpiReady', onEpiReady, true);
+        eventEngine.addListener('beta/epiReady', 'onBetaEpiReady', onEpiReady.bind(this), true);
+        eventEngine.addListener('epiReady', 'onEpiReady', onEpiReady.bind(this), true);
+        eventEngine.addListener('beta/contentSaved', 'BetaEpiContentSaved', onEpiContentSaved.bind(this), true);
+        eventEngine.addListener('contentSaved', 'EpiContentSaved', onEpiContentSaved.bind(this), true);
     }
+
+    protected patchContentRepository(repo : IIContentRepository, baseId : string , event : EpiContentSavedEvent, debug : boolean = false) : void
+    {
+        const isStringProperty : (toTest: object, propName: string) => boolean = (toTest, propName) => {
+            try {
+                return (toTest as any)[propName] && typeof (toTest as any)[propName] === 'string';
+            } catch (e) { /* Empty on purpose */ }
+            return false;
+        }
+
+        repo.patch(baseId, (item) => {
+            const out = clone<IContent>(item);
+            event.properties.forEach(property => {
+                if (property.successful) {
+                    const propertyData : { [key: string ]: Partial<IContentProperty> | string } = { };
+                    if (property.name.substr(0, 9) === 'icontent_') {
+                        switch (property.name.substr(9)) {
+                        case 'name':
+                            if (debug) this.log('EpiContentSaved: Received updated name');
+                            propertyData.name = isStringProperty(out, 'name') ? property.value : { expandedValue: undefined, value: property.value };
+                            break;
+                        default:
+                            if (debug) this.warn('EpiContentSaved: Received unsupported property ', property);
+                            break;
+                        }
+                    } else {
+                        if (debug) this.log(`EpiContentSaved: Received updated ${ property.name }`);
+                        propertyData[property.name] = {
+                            expandedValue: undefined,
+                            value: property.value
+                        }
+                    }
+                    merge(out, propertyData);
+                }
+            });
+            if (debug) this.log('EpiContentSaved: Patched iContent', out);
+            return out;
+        })
+    }
+
+    protected log(...args : any[]) : void { console.debug( ...args ) }
+    protected warn (...args : any[]) : void { console.warn( ...args) }
 }

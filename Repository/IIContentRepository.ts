@@ -135,6 +135,9 @@ export interface IIContentRepository extends IPatchableRepository<ContentReferen
      * @returns The matching website or null if none found or error
      */
     getWebsite(hostname: string, language ?: string) : Promise<Website | null>
+
+    
+    getCurrentWebsite() : Promise<Readonly<Website> | null>
 }
 
 export type IIContentRepositoryType = new(api: IContentDeliveryAPI, config?: Partial<IRepositoryConfig>) => IIContentRepository;

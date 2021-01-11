@@ -79,12 +79,8 @@ export class ContentDeliveryAPI implements IContentDeliveryAPi
 
     public get InEpiserverShell() : boolean
     {
-        if (this.InEditMode) return true;
         try {
-            const searchParams = new URLSearchParams(window.location.search);
-            if (searchParams.has('visitorgroupsByID')) return true;
-            if (searchParams.has('commondrafts')) return true;
-            if (searchParams.has('epieditmode') && searchParams.get('epieditmode')?.toLowerCase() === 'true') return true;
+            return window !== window?.top && window?.name === 'sitePreview';
         } catch (e) {
             // Ignored on purpose
         }
@@ -211,7 +207,7 @@ export class ContentDeliveryAPI implements IContentDeliveryAPi
      */
     public getContent<C extends IContent = IContent>(id : ContentReference, select ?: string[], expand ?: string[]) : Promise<C | NetworkErrorData> {
         // Create base URL
-        const apiId = ContentLinkService.createApiId(id, true);
+        const apiId = ContentLinkService.createApiId(id, !this.InEditMode, this.InEditMode);
         const url = new URL(this.ContentService + apiId, this.BaseURL);
 
         // Handle additional parameters
@@ -240,7 +236,7 @@ export class ContentDeliveryAPI implements IContentDeliveryAPi
         const refs : string[] = [];
         const guids : string[] = [];
         ids?.forEach(id => {
-            const apiId = ContentLinkService.createApiId(id, true);
+            const apiId = ContentLinkService.createApiId(id, !this.InEditMode, this.InEditMode);
             if (this.apiIdIsGuid(apiId)) {
                 guids.push(apiId);
             } else {
@@ -260,7 +256,7 @@ export class ContentDeliveryAPI implements IContentDeliveryAPi
     public getAncestors(id : ContentReference, select ?: string[], expand ?: string[]) : Promise<IContent[]>
     {
         // Create base URL
-        const apiId = ContentLinkService.createApiId(id, true);
+        const apiId = ContentLinkService.createApiId(id, !this.InEditMode, this.InEditMode);
         const url = new URL(this.ContentService + apiId + '/ancestors', this.BaseURL);
 
         // Handle additional parameters
@@ -274,7 +270,7 @@ export class ContentDeliveryAPI implements IContentDeliveryAPi
     public getChildren(id : ContentReference, select ?: string[], expand ?: string[]) : Promise<IContent[]>
     {
         // Create base URL
-        const apiId = ContentLinkService.createApiId(id, true);
+        const apiId = ContentLinkService.createApiId(id, !this.InEditMode, this.InEditMode);
         const url = new URL(this.ContentService + apiId + '/children', this.BaseURL);
 
         // Handle additional parameters
@@ -290,7 +286,7 @@ export class ContentDeliveryAPI implements IContentDeliveryAPi
         if (!this._config.EnableExtensions) return Promise.reject('Extensions must be enabled to use the invoke method');
 
         // Base configuration
-        const apiId = ContentLinkService.createApiId(content, true);
+        const apiId = ContentLinkService.createApiId(content, !this.InEditMode, this.InEditMode);
         const url = new URL(this.MethodService + apiId + '/' + method, this.BaseURL);
 
         // Default JSON Transformer for request data
@@ -367,10 +363,10 @@ export class ContentDeliveryAPI implements IContentDeliveryAPi
                 requestUrl.searchParams.set('epieditmode', 'True');
                 requestUrl.searchParams.set('preventcache', Math.round(Math.random() * 100000000).toString());
 
-                // Propagate the VisitorGroup Preview
+                // Propagate the view configurations
                 try {
                     const windowSearchParams = new URLSearchParams(window?.location?.search);
-                    const toTransfer = ['visitorgroupsByID','epiprojects','commondrafts'];
+                    const toTransfer = ['visitorgroupsByID','epiprojects','commondrafts','epichannel'];
                     toTransfer.forEach(param => {
                         if (!requestUrl.searchParams.has(param) && windowSearchParams.has(param)) {
                             requestUrl.searchParams.set(param, windowSearchParams.get(param) as string);

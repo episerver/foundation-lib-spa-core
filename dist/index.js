@@ -68,6 +68,10 @@ export const useContentDeliveryAPI = ContextProvider.useContentDeliveryAPI;
  */
 export const useServerSideRendering = ContextProvider.useServerSideRendering;
 /**
+ * Retrieve the events accessor
+ */
+export const useEvents = ContextProvider.useEvents;
+/**
  * Helper method to get the global scope at any location within the SPA, this is either
  * the 'window' or 'global' variable, depending on execution context.
  *

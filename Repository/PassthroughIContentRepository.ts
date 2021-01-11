@@ -19,7 +19,7 @@ export class PassthroughIContentRepository extends EventEmitter<IPatchableReposi
     protected _config : IRepositoryConfig = {
         debug: false,
         maxAge: 0,
-        policy: IRepositoryPolicy.NetworkFirst
+        policy: IRepositoryPolicy.LocalStorageFirst
     };
     
     public constructor (api: IContentDeliveryAPI, config?: Partial<IRepositoryConfig>)
@@ -51,6 +51,12 @@ export class PassthroughIContentRepository extends EventEmitter<IPatchableReposi
         try {
             const item = await this.load(reference);
             if (!item) return null;
+            if (item.contentLink?.workId && item.contentLink?.workId > 0) {
+                if (this._config.debug) console.log('PassthroughIContentRepository: Skipping patch to content item', reference, item);
+                this.emit('beforePatch', item.contentLink, item);
+                this.emit('afterPatch', item.contentLink, item, item);
+                return item;
+            }
             if (this._config.debug) console.log('PassthroughIContentRepository: Will apply patch to content item', reference, item, patch);
             this.emit('beforePatch', item.contentLink, item);
             const patchedItem = patch(item);
@@ -93,6 +99,14 @@ export class PassthroughIContentRepository extends EventEmitter<IPatchableReposi
     public getWebsite(hostname: string, language ?: string) : Promise<Website | null>
     {
         return this._api.getWebsite(hostname).then(w => w ? w : null);
+    }
+    public getCurrentWebsite() : Promise<Readonly<Website> | null>
+    {
+        let hostname : string = '*';
+        try {
+            hostname = window.location.hostname;
+        } catch (e) { /* Ignored on purpose */ }
+        return this.getWebsite(hostname, undefined).then(w => w ? w : this.getWebsite(hostname, undefined));
     }
 }
 export default PassthroughIContentRepository;

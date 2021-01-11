@@ -10,6 +10,12 @@ export interface IEvent {
  */
 export default interface IEventEngine {
     /**
+     * Field that indicates if the current engine implementation is in debug
+     * mode.
+     */
+    debug: boolean;
+
+    /**
      * Register an event so it can be dispatched and caught by the engine
      *
      * @param event The event code to register

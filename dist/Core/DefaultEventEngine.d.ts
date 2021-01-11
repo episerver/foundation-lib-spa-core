@@ -9,7 +9,11 @@ export default class DefaultEventEngine implements IEventEngine {
         [key: string]: (...args: any[]) => void;
     };
     protected _events: string[];
+    protected _debug: boolean;
+    get debug(): boolean;
+    set debug(val: boolean);
     constructor();
+    protected log(...args: any[]): void;
     protected onPostMessageReceived(event: MessageEvent): void;
     registerEvent(event: string): IEventEngine;
     hasEvent(event: string): boolean;

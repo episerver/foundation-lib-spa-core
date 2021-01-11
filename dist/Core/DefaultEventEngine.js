@@ -7,11 +7,22 @@ export default class DefaultEventEngine {
     constructor() {
         this._listeners = {};
         this._events = [];
+        this._debug = false;
         this._eventEmitter = new EventEmitter();
         const ctx = AppGlobal();
         if (ctx.addEventListener) {
             ctx.addEventListener('message', this.onPostMessageReceived.bind(this), false);
         }
+    }
+    get debug() {
+        return this._debug;
+    }
+    set debug(val) {
+        this._debug = val;
+    }
+    log(...args) {
+        if (this.debug)
+            console.debug(...args);
     }
     onPostMessageReceived(event) {
         if (event.data.id) {
@@ -22,6 +33,7 @@ export default class DefaultEventEngine {
     }
     registerEvent(event) {
         if (!this.hasEvent(event)) {
+            this.log('Registering event', event);
             this._events.push(event);
         }
         return this;
@@ -41,6 +53,7 @@ export default class DefaultEventEngine {
                 throw new Error(`The event ${event} has not been registered.`);
             }
         }
+        this.log('Registering event handler', event, id, handler);
         this._listeners[id] = handler;
         this._eventEmitter.addListener(event, handler);
         return this;
@@ -48,15 +61,14 @@ export default class DefaultEventEngine {
     dispatch(event, ...args) {
         if (!this.hasEvent(event))
             this.registerEvent(event);
-        const emitArgs = [event];
-        for (const arg of args)
-            emitArgs.push(arg);
-        this._eventEmitter.emit.apply(this._eventEmitter, emitArgs);
+        this.log('Dispatching event', event, args);
+        const emitArgs = [event, ...args];
+        this._eventEmitter.emit(...emitArgs);
     }
     removeListener(event, id) {
-        if (!this._listeners[id]) {
+        if (!this._listeners[id])
             throw new Error(`There's no listner with ${id} present`);
-        }
+        this.log('Removing event handler', event, id);
         this._eventEmitter.removeListener(event, this._listeners[id]);
         delete this._listeners[id];
         return this;

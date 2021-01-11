@@ -66,3 +66,7 @@ export function useServerSideRendering() {
     const sc = useServiceContainer();
     return sc.getService(DefaultServices.ServerContext);
 }
+export function useEvents() {
+    const sc = useServiceContainer();
+    return sc.getService(DefaultServices.EventEngine);
+}

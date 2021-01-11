@@ -1,6 +1,7 @@
 import React from 'react';
 import IContentDeliveryAPI from '../ContentDelivery/IContentDeliveryAPI';
 import IEpiserverContext from '../Core/IEpiserverContext';
+import IEventEngine from '../Core/IEventEngine';
 import IServiceContainer from '../Core/IServiceContainer';
 import IContentRepository from '../Repository/IContentRepository';
 import ServerContextAccessor from '../ServerSideRendering/ServerContextAccessor';
@@ -40,3 +41,4 @@ export declare function useContentDeliveryAPI(): IContentDeliveryAPI;
  */
 export declare function useForceUpdate(): () => void;
 export declare function useServerSideRendering(): ServerContextAccessor;
+export declare function useEvents(): IEventEngine;

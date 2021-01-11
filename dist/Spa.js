@@ -9,9 +9,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 // Redux & Redux setup
 import { configureStore } from '@reduxjs/toolkit';
-// Lodash
-import merge from 'lodash/merge';
-import clone from 'lodash/clone';
 import { DefaultServices } from './Core/IServiceContainer';
 import DefaultEventEngine from './Core/DefaultEventEngine';
 import { ContentLinkService } from './Models/ContentLink';
@@ -38,6 +35,7 @@ export class EpiserverSpaContext {
     constructor() {
         this._initialized = InitStatus.NotInitialized;
         this._modules = [];
+        this._cachedEditModeUrl = undefined;
     }
     get serviceContainer() {
         return this._serviceContainer;
@@ -53,8 +51,8 @@ export class EpiserverSpaContext {
     init(config, serviceContainer, isServerSideRendering = false) {
         // Generic init
         this._initialized = InitStatus.Initializing;
-        // this._isServerSideRendering = isServerSideRendering;
         this._serviceContainer = serviceContainer;
+        // Prepare services
         const executionContext = {
             isServerSideRendering: (() => {
                 try {
@@ -64,24 +62,29 @@ export class EpiserverSpaContext {
                     return false;
                 }
             })(),
-            isDebugActive: process.env.NODE_ENV === 'production' ? false : (typeof (config.enableDebug) === 'boolean' ? config.enableDebug : false),
-            isEditable: false,
-            isInEditMode: false,
+            isDebugActive: typeof (config.enableDebug) === 'boolean' ? config.enableDebug : false,
+            isEditable: this.initialEditMode(),
+            isInEditMode: this.initialEditMode(),
         };
         config.enableDebug = executionContext.isDebugActive;
+        const eventEngine = new DefaultEventEngine();
+        eventEngine.debug = executionContext.isDebugActive;
+        // Warn for production built with debug active
+        if (process.env.NODE_ENV === 'production' && executionContext.isDebugActive)
+            console.warn('Running Episerver SPA with a production build and debug enabled');
         // Create module list
         this._modules.push(new RepositoryModule(), new RoutingModule(), new LoadersModule());
-        this._modules.sort((a, b) => a.SortOrder - b.SortOrder);
         if (config.modules)
             this._modules = this._modules.concat(config.modules);
+        this._modules.sort((a, b) => a.SortOrder - b.SortOrder);
         if (config.enableDebug)
-            console.debug(`Episerver SPA modules: ${this._modules.map((m) => m.GetName()).join(', ')}`);
+            console.info(`Episerver SPA modules: ${this._modules.map((m) => m.GetName()).join(', ')}`);
         // Register core services
         this._serviceContainer.addService(DefaultServices.Context, this);
         this._serviceContainer.addService(DefaultServices.Config, config);
         this._serviceContainer.addService(DefaultServices.ExecutionContext, executionContext);
         this._serviceContainer.addService(DefaultServices.ServerContext, new ServerContextAccessor());
-        this._serviceContainer.addService(DefaultServices.EventEngine, new DefaultEventEngine());
+        this._serviceContainer.addService(DefaultServices.EventEngine, eventEngine);
         this._initialized = InitStatus.CoreServicesReady;
         // Have modules add services of their own
         this._modules.forEach(x => x.ConfigureContainer(this._serviceContainer));
@@ -94,8 +97,11 @@ export class EpiserverSpaContext {
         this._modules.forEach(x => x.StartModule(this));
         // Mark SPA as initialized & and make some info available in the global context
         this._initialized = InitStatus.Initialized;
-        ctx.EpiserverSpa.serviceContainer = this._serviceContainer;
-        ctx.EpiserverSpa.modules = this._modules;
+        if (executionContext.isDebugActive) {
+            ctx.EpiserverSpa.serviceContainer = this._serviceContainer;
+            ctx.EpiserverSpa.modules = this._modules;
+            ctx.EpiserverSpa.eventEngine = eventEngine;
+        }
     }
     _initRedux() {
         const reducers = {};
@@ -109,61 +115,8 @@ export class EpiserverSpaContext {
         if (this.isDebugActive())
             console.debug(`Initializing edit mode in ${this.initialEditMode() ? 'enabled' : 'disabled'} state`);
         if (!this.isServerSideRendering() && this.initialEditMode()) {
-            // if (this.isDebugActive()) console.debug('Adding edit mode event handlers');
-            // this.contentDeliveryApi().setInEditMode(true);
             this.serviceContainer.getService(DefaultServices.ContentDeliveryAPI_V2).InEditMode = true;
-            // this.events().addListener('beta/epiReady', 'BetaEpiReady', this.onEpiReady.bind(this), true);
-            this.events().addListener('beta/contentSaved', 'BetaEpiContentSaved', this.onEpiContentSaved.bind(this), true);
-            // this.events().addListener('epiReady', 'EpiReady', this.onEpiReady.bind(this), true);
-            this.events().addListener('contentSaved', 'EpiContentSaved', this.onEpiContentSaved.bind(this), true);
-        }
-    }
-    onEpiContentSaved(event) {
-        if (this.isDebugActive())
-            console.info('EpiContentSaved: Received updated content from the Episerver Shell', event);
-        if (event.successful) {
-            const repo = this.serviceContainer.getService(DefaultServices.IContentRepository_V2);
-            const baseId = event.savedContentLink;
-            const isStringProperty = (toTest, propName) => {
-                try {
-                    return toTest[propName] && typeof toTest[propName] === 'string';
-                }
-                catch (e) { /* Empty on purpose */ }
-                return false;
-            };
-            repo.patch(baseId, (item) => {
-                const out = clone(item);
-                event.properties.forEach(property => {
-                    if (property.successful) {
-                        const propertyData = {};
-                        if (property.name.substr(0, 9) === 'icontent_') {
-                            switch (property.name.substr(9)) {
-                                case 'name':
-                                    if (this.isDebugActive())
-                                        console.info('EpiContentSaved: Received updated name');
-                                    propertyData.name = isStringProperty(out, 'name') ? property.value : { expandedValue: undefined, value: property.value };
-                                    break;
-                                default:
-                                    if (this.isDebugActive())
-                                        console.warn('EpiContentSaved: Received unsupported property ', property);
-                                    break;
-                            }
-                        }
-                        else {
-                            if (this.isDebugActive())
-                                console.info(`EpiContentSaved: Received updated ${property.name}`);
-                            propertyData[property.name] = {
-                                expandedValue: undefined,
-                                value: property.value
-                            };
-                        }
-                        merge(out, propertyData);
-                    }
-                });
-                if (this.isDebugActive())
-                    console.info('EpiContentSaved: Patched iContent', out);
-                return out;
-            });
+            this.serviceContainer.getService(DefaultServices.ContentDeliveryApi).setInEditMode(true);
         }
     }
     isInitialized() {
@@ -255,78 +208,37 @@ export class EpiserverSpaContext {
      * @return {boolean}
      */
     initialEditMode() {
-        var _a, _b;
+        var _a, _b, _c;
         try {
-            const mySearchParams = new URLSearchParams(window.location.search);
-            if (((_a = mySearchParams.get('commondrafts')) === null || _a === void 0 ? void 0 : _a.toLowerCase()) === 'true')
-                return false;
-            if (((_b = mySearchParams.get('epieditmode')) === null || _b === void 0 ? void 0 : _b.toLowerCase()) === 'true')
+            if (typeof ((_a = ctx === null || ctx === void 0 ? void 0 : ctx.epi) === null || _a === void 0 ? void 0 : _a.inEditMode) === 'boolean' && ctx.epi.inEditMode)
                 return true;
-            return this.isInEditMode();
-        }
-        catch (e) {
-            return false;
-        }
-    }
-    /**
-     * Determine the edit mode by following a sequence of steps, from most
-     * reliable to most unreliable.
-     *
-     * @returns {boolean}
-     */
-    isInEditMode() {
-        var _a, _b;
-        try {
-            const mySearchParams = new URLSearchParams(window.location.search);
-            if (((_a = mySearchParams.get('commondrafts')) === null || _a === void 0 ? void 0 : _a.toLowerCase()) === 'true')
-                return false;
         }
         catch (e) {
             // Ignore errors on purpose to go to next test
         }
         try {
-            return ctx.epi && ctx.epi.inEditMode !== undefined ? ctx.epi.inEditMode === true : false;
+            if (typeof ((_c = (_b = ctx === null || ctx === void 0 ? void 0 : ctx.epi) === null || _b === void 0 ? void 0 : _b.beta) === null || _c === void 0 ? void 0 : _c.inEditMode) === 'boolean' && ctx.epi.beta.inEditMode)
+                return true;
         }
         catch (e) {
             // Ignore errors on purpose to go to next test
         }
         try {
-            return ctx.epi && ctx.epi.beta && ctx.epi.beta.inEditMode !== undefined ? ctx.epi.beta.inEditMode === true : false;
-        }
-        catch (e) {
-            // Ignore errors on purpose to go to next test
-        }
-        try {
-            return ((_b = (new URLSearchParams(window.location.search)).get('epieditmode')) === null || _b === void 0 ? void 0 : _b.toLowerCase()) === 'true';
+            if (this._cachedEditModeUrl === undefined) {
+                this._cachedEditModeUrl = (new URLSearchParams(window.location.search.toLowerCase())).get('epieditmode') === 'true';
+            }
+            return this._cachedEditModeUrl;
         }
         catch (e) {
             // Ignore error on purpose to go to next test
         }
         return false;
     }
+    isInEditMode() {
+        return this._serviceContainer.getService(DefaultServices.ExecutionContext).isInEditMode;
+    }
     isEditable() {
-        var _a;
-        try {
-            const mySearchParams = new URLSearchParams(window.location.search);
-            if (((_a = mySearchParams.get('commondrafts')) === null || _a === void 0 ? void 0 : _a.toLowerCase()) === 'true')
-                return false;
-        }
-        catch (e) {
-            // Ignore errors on purpose to go to next test
-        }
-        try {
-            return ctx.epi ? ctx.epi.isEditable === true : false;
-        }
-        catch (e) {
-            // Ignore errors on purpose to go to next test;
-        }
-        try {
-            return ctx.epi && ctx.epi.beta ? ctx.epi.beta.isEditable === true : false;
-        }
-        catch (e) {
-            // Ignore errors on purpose to go to next test
-        }
-        return false;
+        return this._serviceContainer.getService(DefaultServices.ExecutionContext).isEditable;
     }
     getEpiserverUrl(path = '', action) {
         var _a;

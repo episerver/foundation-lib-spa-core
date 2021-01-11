@@ -20,5 +20,6 @@ export declare class PassthroughIContentRepository extends EventEmitter<IPatchab
     getByReference(reference: string, website?: Website): Promise<IContent | null>;
     getWebsites(): Promise<WebsiteList>;
     getWebsite(hostname: string, language?: string): Promise<Website | null>;
+    getCurrentWebsite(): Promise<Readonly<Website> | null>;
 }
 export default PassthroughIContentRepository;

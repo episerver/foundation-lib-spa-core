@@ -23,6 +23,8 @@ export declare class EpiserverSpaContext implements IEpiserverContext, PathProvi
     protected _componentLoader: ComponentLoader;
     protected _serviceContainer: IServiceContainer;
     protected _modules: IInitializableModule[];
+    private _cachedEditModeUrl?;
+    private _routedContent?;
     get serviceContainer(): IServiceContainer;
     /**
      * Retrieve an instance of the ContentDeliveryAPI wrapper
@@ -33,7 +35,6 @@ export declare class EpiserverSpaContext implements IEpiserverContext, PathProvi
     init(config: AppConfig, serviceContainer: IServiceContainer, isServerSideRendering?: boolean): void;
     private _initRedux;
     private _initEditMode;
-    private onEpiContentSaved;
     isInitialized(): boolean;
     isDebugActive(): boolean;
     isServerSideRendering(): boolean;
@@ -61,12 +62,6 @@ export declare class EpiserverSpaContext implements IEpiserverContext, PathProvi
      * @return {boolean}
      */
     initialEditMode(): boolean;
-    /**
-     * Determine the edit mode by following a sequence of steps, from most
-     * reliable to most unreliable.
-     *
-     * @returns {boolean}
-     */
     isInEditMode(): boolean;
     isEditable(): boolean;
     getEpiserverUrl(path?: ContentReference, action?: string): string;
@@ -81,7 +76,6 @@ export declare class EpiserverSpaContext implements IEpiserverContext, PathProvi
     getCurrentWebsite(): Website;
     loadCurrentWebsite(): Promise<Website>;
     getCurrentPath(): string;
-    private _routedContent?;
     getRoutedContent(): IContent;
     setRoutedContent(iContent?: IContent): IEpiserverContext;
     hasRoutedContent(): boolean;

@@ -1,6 +1,7 @@
 import React, { useContext, useState } from 'react';
 import IContentDeliveryAPI from '../ContentDelivery/IContentDeliveryAPI';
 import IEpiserverContext from '../Core/IEpiserverContext';
+import IEventEngine from '../Core/IEventEngine';
 import IServiceContainer, { DefaultServices } from '../Core/IServiceContainer';
 import IContentRepository from '../Repository/IContentRepository';
 import ServerContextAccessor from '../ServerSideRendering/ServerContextAccessor';
@@ -76,4 +77,9 @@ export function useForceUpdate(){
 export function useServerSideRendering() : ServerContextAccessor {
     const sc = useServiceContainer();
     return sc.getService<ServerContextAccessor>(DefaultServices.ServerContext);
+}
+
+export function useEvents() : IEventEngine {
+    const sc = useServiceContainer();
+    return sc.getService<IEventEngine>(DefaultServices.EventEngine);
 }

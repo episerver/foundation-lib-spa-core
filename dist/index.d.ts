@@ -57,6 +57,10 @@ export declare const useContentDeliveryAPI: () => ContentDeliveryNS.IContentDeli
  */
 export declare const useServerSideRendering: typeof ContextProvider.useServerSideRendering;
 /**
+ * Retrieve the events accessor
+ */
+export declare const useEvents: () => Core.IEventEngine;
+/**
  * Helper method to get the global scope at any location within the SPA, this is either
  * the 'window' or 'global' variable, depending on execution context.
  *

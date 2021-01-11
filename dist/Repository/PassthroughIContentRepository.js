@@ -17,7 +17,7 @@ export class PassthroughIContentRepository extends EventEmitter {
         this._config = {
             debug: false,
             maxAge: 0,
-            policy: IRepositoryPolicy.NetworkFirst
+            policy: IRepositoryPolicy.LocalStorageFirst
         };
         this._api = api;
         this._config = Object.assign(Object.assign({}, this._config), config);
@@ -35,11 +35,19 @@ export class PassthroughIContentRepository extends EventEmitter {
         return this._api.getContent(reference);
     }
     patch(reference, patch) {
+        var _a, _b;
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const item = yield this.load(reference);
                 if (!item)
                     return null;
+                if (((_a = item.contentLink) === null || _a === void 0 ? void 0 : _a.workId) && ((_b = item.contentLink) === null || _b === void 0 ? void 0 : _b.workId) > 0) {
+                    if (this._config.debug)
+                        console.log('PassthroughIContentRepository: Skipping patch to content item', reference, item);
+                    this.emit('beforePatch', item.contentLink, item);
+                    this.emit('afterPatch', item.contentLink, item, item);
+                    return item;
+                }
                 if (this._config.debug)
                     console.log('PassthroughIContentRepository: Will apply patch to content item', reference, item, patch);
                 this.emit('beforePatch', item.contentLink, item);
@@ -87,6 +95,14 @@ export class PassthroughIContentRepository extends EventEmitter {
     }
     getWebsite(hostname, language) {
         return this._api.getWebsite(hostname).then(w => w ? w : null);
+    }
+    getCurrentWebsite() {
+        let hostname = '*';
+        try {
+            hostname = window.location.hostname;
+        }
+        catch (e) { /* Ignored on purpose */ }
+        return this.getWebsite(hostname, undefined).then(w => w ? w : this.getWebsite(hostname, undefined));
     }
 }
 export default PassthroughIContentRepository;

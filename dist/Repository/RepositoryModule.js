@@ -1,3 +1,6 @@
+// Lodash
+import merge from 'lodash/merge';
+import clone from 'lodash/clone';
 // Core libraries
 import { BaseInitializableModule } from '../Core/IInitializableModule';
 import { DefaultServices } from '../Core/IServiceContainer';
@@ -16,7 +19,6 @@ export default class RepositoryModule extends BaseInitializableModule {
     constructor() {
         super(...arguments);
         this.name = "Episerver Content Delivery & Repository";
-        this._shellActive = false;
         this.SortOrder = 10;
     }
     /**
@@ -56,9 +58,7 @@ export default class RepositoryModule extends BaseInitializableModule {
             new EditIContentRepositoryV2(newAPI, repositoryConfig) :
             new IContentRepositoryV2(newAPI, repositoryConfig, ssr);
         if (config.enableDebug && newAPI.InEpiserverShell)
-            console.info(`${this.name}: Detected Episerver Shell - Disabling IndexedDB`);
-        // Configure module
-        this._shellActive = newAPI.InEpiserverShell;
+            this.log(`${this.name}: Detected Episerver Shell - Disabling IndexedDB`);
         // Configure Authentication
         const authStorage = context.isServerSideRendering ? new ServerAuthStorage() : new BrowserAuthStorage();
         container.addService(DefaultServices.AuthService, new DefaultAuthService(newAPI, authStorage));
@@ -69,21 +69,88 @@ export default class RepositoryModule extends BaseInitializableModule {
     }
     StartModule(context) {
         super.StartModule(context);
+        const debug = context.isDebugActive();
+        const _ = this;
         // Define event listeners
         const onEpiReady = (eventData) => {
-            if (context.isDebugActive())
-                console.log(`${this.name}: OnEpiReady`, eventData);
-            if (!this._shellActive && eventData.isEditable) {
-                this._shellActive = true;
-                context.serviceContainer.getService(DefaultServices.ExecutionContext).isEditable = true;
+            if (debug)
+                _.log(`${_.name}: OnEpiReady`, eventData);
+            if (eventData.isEditable) {
+                // Determine window name
+                let windowName = 'server';
+                try {
+                    windowName = (window === null || window === void 0 ? void 0 : window.name) || 'server';
+                }
+                catch (e) {
+                    windowName = 'server';
+                }
+                // Set editable / editmode values
+                context.serviceContainer.getService(DefaultServices.ExecutionContext).isEditable = windowName !== 'compareView';
                 context.serviceContainer.getService(DefaultServices.ExecutionContext).isInEditMode = true;
                 context.serviceContainer.getService(DefaultServices.ContentDeliveryAPI_V2).InEditMode = true;
                 context.serviceContainer.getService(DefaultServices.ContentDeliveryApi).setInEditMode(true);
             }
         };
+        const onEpiContentSaved = (event) => {
+            if (debug)
+                _.log('EpiContentSaved: Received updated content from the Episerver Shell', event);
+            if (event.successful) {
+                if (debug)
+                    _.log('EpiContentSaved: Epi reported success, starting patching process');
+                const repo = context.serviceContainer.getService(DefaultServices.IContentRepository_V2);
+                const baseId = event.savedContentLink;
+                _.patchContentRepository(repo, baseId, event, debug);
+            }
+        };
         // Bind event listener
         const eventEngine = context.serviceContainer.getService(DefaultServices.EventEngine);
-        eventEngine.addListener('beta/epiReady', 'onBetaEpiReady', onEpiReady, true);
-        eventEngine.addListener('epiReady', 'onEpiReady', onEpiReady, true);
+        eventEngine.addListener('beta/epiReady', 'onBetaEpiReady', onEpiReady.bind(this), true);
+        eventEngine.addListener('epiReady', 'onEpiReady', onEpiReady.bind(this), true);
+        eventEngine.addListener('beta/contentSaved', 'BetaEpiContentSaved', onEpiContentSaved.bind(this), true);
+        eventEngine.addListener('contentSaved', 'EpiContentSaved', onEpiContentSaved.bind(this), true);
     }
+    patchContentRepository(repo, baseId, event, debug = false) {
+        const isStringProperty = (toTest, propName) => {
+            try {
+                return toTest[propName] && typeof toTest[propName] === 'string';
+            }
+            catch (e) { /* Empty on purpose */ }
+            return false;
+        };
+        repo.patch(baseId, (item) => {
+            const out = clone(item);
+            event.properties.forEach(property => {
+                if (property.successful) {
+                    const propertyData = {};
+                    if (property.name.substr(0, 9) === 'icontent_') {
+                        switch (property.name.substr(9)) {
+                            case 'name':
+                                if (debug)
+                                    this.log('EpiContentSaved: Received updated name');
+                                propertyData.name = isStringProperty(out, 'name') ? property.value : { expandedValue: undefined, value: property.value };
+                                break;
+                            default:
+                                if (debug)
+                                    this.warn('EpiContentSaved: Received unsupported property ', property);
+                                break;
+                        }
+                    }
+                    else {
+                        if (debug)
+                            this.log(`EpiContentSaved: Received updated ${property.name}`);
+                        propertyData[property.name] = {
+                            expandedValue: undefined,
+                            value: property.value
+                        };
+                    }
+                    merge(out, propertyData);
+                }
+            });
+            if (debug)
+                this.log('EpiContentSaved: Patched iContent', out);
+            return out;
+        });
+    }
+    log(...args) { console.debug(...args); }
+    warn(...args) { console.warn(...args); }
 }
