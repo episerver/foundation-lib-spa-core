@@ -44,16 +44,20 @@ export const FetchAdapter : CachingFetchAdapter = async (config: AxiosRequestCon
 
     const request = new Request(requestUrl.href, requestConfig);
     let r : Response;
-    if (FetchAdapter.isCachable && caches && FetchAdapter.isCachable.some(test => test(requestUrl))) {
-        const cache = await caches.open(userAgent);
-        const cacheResponse = await cache.match(request);
-        if (!cacheResponse) {
-            r = await fetch(request);
-            cache.put(request, r.clone());
+    try {
+        if (FetchAdapter.isCachable && caches && FetchAdapter.isCachable.some(test => test(requestUrl))) {
+            const cache = await caches.open(userAgent);
+            const cacheResponse = await cache.match(request);
+            if (!cacheResponse) {
+                r = await fetch(request);
+                cache.put(request, r.clone());
+            } else {
+                r = cacheResponse;
+            }
         } else {
-            r = cacheResponse;
+            r = await fetch(request);
         }
-    } else {
+    } catch (e) {
         r = await fetch(request);
     }
     const responseHeaders: { [key: string]: string; } = {};

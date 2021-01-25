@@ -41,18 +41,23 @@ export const FetchAdapter = (config) => __awaiter(void 0, void 0, void 0, functi
     };
     const request = new Request(requestUrl.href, requestConfig);
     let r;
-    if (FetchAdapter.isCachable && caches && FetchAdapter.isCachable.some(test => test(requestUrl))) {
-        const cache = yield caches.open(userAgent);
-        const cacheResponse = yield cache.match(request);
-        if (!cacheResponse) {
-            r = yield fetch(request);
-            cache.put(request, r.clone());
+    try {
+        if (FetchAdapter.isCachable && caches && FetchAdapter.isCachable.some(test => test(requestUrl))) {
+            const cache = yield caches.open(userAgent);
+            const cacheResponse = yield cache.match(request);
+            if (!cacheResponse) {
+                r = yield fetch(request);
+                cache.put(request, r.clone());
+            }
+            else {
+                r = cacheResponse;
+            }
         }
         else {
-            r = cacheResponse;
+            r = yield fetch(request);
         }
     }
-    else {
+    catch (e) {
         r = yield fetch(request);
     }
     const responseHeaders = {};
