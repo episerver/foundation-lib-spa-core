@@ -1,5 +1,4 @@
 {
-  "files": ["index.ts", "bin/epi_sync_models.ts"],
   "compilerOptions": {
     "target": "ES6",
     "jsx": "react",
@@ -13,6 +12,5 @@
     "lib": ["ES6", "DOM", "DOM.Iterable"],
     "removeComments": false
   },
-  "exclude": ["node_modules", "tests", "dist"],
-  "include": ["bin"]
+  "exclude": ["node_modules", "tests", "dist"]
 }

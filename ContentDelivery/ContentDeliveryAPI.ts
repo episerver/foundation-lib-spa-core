@@ -357,7 +357,7 @@ export class ContentDeliveryAPI implements IContentDeliveryAPi
     protected async doAdvancedRequest<T>(url: string | URL, options: Partial<AxiosRequestConfig> = {}, addDefaultQueryParams : boolean = true, returnOnError : boolean = false) : Promise<IContentDeliveryResponse<T>>
     {
         // Pre-process URL
-        const requestUrl : URL = typeof(url) === "string" ? new URL(url.toLowerCase(), this.BaseURL) : url;
+        const requestUrl : URL = typeof(url) === "string" ? new URL(url, this.BaseURL) : url;
         if (addDefaultQueryParams) {
             if (this.InEditMode) {
                 requestUrl.searchParams.set('epieditmode', 'True');

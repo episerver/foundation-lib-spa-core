@@ -321,7 +321,7 @@ export class ContentDeliveryAPI {
         var _a, _b;
         return __awaiter(this, void 0, void 0, function* () {
             // Pre-process URL
-            const requestUrl = typeof (url) === "string" ? new URL(url.toLowerCase(), this.BaseURL) : url;
+            const requestUrl = typeof (url) === "string" ? new URL(url, this.BaseURL) : url;
             if (addDefaultQueryParams) {
                 if (this.InEditMode) {
                     requestUrl.searchParams.set('epieditmode', 'True');
