@@ -264,7 +264,7 @@ export class IContentRepository extends EventEmitter {
     getCurrentWebsite() {
         let hostname = '*';
         try {
-            hostname = window.location.hostname;
+            hostname = window.location.host;
         }
         catch (e) { /* Ignored on purpose */ }
         return this.getWebsite(hostname, undefined, false).then(w => w ? w : this.getWebsite(hostname, undefined, true));

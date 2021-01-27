@@ -138,7 +138,7 @@ export class ContentDeliveryAPI implements IContentDeliveryAPi
                 processedHost = hostname;
                 break;
             default:
-                processedHost = hostname.hostname;
+                processedHost = hostname.host;
                 break;
         }
         if (this._config.Debug) console.log(`ContentDeliveryAPI: Resolving website for: ${ processedHost }`);
@@ -156,7 +156,7 @@ export class ContentDeliveryAPI implements IContentDeliveryAPi
         if (this.CurrentWebsite) return this.CurrentWebsite;
         let hostname : undefined | string | URL;
         try {
-            hostname = window.location.hostname;
+            hostname = window.location.host;
         } catch (e) { /* Ignored on purpose */ }
         const w = await this.getWebsite(hostname);
         this.CurrentWebsite = w;

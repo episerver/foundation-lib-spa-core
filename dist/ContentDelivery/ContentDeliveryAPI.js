@@ -104,7 +104,7 @@ export class ContentDeliveryAPI {
                     processedHost = hostname;
                     break;
                 default:
-                    processedHost = hostname.hostname;
+                    processedHost = hostname.host;
                     break;
             }
             if (this._config.Debug)
@@ -125,7 +125,7 @@ export class ContentDeliveryAPI {
                 return this.CurrentWebsite;
             let hostname;
             try {
-                hostname = window.location.hostname;
+                hostname = window.location.host;
             }
             catch (e) { /* Ignored on purpose */ }
             const w = yield this.getWebsite(hostname);
