@@ -10,6 +10,7 @@ import WebsiteList from '../Models/WebsiteList';
  */
 export declare type IContentRepositoryItem<T extends IContent = IContent> = IRepositoryItem<T> & {
     apiId: string;
+    guid: string;
     contentId: string;
     type: string;
     route: string | null;
@@ -46,7 +47,9 @@ export interface IEventingRepository<EventTypes extends EventEmitter.ValidEventT
     removeListener<T extends EventEmitter.EventNames<EventTypes>>(event: T, fn?: EventEmitter.EventListener<EventTypes, T>, context?: Context, once?: boolean): this;
     off<T extends EventEmitter.EventNames<EventTypes>>(event: T, fn?: EventEmitter.EventListener<EventTypes, T>, context?: Context, once?: boolean): this;
 }
-export declare type WebsiteRepositoryItem<T extends Website = Website> = IRepositoryItem<T>;
+export declare type WebsiteRepositoryItem<T extends Website = Website> = IRepositoryItem<T> & {
+    hosts: string;
+};
 export interface IIContentRepository extends IPatchableRepository<ContentReference, IContent>, IEventingRepository<IPatchableRepositoryEvents<ContentReference, IContent>, IIContentRepository> {
     /**
      * Get the IContent from the client repository, if it's not present there, go to the Episerver Instance
@@ -56,25 +59,25 @@ export interface IIContentRepository extends IPatchableRepository<ContentReferen
      * @param   { boolean }             recursive   Marker to indicate if the content must be laoded recursively (e.g. resolve all related content items)
      * @returns The loaded data or null if not found or accessible
      */
-    load: (itemId: ContentReference, recursive?: boolean) => Promise<IContent | null>;
+    load: <IContentType extends IContent = IContent>(itemId: ContentReference, recursive?: boolean) => Promise<IContentType | null>;
     /**
      * Force loading the IContent from Episerver and update the reference in the local repository
      */
-    update: (reference: ContentReference, recursive?: boolean) => Promise<IContent | null>;
+    update: <IContentType extends IContent = IContent>(reference: ContentReference, recursive?: boolean) => Promise<IContentType | null>;
     /**
      * Retrieve content by the Episerver ContentId, using the index on the local repository
      *
      * @param { string } contentId  The Episerver ContentID (using format: {number}__{provider})
      * @returns { Promise<IContent | null> } The content from the index or null otherwise
      */
-    getByContentId: (contentId: string) => Promise<IContent | null>;
+    getByContentId: <IContentType extends IContent = IContent>(contentId: string) => Promise<IContentType | null>;
     /**
      * Retrieve content by the Episerver route (URL), using the index on the local repository
      *
      * @param { string } route
      * @returns { Promise<IContent | null> } The content from the index or null otherwise
      */
-    getByRoute(route: string): Promise<IContent | null>;
+    getByRoute: <IContentType extends IContent = IContent>(route: string) => Promise<IContentType | null>;
     /**
      * Load content by the reference name from the website
      *
@@ -82,11 +85,11 @@ export interface IIContentRepository extends IPatchableRepository<ContentReferen
      * @param { Website } website The website to get the registrations from, if omitted it takes the current website from the ContentDelivery API
      * @returns { Promise<IContent | null> } The content from the index or null otherwise
      */
-    getByReference(reference: string, website?: Website): Promise<IContent | null>;
+    getByReference: <IContentType extends IContent = IContent>(reference: string, website?: Website) => Promise<IContentType | null>;
     /**
      * Retrieve a list of all websites stored within Episerver
      */
-    getWebsites(): Promise<WebsiteList>;
+    getWebsites: () => Promise<WebsiteList>;
     /**
      * Retrieve a single website, as stored within Episerver
      *
@@ -94,8 +97,8 @@ export interface IIContentRepository extends IPatchableRepository<ContentReferen
      * @param   { string }  language    The language to match when retrieving the website
      * @returns The matching website or null if none found or error
      */
-    getWebsite(hostname: string, language?: string): Promise<Website | null>;
-    getCurrentWebsite(): Promise<Readonly<Website> | null>;
+    getWebsite: (hostname: string, language?: string) => Promise<Website | null>;
+    getCurrentWebsite: () => Promise<Readonly<Website> | null>;
 }
 export declare type IIContentRepositoryType = new (api: IContentDeliveryAPI, config?: Partial<IRepositoryConfig>) => IIContentRepository;
 export default IIContentRepository;

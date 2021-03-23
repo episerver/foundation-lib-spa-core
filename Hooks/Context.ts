@@ -1,3 +1,4 @@
+import { EnhancedStore } from '@reduxjs/toolkit';
 import React, { useContext, useState } from 'react';
 import IContentDeliveryAPI from '../ContentDelivery/IContentDeliveryAPI';
 import IEpiserverContext from '../Core/IEpiserverContext';
@@ -5,6 +6,8 @@ import IEventEngine from '../Core/IEventEngine';
 import IServiceContainer, { DefaultServices } from '../Core/IServiceContainer';
 import IContentRepository from '../Repository/IContentRepository';
 import ServerContextAccessor from '../ServerSideRendering/ServerContextAccessor';
+import CmsState from '../State/CmsState'
+import { ContentAppState } from '../State/Reducer';
 
 /**
  * The React Context object for the Episerver context
@@ -82,4 +85,13 @@ export function useServerSideRendering() : ServerContextAccessor {
 export function useEvents() : IEventEngine {
     const sc = useServiceContainer();
     return sc.getService<IEventEngine>(DefaultServices.EventEngine);
+}
+
+export function useStore() : EnhancedStore {
+    return useEpiserver().getStore();
+}
+
+export function useCmsState() : CmsState | undefined {
+    const state : ContentAppState = useEpiserver().getStore().getState();
+    return state?.OptiContentCloud;
 }

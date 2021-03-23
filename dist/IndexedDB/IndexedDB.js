@@ -51,3 +51,4 @@ export class IndexedDB {
     }
 }
 export default IndexedDB;
+//# sourceMappingURL=IndexedDB.js.map

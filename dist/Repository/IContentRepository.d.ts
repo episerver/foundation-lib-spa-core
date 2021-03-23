@@ -36,7 +36,8 @@ export declare class IContentRepository extends EventEmitter<IPatchableRepositor
      * @param { boolean } recursive Whether or all referenced content must be loaded as well
      * @returns { Promise<IContent | null> }
      */
-    load(reference: ContentReference, recursive?: boolean): Promise<IContent | null>;
+    load<IContentType extends IContent = IContent>(reference: ContentReference, recursive?: boolean): Promise<IContentType | null>;
+    protected createStorageId(reference: ContentReference, preferGuid?: boolean, editModeId?: boolean): string;
     /**
      * Force reloading of the content and return the fresh content
      *
@@ -44,7 +45,7 @@ export declare class IContentRepository extends EventEmitter<IPatchableRepositor
      * @param { boolean } recursive Whether or all referenced content must be loaded as well
      * @returns { Promise<IContent | null> }
      */
-    update(reference: ContentReference, recursive?: boolean): Promise<IContent | null>;
+    update<IContentType extends IContent = IContent>(reference: ContentReference, recursive?: boolean): Promise<IContentType | null>;
     /**
      * Validate if the current item is still valid or must be refreshed from the server
      *
@@ -67,16 +68,16 @@ export declare class IContentRepository extends EventEmitter<IPatchableRepositor
      * @param { ContentReference } reference The reference to the content, e.g. something that can be resolved by the ContentDelivery API
      * @returns { Promise<IContent | null> }
      */
-    get(reference: ContentReference): Promise<IContent | null>;
-    getByContentId(contentId: string): Promise<IContent | null>;
+    get<IContentType extends IContent = IContent>(reference: ContentReference): Promise<IContentType | null>;
+    getByContentId<IContentType extends IContent = IContent>(contentId: string): Promise<IContentType | null>;
     /**
      * Resolve an IContent | null from a route via the index
      *
      * @param { string } route The route to resolve to an iContent item trough the index
      * @returns { Promise<Store<IContentRepositoryItem>> }
      */
-    getByRoute(route: string): Promise<IContent | null>;
-    getByReference(reference: string, website?: Website): Promise<IContent | null>;
+    getByRoute<IContentType extends IContent = IContent>(route: string): Promise<IContentType | null>;
+    getByReference<IContentType extends IContent = IContent>(reference: string, website?: Website): Promise<IContentType | null>;
     patch(reference: ContentReference, patch: (item: Readonly<IContent>) => IContent): Promise<IContent | null>;
     getWebsites(): Promise<WebsiteList>;
     getWebsite(hostname: string, language?: string, matchWildCard?: boolean): Promise<Readonly<Website> | null>;

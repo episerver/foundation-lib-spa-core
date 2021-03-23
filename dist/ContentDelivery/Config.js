@@ -10,3 +10,4 @@ export const DefaultConfig = {
     AutoExpandAll: false,
     EnableExtensions: false
 };
+//# sourceMappingURL=Config.js.map

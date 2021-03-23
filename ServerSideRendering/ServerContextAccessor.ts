@@ -72,14 +72,14 @@ export class ServerContextAccessor
         return this._context ? true : false;
     }
 
-    public getIContent(ref : ContentReference) : IContent | null 
+    public getIContent<T extends IContent = IContent>(ref : ContentReference) : T | null 
     {
         const refId = ContentLinkService.createApiId(ref || 'args.ref');
         if (ContentLinkService.createApiId(this.IContent || 'this.icontent') === refId) {
-            return this.IContent;
+            return this.IContent as T;
         }
         if (ContentLinkService.createApiId(this.StartPage || 'this.startpage') === refId) {
-            return this.StartPage;
+            return this.StartPage as T;
         }
         return null;
     }

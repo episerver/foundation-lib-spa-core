@@ -8,7 +8,6 @@ import * as IIContentRepositoryNS from '../Repository/IIContentRepository';
 import IContentDeliveryAPI from '../ContentDelivery/IContentDeliveryAPI';
 import ContentDeliveryAPI_V2 from '../ContentDelivery/ContentDeliveryAPI';
 import IContentDeliveryAPIConfig from '../ContentDelivery/Config';
-import * as DefaultAuthServiceNS from '../ContentDelivery/DefaultAuthService';
 import * as IAuthServiceNS from '../ContentDelivery/IAuthService';
 import * as IAuthStorageNS from '../ContentDelivery/IAuthStorage';
 import * as IAuthTokenProviderNS from '../ContentDelivery/IAuthTokenProvider';
@@ -45,6 +44,6 @@ export declare type IOAuthSuccessResponse = IAuthServiceNS.IOAuthSuccessResponse
 export declare type IAuthStorage = IAuthStorageNS.IAuthStorage;
 export declare type IAuthToken = IAuthTokenProviderNS.IAuthToken;
 export declare type IAuthTokenProvider = IAuthTokenProviderNS.IAuthTokenProvider;
-export declare const DefaultAuthService: typeof DefaultAuthServiceNS.DefaultAuthService;
+export declare const DefaultAuthService: IAuthServiceNS.IAuthServiceStatic;
 export declare const BrowserAuthStorage: typeof BrowserAuthStorageNS.BrowserAuthStorage;
 export declare const ServerAuthStorage: typeof ServerAuthStorageNS.ServerAuthStorage;

@@ -70,3 +70,11 @@ export function useEvents() {
     const sc = useServiceContainer();
     return sc.getService(DefaultServices.EventEngine);
 }
+export function useStore() {
+    return useEpiserver().getStore();
+}
+export function useCmsState() {
+    const state = useEpiserver().getStore().getState();
+    return state === null || state === void 0 ? void 0 : state.OptiContentCloud;
+}
+//# sourceMappingURL=Context.js.map

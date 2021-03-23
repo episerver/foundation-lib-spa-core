@@ -1,5 +1,5 @@
-import { AxiosInstance, AxiosRequestConfig, AxiosTransformer, Method } from 'axios';
-import IContentDeliveryAPi, { IContentDeliveryResponse } from './IContentDeliveryAPI';
+import { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosTransformer, Method } from 'axios';
+import IContentDeliveryAPi, { IContentDeliveryResponse, IContentDeliverySearchResults } from './IContentDeliveryAPI';
 import ContentDeliveryApiConfig from './Config';
 import Website from '../Models/Website';
 import WebsiteList from '../Models/WebsiteList';
@@ -14,10 +14,11 @@ export declare class ContentDeliveryAPI implements IContentDeliveryAPi {
     readonly SiteService: string;
     readonly MethodService: string;
     readonly AuthService: string;
-    readonly RouteService: string;
     readonly ModelService: string;
+    readonly SearchService: string;
     private _config;
     private _axios;
+    private _axiosStatic;
     constructor(config: Partial<ContentDeliveryApiConfig>);
     protected get Axios(): AxiosInstance;
     CurrentWebsite?: Website;
@@ -55,18 +56,44 @@ export declare class ContentDeliveryAPI implements IContentDeliveryAPi {
      * @param { string[] } expand The list of fields that need to be expanded
      */
     getContents<C extends IContent = IContent>(ids: ContentReference[], select?: string[], expand?: string[]): Promise<C[] | NetworkErrorData[]>;
+    /**
+     * Perform a basic search by either a single keyword/phrase or a query string encoded set of constraints.
+     *
+     * @param { string }    query         Keyword/Phrase or query string
+     * @param { string }    orderBy
+     * @param { number }    skip
+     * @param { number }    top
+     * @param { boolean }   personalized  Wether or not personalized results must be returned
+     * @param { string }    select
+     * @param { string }    expand
+     * @returns The search results
+     */
+    basicSearch<T extends IContent = IContent>(query: string, orderBy?: string, skip?: number, top?: number, personalized?: boolean, select?: string[], expand?: string[]): Promise<IContentDeliverySearchResults<T>>;
+    /**
+     * Perform an advanced search by an OData Query
+     *
+     * @param { string }    query         Keyword/Phrase or query string
+     * @param { string }    orderBy
+     * @param { number }    skip
+     * @param { number }    top
+     * @param { boolean }   personalized  Wether or not personalized results must be returned
+     * @param { string }    select
+     * @param { string }    expand
+     * @returns The search results
+     */
+    search<T extends IContent = IContent>(query: string, orderBy: string, skip?: number, top?: number, personalized?: boolean, select?: string[], expand?: string[]): Promise<IContentDeliverySearchResults<T>>;
     getAncestors(id: ContentReference, select?: string[], expand?: string[]): Promise<IContent[]>;
     getChildren(id: ContentReference, select?: string[], expand?: string[]): Promise<IContent[]>;
     invoke<TypeOut extends unknown = any, TypeIn extends unknown = any>(content: ContentReference, method: string, verb?: Method, data?: TypeIn, requestTransformer?: AxiosTransformer): Promise<ActionResponse<TypeOut | NetworkErrorData, IContent>>;
     isServiceURL(url: URL | string): boolean;
-    raw<TypeOut>(url: string | URL, options?: Partial<AxiosRequestConfig>, addDefaultQueryParams?: boolean): Promise<IContentDeliveryResponse<TypeOut>>;
+    raw<TypeOut>(url: string | URL, options?: Partial<AxiosRequestConfig>, addDefaultQueryParams?: boolean): Promise<IContentDeliveryResponse<TypeOut | NetworkErrorData>>;
     protected apiIdIsGuid(apiId: string): boolean;
     private doRequest;
-    protected doAdvancedRequest<T>(url: string | URL, options?: Partial<AxiosRequestConfig>, addDefaultQueryParams?: boolean, returnOnError?: boolean): Promise<IContentDeliveryResponse<T>>;
+    protected doAdvancedRequest<T>(url: string | URL, options?: Partial<AxiosRequestConfig>, addDefaultQueryParams?: boolean, returnOnError?: boolean): Promise<IContentDeliveryResponse<T | NetworkErrorData>>;
     protected getDefaultRequestConfig(): AxiosRequestConfig;
     protected getHeaders(customHeaders?: AxiosHeaders): AxiosHeaders;
     protected errorCounter: number;
-    protected createNetworkErrorResponse<T extends unknown = any>(e: T): NetworkErrorData<T>;
+    protected createNetworkErrorResponse<T extends unknown = any>(error: T, response?: AxiosResponse): NetworkErrorData<T>;
 }
 export declare type AxiosHeaders = {
     [key: string]: string;

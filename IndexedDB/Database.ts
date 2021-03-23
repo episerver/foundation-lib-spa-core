@@ -23,6 +23,29 @@ export class Database {
         this._idb = idb;
     }
 
+    public async replaceStore(name: string, keyPath?: string, autoIncrement?: boolean, indices?: TableIndex[]) : Promise<boolean>
+    {
+        let success = await this.dropStore(name);
+        if (success) 
+            success = await this.createStore(name, keyPath, autoIncrement, indices);
+        return success;
+    }
+
+    public dropStore(name: string) : Promise<boolean>
+    {
+        return new Promise<boolean>((resolve, reject) => {
+            if (this._idb.objectStoreNames.contains(name)) {
+                try {
+                    this._idb.deleteObjectStore(name);
+                } catch (e) {
+                    reject(e);
+                    return;
+                }
+            }
+            resolve(true);
+        })
+    }
+
     public createStore(name: string, keyPath?: string, autoIncrement?: boolean, indices?: TableIndex[]) : Promise<boolean>
     {
         return new Promise<boolean>((resolve, reject) => {

@@ -16,3 +16,4 @@ export const CmsComponent = (props) => {
     return React.createElement(DynamicComponent, Object.assign({}, props));
 };
 export default CmsComponent;
+//# sourceMappingURL=CmsComponent.js.map

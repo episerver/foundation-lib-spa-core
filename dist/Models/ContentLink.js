@@ -14,8 +14,30 @@ export class ContentLinkService {
         return ref && ref.trim ? true : false;
     }
     /**
+     * Generate a - language aware - identifier for a given content reference. When the language is mandatory when the reference is
+     * a string or ContentLink, and ignored when the reference is iContent.
      *
-     * @param ref The content reference to generate the API-ID for.
+     * @param { ContentReference }  ref           The content reference to generate the API-ID for
+     * @param { string }            languageCode  The language code to use, if the reference is not iContent
+     * @param { boolean }           editModeId    If set, get the identifier, including work-id to load a specific version of the content
+     * @returns { ContentApiId }
+     */
+    static createLanguageId(reference, languageCode, editModeId = false) {
+        var _a;
+        const baseId = this.createApiId(reference, false, editModeId);
+        if (this.referenceIsIContent(reference) && ((_a = reference.language) === null || _a === void 0 ? void 0 : _a.name))
+            return `${baseId}___${reference.language.name}`;
+        if (!languageCode)
+            throw new Error('Reference is not translatable iContent and no languageCode specified!');
+        return `${baseId}___${languageCode}`;
+    }
+    /**
+     * Generate a ContentDeliveryAPI Compliant identifier for a given content reference.
+     *
+     * @param { ContentReference }  ref         The content reference to generate the API-ID for
+     * @param { boolean }           preferGuid  If set, prefer to receive the GUID as api identifier
+     * @param { boolean }           editModeId  If set, get the identifier, including work-id to load a specific version of the content
+     * @returns { ContentApiId }
      */
     static createApiId(ref, preferGuid = false, editModeId = false) {
         if (this.referenceIsString(ref)) {
@@ -83,3 +105,4 @@ export class ContentLinkService {
         }
     }
 }
+//# sourceMappingURL=ContentLink.js.map

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Spinner, { SpinnerProps } from './Spinner';
 import { useEpiserver } from '../index';
 
-export type LazyComponentProps<T = any> = React.PropsWithChildren<{
+export type LazyComponentProps<T = any> = {
     /**
      * The name of the component to load, this is the component path after
      * app/Components/ e.g. a value of CheckoutPage will load the default export
@@ -19,15 +19,15 @@ export type LazyComponentProps<T = any> = React.PropsWithChildren<{
      * @type    boolean
      */
     noSpinner?: boolean
-} & T>;
+} & SpinnerProps & T;
 
-export function LazyComponent<P>(props: LazyComponentProps<P>, context?: any) : React.ReactElement<P | SpinnerProps, any> | null
+export const LazyComponent : React.FunctionComponent<LazyComponentProps> = (props) =>
 {
     const epi = useEpiserver();
-    const [ loadedComponent, setLoadedComponent ] = useState<React.ReactElement<P, any> | undefined>(undefined);
-    useEffect(() => { epi.componentLoader().LoadComponent<P>(props.component, props).then(c => setLoadedComponent(c)); }, [props]);
+    const [ loadedComponent, setLoadedComponent ] = useState<React.ReactElement | undefined>(undefined);
+    useEffect(() => { epi.componentLoader().LoadComponent(props.component, props).then(c => setLoadedComponent(c)); }, [props]);
     if (typeof(loadedComponent) === "undefined" ) {
-        return props.noSpinner ? null : Spinner.CreateInstance({});
+        return props.noSpinner ? null : Spinner.CreateInstance(props);
     }
     return <LazyComponentErrorBoundary>{ loadedComponent }</LazyComponentErrorBoundary>
 }
@@ -47,7 +47,7 @@ class LazyComponentErrorBoundary extends React.Component<React.PropsWithChildren
     componentDidCatch(error: any, errorInfo: any) {
         console.error('LazyComponentErrorBoundary caught error', error, errorInfo);
         // You can also log the error to an error reporting service
-        //logErrorToMyService(error, errorInfo);
+        // logErrorToMyService(error, errorInfo);
     }
     
     render() {

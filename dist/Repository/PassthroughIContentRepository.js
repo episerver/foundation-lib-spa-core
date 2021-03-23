@@ -66,7 +66,7 @@ export class PassthroughIContentRepository extends EventEmitter {
         return this._api.getContent(contentId);
     }
     getByRoute(route) {
-        return this._api.resolveRoute(route).then(r => PathResponseIsIContent(r) ? r : r.currentContent);
+        return this._api.resolveRoute(route).then(r => (PathResponseIsIContent(r) ? r : r.currentContent));
     }
     getByReference(reference, website) {
         let hostname = '*';
@@ -106,3 +106,4 @@ export class PassthroughIContentRepository extends EventEmitter {
     }
 }
 export default PassthroughIContentRepository;
+//# sourceMappingURL=PassthroughIContentRepository.js.map

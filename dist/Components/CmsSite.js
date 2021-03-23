@@ -12,15 +12,16 @@ export const EpiserverWebsite = (props) => {
     const SiteLayout = getLayout(props.context.config());
     const ssr = props.context.serviceContainer.getService(DefaultServices.ServerContext);
     const location = (props.context.isServerSideRendering() ? ssr.Path : window.location.pathname) || undefined;
-    const mainSite = React.createElement(EpiserverContext.Provider, { value: props.context },
-        React.createElement(EpiRouter, { location: location, context: props.staticContext },
-            React.createElement(Helmet, null),
-            React.createElement(SiteLayout, { context: props.context },
-                React.createElement(RoutedContent, { config: props.context.config().routes || [], keyPrefix: "CmsSite-RoutedContent" }),
-                props.children)));
-    return props.context.isServerSideRendering() ? mainSite : React.createElement(ReduxProvider, { store: props.context.getStore() }, mainSite);
+    return React.createElement(ReduxProvider, { store: props.context.getStore() },
+        React.createElement(EpiserverContext.Provider, { value: props.context },
+            React.createElement(EpiRouter, { location: location, context: props.staticContext },
+                React.createElement(Helmet, null),
+                React.createElement(SiteLayout, { context: props.context },
+                    React.createElement(RoutedContent, { config: props.context.config().routes || [], keyPrefix: "CmsSite-RoutedContent" }),
+                    props.children))));
 };
 function getLayout(config) {
     return config.layout || Layout;
 }
 export default EpiserverWebsite;
+//# sourceMappingURL=CmsSite.js.map

@@ -9,20 +9,23 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 import Axios from 'axios';
 import * as UUID from 'uuid';
+import { isNetworkError } from './IContentDeliveryAPI';
 import { DefaultConfig } from './Config';
 import { hostnameFilter } from '../Models/WebsiteList';
 import { ContentLinkService } from '../Models/ContentLink';
 import { ResponseType } from '../Models/ActionResponse';
+import { networkErrorToOAuthError } from './IAuthService';
 export class ContentDeliveryAPI {
     constructor(config) {
-        this.ContentService = 'api/episerver/v2.0/content/'; // Stick to V2 as V3 doesn't support refs
-        this.SiteService = 'api/episerver/v2.0/site/'; // Stick to V2 as V3 doesn't report hosts
+        this.ContentService = 'api/episerver/v2.0/content/';
+        this.SiteService = 'api/episerver/v2.0/site/';
         this.MethodService = 'api/episerver/v3/action/';
         this.AuthService = 'api/episerver/auth/token';
-        this.RouteService = 'api/episerver/v3/route/';
         this.ModelService = 'api/episerver/v3/model/';
+        this.SearchService = 'api/episerver/v2.0/search/content';
         this.errorCounter = 0;
         this._config = Object.assign(Object.assign({}, DefaultConfig), config);
+        this._axiosStatic = Axios;
         this._axios = Axios.create(this.getDefaultRequestConfig());
     }
     get Axios() {
@@ -88,10 +91,10 @@ export class ContentDeliveryAPI {
                 headers["Content-Type"] = "application/x-www-form-urlencoded";
                 return Object.entries(data).map(x => `${encodeURIComponent(x[0])}=${encodeURIComponent(x[1])}`).join('&');
             }
-        }, false, true).then(r => r[0]);
+        }, false, true).then(r => r[0]).then(r => isNetworkError(r) ? networkErrorToOAuthError(r) : r);
     }
     getWebsites() {
-        return this.doRequest(this.SiteService).catch(() => []);
+        return this.doRequest(this.SiteService).then(r => isNetworkError(r) ? [] : r).catch(() => []);
     }
     getWebsite(hostname) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -135,7 +138,7 @@ export class ContentDeliveryAPI {
     }
     resolveRoute(path, select, expand) {
         return __awaiter(this, void 0, void 0, function* () {
-            // Try CD-API 2.17 method first
+            // Try CD-API 2.17+ method first
             const contentServiceUrl = new URL(this.ContentService, this.BaseURL);
             contentServiceUrl.searchParams.set('contentUrl', path);
             if (select)
@@ -143,27 +146,10 @@ export class ContentDeliveryAPI {
             if (expand)
                 contentServiceUrl.searchParams.set('expand', expand.join(','));
             const list = yield this.doRequest(contentServiceUrl);
-            if (list && list.length === 1) {
+            if (isNetworkError(list))
+                return list;
+            if (list && list.length === 1)
                 return list[0];
-            }
-            // Then try the extension method
-            if (this._config.EnableExtensions && !this.InEditMode) {
-                const routeServiceUrl = new URL(this.RouteService, this.BaseURL);
-                if (this.CurrentWebsite)
-                    routeServiceUrl.searchParams.set('siteId', this.CurrentWebsite.id);
-                routeServiceUrl.searchParams.set('route', path);
-                try {
-                    const routeResponse = yield this.doRequest(routeServiceUrl);
-                    if (routeResponse) {
-                        const iContent = yield this.getContent(routeResponse.contentLink);
-                        if (iContent)
-                            return iContent;
-                    }
-                }
-                catch (e) {
-                    // Ignored on purpose
-                }
-            }
             // Fallback to resolving by accessing the URL itself
             const url = new URL(path.startsWith('/') ? path.substr(1) : path, this.BaseURL);
             if (select)
@@ -227,8 +213,69 @@ export class ContentDeliveryAPI {
             url.searchParams.set('select', select.map(s => encodeURIComponent(s)).join(','));
         if (expand)
             url.searchParams.set('expand', expand.map(s => encodeURIComponent(s)).join(','));
-        return this.doRequest(url).catch(e => [this.createNetworkErrorResponse(e)]);
-        ;
+        return this.doRequest(url).then(r => isNetworkError(r) ? [r] : r).catch(e => [this.createNetworkErrorResponse(e)]);
+    }
+    /**
+     * Perform a basic search by either a single keyword/phrase or a query string encoded set of constraints.
+     *
+     * @param { string }    query         Keyword/Phrase or query string
+     * @param { string }    orderBy
+     * @param { number }    skip
+     * @param { number }    top
+     * @param { boolean }   personalized  Wether or not personalized results must be returned
+     * @param { string }    select
+     * @param { string }    expand
+     * @returns The search results
+     */
+    basicSearch(query, orderBy, skip, top, personalized, select, expand) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (!this.OnLine)
+                return Promise.resolve({ TotalMatching: 0, Results: [] });
+            const params = new URLSearchParams();
+            params.set('query', query);
+            if (orderBy)
+                params.set('orderBy', orderBy);
+            if (skip)
+                params.set('skip', skip.toString());
+            if (top)
+                params.set('top', top.toString());
+            if (select)
+                params.set('select', select.join(','));
+            if (expand)
+                params.set('expand', expand.join(','));
+            if (personalized)
+                params.set('personalize', 'true');
+            const url = this.SearchService + '?' + params.toString();
+            const data = yield this
+                .doAdvancedRequest(url, {}, true, false)
+                .then(r => {
+                if (isNetworkError(r[0])) {
+                    const errorResponse = {
+                        TotalMatching: 0,
+                        Results: []
+                    };
+                    return errorResponse;
+                }
+                else
+                    return r[0];
+            });
+            return data;
+        });
+    }
+    /**
+     * Perform an advanced search by an OData Query
+     *
+     * @param { string }    query         Keyword/Phrase or query string
+     * @param { string }    orderBy
+     * @param { number }    skip
+     * @param { number }    top
+     * @param { boolean }   personalized  Wether or not personalized results must be returned
+     * @param { string }    select
+     * @param { string }    expand
+     * @returns The search results
+     */
+    search(query, orderBy, skip, top, personalized, select, expand) {
+        return Promise.resolve({ TotalMatching: 0, Results: [] });
     }
     getAncestors(id, select, expand) {
         // Create base URL
@@ -240,7 +287,7 @@ export class ContentDeliveryAPI {
         if (expand)
             url.searchParams.set('expand', expand.map(s => encodeURIComponent(s)).join(','));
         // Perform request
-        return this.doRequest(url).catch(e => [this.createNetworkErrorResponse(e)]);
+        return this.doRequest(url).then(r => isNetworkError(r) ? [r] : r).catch(e => [this.createNetworkErrorResponse(e)]);
     }
     getChildren(id, select, expand) {
         // Create base URL
@@ -252,7 +299,7 @@ export class ContentDeliveryAPI {
         if (expand)
             url.searchParams.set('expand', expand.map(s => encodeURIComponent(s)).join(','));
         // Perform request
-        return this.doRequest(url).catch(e => [this.createNetworkErrorResponse(e)]);
+        return this.doRequest(url).then(r => isNetworkError(r) ? [r] : r).catch(e => [this.createNetworkErrorResponse(e)]);
     }
     invoke(content, method, verb, data, requestTransformer) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -275,20 +322,25 @@ export class ContentDeliveryAPI {
                 data,
                 transformRequest: requestTransformer || defaultTransformer
             };
-            // Run the actual request
-            return this.doRequest(url, options).catch((e) => {
-                const errorResponse = this.createNetworkErrorResponse(e);
+            const createActionErrorResponse = (error) => {
                 const actionResponse = {
                     actionName: method,
-                    contentLink: errorResponse.contentLink,
-                    currentContent: errorResponse,
+                    contentLink: error.contentLink,
+                    currentContent: error,
                     responseType: ResponseType.ActionResult,
-                    data: errorResponse,
+                    data: error,
                     language: this.Language,
-                    name: typeof (errorResponse.name) === "string" ? errorResponse.name : errorResponse.name.value,
-                    url: errorResponse.contentLink.url
+                    name: typeof (error.name) === "string" ? error.name : error.name.value,
+                    url: error.contentLink.url
                 };
                 return actionResponse;
+            };
+            // Run the actual request
+            return this.doRequest(url, options)
+                .then(r => isNetworkError(r) ? createActionErrorResponse(r) : r)
+                .catch((e) => {
+                const errorResponse = this.createNetworkErrorResponse(e);
+                return createActionErrorResponse(errorResponse);
             });
         });
     }
@@ -365,7 +417,7 @@ export class ContentDeliveryAPI {
                         console.info(`ContentDeliveryAPI Error ${response.status}: ${response.statusText}`, requestConfig.method + ' ' + requestConfig.url);
                     throw new Error(`${response.status}: ${response.statusText}`);
                 }
-                const data = response.data;
+                const data = response.data || this.createNetworkErrorResponse('Empty response', response);
                 const ctx = {
                     status: response.status,
                     statusText: response.statusText,
@@ -404,7 +456,7 @@ export class ContentDeliveryAPI {
             baseURL: this.BaseURL,
             withCredentials: true,
             headers: this.getHeaders(),
-            responseType: "json"
+            responseType: "json",
         };
         // Set the adapter if needed
         if (this._config.Adapter && typeof (this._config.Adapter) === 'function') {
@@ -417,12 +469,13 @@ export class ContentDeliveryAPI {
             'Accept': 'application/json',
             'Accept-Language': this.Language,
             'Content-Type': 'application/json',
+            'X-IContent-Language': this.Language // Requested language branch
         };
         if (!customHeaders)
             return defaultHeaders;
         return Object.assign(Object.assign({}, defaultHeaders), customHeaders);
     }
-    createNetworkErrorResponse(e) {
+    createNetworkErrorResponse(error, response) {
         const errorId = ++this.errorCounter;
         return {
             contentLink: {
@@ -430,15 +483,16 @@ export class ContentDeliveryAPI {
                 id: errorId,
                 providerName: 'EpiserverSPA',
                 workId: 0,
-                url: '#EpiserverSPA__' + errorId
+                url: ''
             },
             name: 'Network error',
             error: {
                 propertyDataType: 'errorMessage',
-                value: e
+                value: error
             },
             contentType: ['Errors', 'NetworkError']
         };
     }
 }
 export default ContentDeliveryAPI;
+//# sourceMappingURL=ContentDeliveryAPI.js.map

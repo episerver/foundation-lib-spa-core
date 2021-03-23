@@ -191,3 +191,4 @@ return type;
 }
 ;
 export default ComponentLoader;
+//# sourceMappingURL=ComponentLoader.js.map

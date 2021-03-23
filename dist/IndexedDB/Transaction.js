@@ -20,3 +20,4 @@ export class Transaction {
     }
 }
 export default Transaction;
+//# sourceMappingURL=Transaction.js.map

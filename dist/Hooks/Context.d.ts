@@ -1,3 +1,4 @@
+import { EnhancedStore } from '@reduxjs/toolkit';
 import React from 'react';
 import IContentDeliveryAPI from '../ContentDelivery/IContentDeliveryAPI';
 import IEpiserverContext from '../Core/IEpiserverContext';
@@ -5,6 +6,7 @@ import IEventEngine from '../Core/IEventEngine';
 import IServiceContainer from '../Core/IServiceContainer';
 import IContentRepository from '../Repository/IContentRepository';
 import ServerContextAccessor from '../ServerSideRendering/ServerContextAccessor';
+import CmsState from '../State/CmsState';
 /**
  * The React Context object for the Episerver context
  *
@@ -42,3 +44,5 @@ export declare function useContentDeliveryAPI(): IContentDeliveryAPI;
 export declare function useForceUpdate(): () => void;
 export declare function useServerSideRendering(): ServerContextAccessor;
 export declare function useEvents(): IEventEngine;
+export declare function useStore(): EnhancedStore;
+export declare function useCmsState(): CmsState | undefined;

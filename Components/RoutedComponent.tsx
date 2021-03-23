@@ -5,6 +5,7 @@ import { useEpiserver, useIContentRepository, useServerSideRendering } from '../
 import IContent from '../Models/IContent';
 import EpiComponent from './EpiComponent';
 import Spinner from './Spinner';
+import { ContentLinkService } from '../Models/ContentLink';
 
 
 export const RoutedComponent : FunctionComponent<RouteComponentProps> = (props: RouteComponentProps) =>
@@ -14,14 +15,17 @@ export const RoutedComponent : FunctionComponent<RouteComponentProps> = (props: 
     const ssr = useServerSideRendering();
     const path = props.location.pathname;
     const [iContent, setIContent] = useState<IContent | null>(path === ssr.Path ? ssr.IContent : null);
+    const iContentId = iContent ? ContentLinkService.createLanguageId(iContent, 'en') : '';
 
     // Handle path changes
     useEffect(() => {
+        let isCancelled : boolean = false;
         repo.getByRoute(path).then(c => {
+            if (isCancelled) return;
             epi.setRoutedContent(c || undefined);
             setIContent(c);
         });
-        return () => { epi.setRoutedContent() };
+        return () => { isCancelled = true; epi.setRoutedContent(); };
     }, [ path ]);
 
     // Handle content changes
@@ -32,7 +36,7 @@ export const RoutedComponent : FunctionComponent<RouteComponentProps> = (props: 
         }
         repo.on("afterUpdate", handleUpdate);
         return () => { repo.off("afterUpdate", handleUpdate); }
-    }, [ iContent ]);
+    }, [ iContentId ]);
 
     if (iContent === null) {
         return Spinner.CreateInstance({});

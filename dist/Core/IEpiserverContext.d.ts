@@ -18,6 +18,10 @@ export default interface IEpiserverContext {
      */
     readonly contentStorage: ContentDeliveryAPI;
     /**
+     * The current language code
+     */
+    readonly Language: string;
+    /**
      * Perform the initialization of the context from the configuration of the application
      *
      * @param config

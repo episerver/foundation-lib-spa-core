@@ -15,3 +15,4 @@ export default class ComponentNotFound extends EpiComponent {
     }
 }
 ComponentNotFound.displayName = 'Epi/Error/ComponentNotFound';
+//# sourceMappingURL=ComponentNotFound.js.map

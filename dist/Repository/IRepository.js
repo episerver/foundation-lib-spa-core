@@ -20,3 +20,4 @@ export var IRepositoryPolicy;
      */
     IRepositoryPolicy["PreferOffline"] = "PreferOffline";
 })(IRepositoryPolicy || (IRepositoryPolicy = {}));
+//# sourceMappingURL=IRepository.js.map

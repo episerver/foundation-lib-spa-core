@@ -84,3 +84,4 @@ function isEditable(iContent, ctx) {
     const myContentId = ContentLinkService.createApiId(iContent.contentLink);
     return routedContentId === myContentId;
 }
+//# sourceMappingURL=Property.js.map

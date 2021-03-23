@@ -19,6 +19,7 @@ import ServerContextAccessor from './ServerSideRendering/ServerContextAccessor';
 import RoutingModule from './Routing/RoutingModule';
 import RepositoryModule from './Repository/RepositoryModule';
 import LoadersModule from './Loaders/LoadersModule';
+import StateModule from './State/StateModule';
 
 // Taxonomy
 import IContent from './Models/IContent';
@@ -69,6 +70,12 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
         return this.serviceContainer.getService<ContentDeliveryAPI>(DefaultServices.ContentDeliveryApi);
     }
 
+    public get Language() : string
+    {
+        return this.serviceContainer.getService<IContentDeliveryApiV2>(DefaultServices.ContentDeliveryAPI_V2)?.Language ||
+            this.config().defaultLanguage;
+    }
+
     public init(config: AppConfig, serviceContainer: IServiceContainer, isServerSideRendering: boolean = false): void {
         // Generic init
         this._initialized = InitStatus.Initializing;
@@ -96,10 +103,10 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
             console.warn('Running Episerver SPA with a production build and debug enabled');    
 
         // Create module list
-        this._modules.push(new RepositoryModule(), new RoutingModule(), new LoadersModule());
+        this._modules.push(new RepositoryModule(), new RoutingModule(), new LoadersModule(), new StateModule());
         if (config.modules) this._modules = this._modules.concat(config.modules);
         this._modules.sort((a, b) => a.SortOrder - b.SortOrder);
-        if (config.enableDebug) console.info(`Episerver SPA modules: ${this._modules.map((m) => m.GetName()).join(', ')}`);
+        if (config.enableDebug) console.info(`Episerver SPA modules: ${this._modules.map((m) => `${m.GetName()} (${m.SortOrder})`).join(', ')}`);
 
         // Register core services
         this._serviceContainer.addService(DefaultServices.Context, this);
@@ -299,7 +306,8 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
             itemPath += itemPath.length ? '/' + action : action;
         }
 
-        return StringUtils.TrimRight('/', this.config()?.epiBaseUrl + itemPath);
+        const itemUrl : URL = new URL(itemPath, this.config()?.epiBaseUrl);
+        return StringUtils.TrimRight('/', itemUrl.href);
     }
 
     public getSpaRoute(path: ContentReference) : string

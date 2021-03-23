@@ -12,12 +12,12 @@ export declare class PassthroughIContentRepository extends EventEmitter<IPatchab
     constructor(api: IContentDeliveryAPI, config?: Partial<IRepositoryConfig>);
     get(reference: ContentReference): Promise<IContent | null>;
     has(reference: ContentReference): Promise<boolean>;
-    load(itemId: ContentReference, recursive?: boolean): Promise<IContent | null>;
-    update(reference: ContentReference, recursive?: boolean): Promise<IContent | null>;
+    load<IContentType extends IContent = IContent>(itemId: ContentReference, recursive?: boolean): Promise<IContentType | null>;
+    update<IContentType extends IContent = IContent>(reference: ContentReference, recursive?: boolean): Promise<IContentType | null>;
     patch(reference: ContentReference, patch: (item: Readonly<IContent>) => IContent): Promise<IContent | null>;
-    getByContentId(contentId: string): Promise<IContent | null>;
-    getByRoute(route: string): Promise<IContent | null>;
-    getByReference(reference: string, website?: Website): Promise<IContent | null>;
+    getByContentId<IContentType extends IContent = IContent>(contentId: string): Promise<IContentType | null>;
+    getByRoute<IContentType extends IContent = IContent>(route: string): Promise<IContentType | null>;
+    getByReference<IContentType extends IContent = IContent>(reference: string, website?: Website): Promise<IContentType | null>;
     getWebsites(): Promise<WebsiteList>;
     getWebsite(hostname: string, language?: string): Promise<Website | null>;
     getCurrentWebsite(): Promise<Readonly<Website> | null>;

@@ -1,139 +1,127 @@
+import React from 'react';
+import { useEpiserver } from '../Hooks/Context';
 import { ContentLinkService } from '../Models/ContentLink';
-import React, { Component } from 'react';
 import EpiComponent from './EpiComponent';
-export default class ContentArea extends Component {
-    render() {
-        // Return the children if there's no components
-        if (!this.props.data || !this.props.data.value)
-            return this.props.children || this.renderNoChildren();
-        // Render the actual components
-        const components = this.props.data.value.map(this.renderComponent.bind(this));
-        if (this.props.noWrap === true) {
-            if (this.props.propertyName && this.props.context.isEditable()) {
-                return React.createElement("div", { "data-epi-edit": this.props.propertyName }, components);
-            }
-            return components;
-        }
-        // If there's no container, just output the row
-        const rowClass = `content-area ${this.getConfigValue('defaultRowClass', 'row')}`;
-        if (!this.props.addContainer) {
-            if (this.props.context.isEditable()) {
-                return React.createElement("div", { className: rowClass, "data-epi-edit": this.props.propertyName }, components);
-            }
-            return React.createElement("div", { className: rowClass }, components);
-        }
-        const containerBreakBlockClass = this.getConfigValue('containerBreakBlockClass', undefined);
-        const containerClass = this.getConfigValue('defaultContainerClass', 'container');
-        if (!containerBreakBlockClass) {
-            return React.createElement("div", { className: containerClass },
-                React.createElement("div", { className: rowClass, "data-epi-edit": this.props.context.isEditable() ? this.props.propertyName : null }, components));
-        }
-        const containers = [{ isContainer: true, components: [] }];
-        let containerIdx = 0;
-        components.forEach(c => {
-            const classNames = c.props.className;
-            if (classNames.indexOf(containerBreakBlockClass) >= 0) {
-                if (containers[containerIdx].components.length === 0) {
-                    containers[containerIdx].isContainer = false;
-                    containers[containerIdx].components.push(c);
-                }
-                else {
-                    containerIdx++;
-                    containers[containerIdx] = { isContainer: false, components: [c] };
-                }
-                containerIdx++;
-                containers[containerIdx] = { isContainer: true, components: [] };
-            }
-            else {
-                containers[containerIdx].components.push(c);
-            }
-        });
-        const groupedComponents = containers.map((cItem, idx) => {
-            if (cItem.isContainer) {
-                return React.createElement("div", { className: containerClass, key: `ContentArea-${this.props.propertyName}-item-${idx}` },
-                    React.createElement("div", { className: rowClass }, cItem.components));
-            }
-            else if (cItem.components.length > 1) {
-                return React.createElement("div", { key: `ContentArea-${this.props.propertyName}-item-${idx}` }, cItem.components);
-            }
-            else {
-                return cItem.components[0];
-            }
-        });
-        if (this.props.context.isEditable()) {
-            return React.createElement("div", { "data-epi-edit": this.props.propertyName }, groupedComponents);
-        }
-        return groupedComponents;
-    }
-    renderComponent(item, idx) {
-        // Get expanded value
-        let expandedValue;
-        if (this.props.data.expandedValue) {
-            expandedValue = this.props.data.expandedValue[idx];
-        }
-        // Build component
-        const ConnectedEpiComponent = EpiComponent.CreateComponent(this.props.context);
-        const component = React.createElement(ConnectedEpiComponent, { context: this.props.context, contentLink: item.contentLink, contentType: this.getComponentType(), key: item.contentLink.guidValue, expandedValue: expandedValue });
-        const blockId = ContentLinkService.createApiId(item.contentLink, false, true);
-        const blockKey = `${ContentLinkService.createApiId(item.contentLink, true, false)}-${idx}-container`;
-        // Return if no wrapping
-        if (this.props.noWrap === true) {
-            if (this.props.context.isEditable()) {
-                return React.createElement("div", { "data-epi-block-id": blockId, key: blockKey }, component);
-            }
-            return component;
-        }
-        // Build wrapper element
-        const displayOption = item.displayOption || "default";
-        const props = {
-            "data-displayoption": displayOption,
-            "data-tag": item.tag,
-            "className": this.getBlockClasses(displayOption).join(' '),
-            "key": blockKey,
-            "children": component
-        };
-        if (this.props.context.isEditable())
-            props["data-epi-block-id"] = blockId;
-        return React.createElement('div', props);
-    }
-    renderNoChildren() {
-        if (this.props.context.isEditable()) {
-            return React.createElement("div", { "data-epi-edit": this.props.propertyName },
-                React.createElement("div", { className: "alert alert-info m-5" },
-                    "There're no blocks in ",
-                    React.createElement("i", null, this.props.propertyName || 'this area')));
-        }
-        return React.createElement("div", null);
-    }
-    getBlockClasses(displayOption) {
-        const cssClasses = ['block'];
-        const displayOptions = this.getConfigValue('displayOptions', {}) || {};
-        if (displayOptions[displayOption]) {
-            cssClasses.push(displayOptions[displayOption]);
+export const ContentArea = (props) => {
+    var _a, _b, _c;
+    // Check if the areay is empty
+    if (!((_a = props.data) === null || _a === void 0 ? void 0 : _a.value))
+        return props.children ? React.createElement("div", null, props.children) : React.createElement(DefaultEmptyContentArea, { propertyName: props.propertyName });
+    // Build the configuration
+    const ctx = useEpiserver();
+    const globalConfig = ((_b = ctx.config()) === null || _b === void 0 ? void 0 : _b.contentArea) || {};
+    const config = Object.assign(Object.assign({}, globalConfig), props);
+    const wrapperClass = getConfigValue(config, 'wrapperClass', 'content-area');
+    // Render the items
+    const items = (((_c = props.data) === null || _c === void 0 ? void 0 : _c.value) || []).map((x, i) => {
+        var _a, _b;
+        const className = getBlockClasses(x.displayOption, config).join(' ');
+        const blockKey = `ContentAreaItem-${ContentLinkService.createApiId(x.contentLink, true, false)}-${i}`;
+        return React.createElement(ContentAreaItem, { key: blockKey, item: x, config: config, idx: i, className: className, expandedValue: ((_a = props.data) === null || _a === void 0 ? void 0 : _a.expandedValue) ? (_b = props.data) === null || _b === void 0 ? void 0 : _b.expandedValue[i] : undefined });
+    });
+    // Return if no wrapping
+    if (getConfigValue(config, "noWrap", false) === true)
+        return ctx.isEditable() ? React.createElement("div", { className: wrapperClass, "data-epi-block-id": props.propertyName }, items) : React.createElement(React.Fragment, null, items);
+    // If there's no container, just output the row
+    const rowClass = getConfigValue(config, 'defaultRowClass', 'row');
+    if (!getConfigValue(config, 'addContainer', false))
+        return ctx.isEditable() ? React.createElement("div", { className: `${wrapperClass} ${rowClass}`, "data-epi-edit": props.propertyName }, items) : React.createElement("div", { className: rowClass }, items);
+    // Prepare rendering the container
+    const containerBreakBlockClass = getConfigValue(config, 'containerBreakBlockClass');
+    const containerClass = getConfigValue(config, 'defaultContainerClass', 'container');
+    // Output if there's no breaking block class defined
+    if (!containerBreakBlockClass)
+        return React.createElement("div", { className: `${wrapperClass} ${containerClass}` },
+            React.createElement("div", { className: rowClass, "data-epi-edit": ctx.isEditable() ? props.propertyName : undefined }, items));
+    // Split the items into containers
+    const containers = [];
+    let currentContainerId = 0;
+    items.forEach(item => {
+        const cssClasses = (item.props.className || "").split(' ').filter(s => s.length > 0);
+        containers[currentContainerId] = containers[currentContainerId] || { items: [], shouldWrap: true };
+        if (cssClasses.indexOf(containerBreakBlockClass) >= 0) {
+            // Move to next container if not empty
+            if (containers[currentContainerId] && containers[currentContainerId].items.length > 0)
+                containers[++currentContainerId] = { items: [], shouldWrap: false };
+            // Add item
+            containers[currentContainerId].shouldWrap = false;
+            containers[currentContainerId].items.push(item);
+            // Move to next
+            currentContainerId++;
         }
         else {
-            cssClasses.push(this.getConfigValue('defaultBlockClass', 'col'));
+            containers[currentContainerId].items.push(item);
         }
-        return cssClasses;
-    }
-    /**
-     * Retrieve the ContentArea configuration, as the global configuration overridden by the
-     * instance configuration.
-     */
-    getConfig() {
-        var _a;
-        const globalConfig = ((_a = this.props.context.config()) === null || _a === void 0 ? void 0 : _a.contentArea) || {};
-        return Object.assign(Object.assign({}, globalConfig), this.props);
-    }
-    getConfigValue(propName, defaultValue) {
-        const cfg = this.getConfig();
-        if (cfg[propName]) {
-            return cfg[propName];
-        }
-        return defaultValue;
-    }
-    getComponentType() {
-        const cfg = this.getConfig();
-        return cfg.itemContentType || "Block";
-    }
+    });
+    // Render containers
+    const rendered = containers.map((container, idx) => {
+        const containerId = `ContentArea-${props.propertyName}-Container-${idx}`;
+        if (!container.shouldWrap && container.items.length === 1)
+            return container.items[0];
+        if (container.items.length === 0)
+            return null;
+        return React.createElement("div", { className: containerClass, key: containerId },
+            React.createElement("div", { className: rowClass }, container.items));
+    });
+    // Output HTML
+    return React.createElement("div", { className: wrapperClass, "data-epi-edit": ctx.isEditable() ? props.propertyName : undefined }, rendered);
+};
+ContentArea.displayName = "ContentArea";
+export default ContentArea;
+/**
+ * A type-checked method that reads a value from the configuration, eliminating the "undefined" value option when
+ * a default value has been provided for an optional configuration key.
+ *
+ * @param config        The configuration object, created by merging the global and instance configuration
+ * @param key           The configuration key to read
+ * @param defaultValue  The default value
+ * @returns             The configured or default value
+ */
+function getConfigValue(config, key, defaultValue) {
+    return (config[key] || defaultValue);
 }
+function getBlockClasses(displayOption, config) {
+    const cssClasses = ['block'];
+    const displayOptions = getConfigValue(config, 'displayOptions', {});
+    cssClasses.push(displayOptions[displayOption] ? displayOptions[displayOption] : getConfigValue(config, 'defaultBlockClass', 'col'));
+    return cssClasses.filter(x => x);
+}
+const ContentAreaItem = (props) => {
+    // Context
+    const ctx = useEpiserver();
+    // Build component
+    const componentType = getConfigValue(props.config, "itemContentType", "Block");
+    const component = React.createElement(EpiComponent, { contentLink: props.item.contentLink, contentType: componentType, key: props.item.contentLink.guidValue, expandedValue: props.expandedValue });
+    const blockId = ContentLinkService.createApiId(props.item.contentLink, false, true);
+    // Return if no wrapping
+    if (getConfigValue(props.config, "noWrap", false) === true)
+        return ctx.isEditable() ? React.createElement("div", { "data-epi-block-id": blockId }, component) : component;
+    // Build wrapper element
+    const displayOption = props.item.displayOption || "default";
+    const wrapperProps = {
+        "data-displayoption": displayOption,
+        "data-tag": props.item.tag,
+        "className": props.className,
+        "children": component
+    };
+    if (ctx.isEditable())
+        wrapperProps["data-epi-block-id"] = blockId;
+    return React.createElement("div", Object.assign({}, wrapperProps));
+};
+ContentAreaItem.displayName = "ContentAreaItem";
+/**
+ * Render and empty Content Area
+ *
+ * @param props The properties for the empty ContentArea renderer
+ */
+const DefaultEmptyContentArea = (props) => {
+    const ctx = useEpiserver();
+    if (ctx.isEditable())
+        return React.createElement("div", { "data-epi-edit": props.propertyName },
+            React.createElement("div", { className: "alert alert-info m-5" },
+                "There're no blocks in ",
+                React.createElement("i", null, props.propertyName || 'this area')));
+    return null;
+};
+DefaultEmptyContentArea.displayName = "DefaultEmptyContentArea";
+//# sourceMappingURL=ContentArea.js.map

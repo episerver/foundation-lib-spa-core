@@ -18,3 +18,4 @@ export class BaseInitializableModule {
         return null;
     }
 }
+//# sourceMappingURL=IInitializableModule.js.map

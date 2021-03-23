@@ -32,3 +32,4 @@ export default function RenderServerSide(config, serviceContainer) {
         BodyAttributes: meta.bodyAttributes.toString()
     };
 }
+//# sourceMappingURL=InitServer.js.map

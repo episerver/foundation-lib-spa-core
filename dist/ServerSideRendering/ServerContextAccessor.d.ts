@@ -15,6 +15,6 @@ export declare class ServerContextAccessor {
     get StartPage(): IContent | null;
     get Path(): string | null;
     hasContext(): boolean;
-    getIContent(ref: ContentReference): IContent | null;
+    getIContent<T extends IContent = IContent>(ref: ContentReference): T | null;
 }
 export default ServerContextAccessor;

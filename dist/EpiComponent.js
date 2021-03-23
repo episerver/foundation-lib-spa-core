@@ -72,3 +72,4 @@ export class EpiComponent extends Component {
     }
 }
 export default EpiComponent;
+//# sourceMappingURL=EpiComponent.js.map

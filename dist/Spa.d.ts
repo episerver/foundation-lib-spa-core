@@ -32,6 +32,7 @@ export declare class EpiserverSpaContext implements IEpiserverContext, PathProvi
      * @deprecated    Use the ContentRepository_V2 service to fetch content and interact with controllers
      */
     get contentStorage(): ContentDeliveryAPI;
+    get Language(): string;
     init(config: AppConfig, serviceContainer: IServiceContainer, isServerSideRendering?: boolean): void;
     private _initRedux;
     private _initEditMode;

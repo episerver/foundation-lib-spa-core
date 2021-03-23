@@ -27,7 +27,7 @@ export function PathResponseIsActionResponse<P extends any = any>(actionResponse
   }
   return false;
 }
-export function getIContentFromPathResponse(response: PathResponse) : IContent | null
+export function getIContentFromPathResponse<IContentType extends IContent = IContent>(response: PathResponse<any, IContentType>) : IContentType | null
 {
   if (PathResponseIsActionResponse(response)) {
     return response.currentContent;

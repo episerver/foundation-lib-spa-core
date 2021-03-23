@@ -72,8 +72,17 @@ const ElementNavigation = (props) => {
                 return false;
             }
         };
+        try {
+            window.scrollTo(0, 0);
+        }
+        catch (e) {
+            if (epi.isDebugActive())
+                console.warn('ElementNavigation: Failed to scroll to top');
+        }
         document.addEventListener('click', onWindowClick);
         return () => {
+            if (epi.isDebugActive())
+                console.info('ElementNavigation: Removing catch-all click handling for navigation');
             document.removeEventListener('click', onWindowClick);
         };
     });
@@ -103,3 +112,4 @@ function createRouteNode(route, basePath = "", key, ctx) {
     };
     return React.createElement(Route, Object.assign({}, newRouteProps, { key: key }));
 }
+//# sourceMappingURL=EpiSpaRouter.js.map

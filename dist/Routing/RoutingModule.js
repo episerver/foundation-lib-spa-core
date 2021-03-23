@@ -27,3 +27,4 @@ export default class RoutingModule extends BaseInitializableModule {
             });
     }
 }
+//# sourceMappingURL=RoutingModule.js.map

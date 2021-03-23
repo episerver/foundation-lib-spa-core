@@ -18,6 +18,7 @@ import ServerContextAccessor from './ServerSideRendering/ServerContextAccessor';
 import RoutingModule from './Routing/RoutingModule';
 import RepositoryModule from './Repository/RepositoryModule';
 import LoadersModule from './Loaders/LoadersModule';
+import StateModule from './State/StateModule';
 import StringUtils from './Util/StringUtils';
 // Create context
 const ctx = getGlobal();
@@ -48,6 +49,11 @@ export class EpiserverSpaContext {
     get contentStorage() {
         return this.serviceContainer.getService(DefaultServices.ContentDeliveryApi);
     }
+    get Language() {
+        var _a;
+        return ((_a = this.serviceContainer.getService(DefaultServices.ContentDeliveryAPI_V2)) === null || _a === void 0 ? void 0 : _a.Language) ||
+            this.config().defaultLanguage;
+    }
     init(config, serviceContainer, isServerSideRendering = false) {
         // Generic init
         this._initialized = InitStatus.Initializing;
@@ -73,12 +79,12 @@ export class EpiserverSpaContext {
         if (process.env.NODE_ENV === 'production' && executionContext.isDebugActive)
             console.warn('Running Episerver SPA with a production build and debug enabled');
         // Create module list
-        this._modules.push(new RepositoryModule(), new RoutingModule(), new LoadersModule());
+        this._modules.push(new RepositoryModule(), new RoutingModule(), new LoadersModule(), new StateModule());
         if (config.modules)
             this._modules = this._modules.concat(config.modules);
         this._modules.sort((a, b) => a.SortOrder - b.SortOrder);
         if (config.enableDebug)
-            console.info(`Episerver SPA modules: ${this._modules.map((m) => m.GetName()).join(', ')}`);
+            console.info(`Episerver SPA modules: ${this._modules.map((m) => `${m.GetName()} (${m.SortOrder})`).join(', ')}`);
         // Register core services
         this._serviceContainer.addService(DefaultServices.Context, this);
         this._serviceContainer.addService(DefaultServices.Config, config);
@@ -255,7 +261,8 @@ export class EpiserverSpaContext {
         if (action) {
             itemPath += itemPath.length ? '/' + action : action;
         }
-        return StringUtils.TrimRight('/', ((_a = this.config()) === null || _a === void 0 ? void 0 : _a.epiBaseUrl) + itemPath);
+        const itemUrl = new URL(itemPath, (_a = this.config()) === null || _a === void 0 ? void 0 : _a.epiBaseUrl);
+        return StringUtils.TrimRight('/', itemUrl.href);
     }
     getSpaRoute(path) {
         let newPath = '';
@@ -399,3 +406,4 @@ export class EpiserverSpaContext {
 }
 ctx.EpiserverSpa.Context = ctx.EpiserverSpa.Context || new EpiserverSpaContext();
 export default ctx.EpiserverSpa.Context;
+//# sourceMappingURL=Spa.js.map

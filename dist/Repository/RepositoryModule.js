@@ -11,10 +11,19 @@ import { IRepositoryPolicy } from './IRepository';
 import IContentRepositoryV2 from './IContentRepository';
 import EditIContentRepositoryV2 from './PassthroughIContentRepository';
 import ContentDeliveryApiV2 from '../ContentDelivery/ContentDeliveryAPI';
+import FetchAdapter from '../ContentDelivery/FetchAdapter';
 // Authorization
 import DefaultAuthService from '../ContentDelivery/DefaultAuthService';
 import BrowserAuthStorage from '../ContentDelivery/BrowserAuthStorage';
 import ServerAuthStorage from '../ContentDelivery/ServerAuthStorage';
+function isFetchApiAvailable() {
+    try {
+        return fetch && typeof (fetch) === 'function';
+    }
+    catch (e) {
+        return false;
+    }
+}
 export default class RepositoryModule extends BaseInitializableModule {
     constructor() {
         super(...arguments);
@@ -36,7 +45,7 @@ export default class RepositoryModule extends BaseInitializableModule {
         const context = container.getService(DefaultServices.ExecutionContext);
         // Build New ContentDeliveryAPI Connector
         const newApiClassicConfig = {
-            Adapter: config.networkAdapter,
+            Adapter: config.networkAdapter || isFetchApiAvailable() ? FetchAdapter : undefined,
             BaseURL: config.epiBaseUrl,
             AutoExpandAll: config.autoExpandRequests,
             Debug: config.enableDebug,
@@ -154,3 +163,4 @@ export default class RepositoryModule extends BaseInitializableModule {
     log(...args) { console.debug(...args); }
     warn(...args) { console.warn(...args); }
 }
+//# sourceMappingURL=RepositoryModule.js.map

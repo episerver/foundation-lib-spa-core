@@ -76,3 +76,4 @@ export const SafeModelName = StringUtils.SafeModelName;
 export const TrimRight = StringUtils.TrimRight;
 export const TrimLeft = StringUtils.TrimLeft;
 export default StringUtils;
+//# sourceMappingURL=StringUtils.js.map

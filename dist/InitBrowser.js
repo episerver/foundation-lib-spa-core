@@ -27,3 +27,4 @@ export default function InitBrowser(config, containerId, serviceContainer) {
         ReactDOM.render(React.createElement(CmsSite, { context: EpiContext }), container);
     }
 }
+//# sourceMappingURL=InitBrowser.js.map

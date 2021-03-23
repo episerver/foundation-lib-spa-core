@@ -1,8 +1,21 @@
 import IContent from './IContent';
 import EpiContext from '../Spa';
 
-export type ContentReference = IContent | ContentLink | string;
-export type ContentApiId = string;
+export type ContentReference = IContent | ContentLink | string
+export type ContentApiId = string
+
+/**
+ * Describe a content-link item as returned by the Episerver
+ * Content Delivery API.
+ */
+export type ContentLink = {
+  id: number;
+  workId?: number;
+  guidValue: string;
+  providerName?: string;
+  url: string;
+  expanded?: IContent;
+}
 
 export class ContentLinkService {
   private constructor() {
@@ -24,9 +37,35 @@ export class ContentLinkService {
     return ref && (ref as string).trim ? true : false;
   }
 
+    /**
+     * Generate a - language aware - identifier for a given content reference. When the language is mandatory when the reference is
+     * a string or ContentLink, and ignored when the reference is iContent.
+     *
+     * @param { ContentReference }  ref           The content reference to generate the API-ID for
+     * @param { string }            languageCode  The language code to use, if the reference is not iContent
+     * @param { boolean }           editModeId    If set, get the identifier, including work-id to load a specific version of the content
+     * @returns { ContentApiId }
+     */
+    public static createLanguageId(reference: ContentReference, languageCode?: string, editModeId: boolean = false) : ContentApiId 
+    {
+        const baseId = this.createApiId(reference, false, editModeId);
+
+        if (this.referenceIsIContent(reference) && reference.language?.name)
+            return `${ baseId }___${ reference.language.name }`;
+
+        if (!languageCode)
+            throw new Error('Reference is not translatable iContent and no languageCode specified!');
+
+        return `${ baseId }___${ languageCode }`;
+    }
+
   /**
+   * Generate a ContentDeliveryAPI Compliant identifier for a given content reference.
    *
-   * @param ref The content reference to generate the API-ID for.
+   * @param { ContentReference }  ref         The content reference to generate the API-ID for
+   * @param { boolean }           preferGuid  If set, prefer to receive the GUID as api identifier
+   * @param { boolean }           editModeId  If set, get the identifier, including work-id to load a specific version of the content
+   * @returns { ContentApiId }
    */
   public static createApiId(ref: ContentReference, preferGuid: boolean = false, editModeId: boolean = false): ContentApiId {
     if (this.referenceIsString(ref)) {
@@ -96,15 +135,4 @@ export class ContentLinkService {
   }
 }
 
-/**
- * Describe a content-link item as returned by the Episerver
- * Content Delivery API.
- */
-export default interface ContentLink {
-  id: number;
-  workId?: number;
-  guidValue: string;
-  providerName?: string;
-  url: string;
-  expanded?: IContent;
-}
+export default ContentLink

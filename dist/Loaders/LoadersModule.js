@@ -46,3 +46,4 @@ export default class LoadersModule extends BaseInitializableModule {
         container.addService(DefaultServices.ComponentLoader, cl);
     }
 }
+//# sourceMappingURL=LoadersModule.js.map

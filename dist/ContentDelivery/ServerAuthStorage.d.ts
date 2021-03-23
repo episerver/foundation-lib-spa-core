@@ -6,9 +6,9 @@ import { IOAuthSuccessResponse } from './IAuthService';
  * token.
  */
 export declare class ServerAuthStorage implements IAuthStorage {
-    clearToken(): boolean;
-    storeToken(token: IOAuthSuccessResponse): boolean;
-    hasToken(): boolean;
-    getToken(): IOAuthSuccessResponse | null;
+    clearToken: () => boolean;
+    storeToken: (token: IOAuthSuccessResponse) => boolean;
+    hasToken: () => boolean;
+    getToken: () => IOAuthSuccessResponse | null;
 }
 export default ServerAuthStorage;

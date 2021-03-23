@@ -36,3 +36,4 @@ export class BaseIContent {
         return this._propertyMap[prop.toString()];
     }
 }
+//# sourceMappingURL=IContent.js.map

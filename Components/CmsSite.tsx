@@ -29,17 +29,17 @@ export const EpiserverWebsite : React.FunctionComponent<CmsSiteProps> = (props) 
     const SiteLayout = getLayout(props.context.config());
     const ssr = props.context.serviceContainer.getService<ServerContextAccessor>(DefaultServices.ServerContext);
     const location = (props.context.isServerSideRendering() ? ssr.Path : window.location.pathname) || undefined;
-    const mainSite = <EpiserverContext.Provider value={ props.context }>
-        <EpiRouter location={ location } context={ props.staticContext }>
-            <Helmet />
-            <SiteLayout context={ props.context } >
-                <RoutedContent config={ props.context.config().routes || [] } keyPrefix="CmsSite-RoutedContent" />
-                { props.children }  
-            </SiteLayout>
-        </EpiRouter>
-    </EpiserverContext.Provider>
-
-    return props.context.isServerSideRendering() ? mainSite : <ReduxProvider store={ props.context.getStore() }>{ mainSite }</ReduxProvider>
+    return <ReduxProvider store={ props.context.getStore() }>
+        <EpiserverContext.Provider value={ props.context }>
+            <EpiRouter location={ location } context={ props.staticContext }>
+                <Helmet />
+                <SiteLayout context={ props.context } >
+                    <RoutedContent config={ props.context.config().routes || [] } keyPrefix="CmsSite-RoutedContent" />
+                    { props.children }  
+                </SiteLayout>
+            </EpiRouter>
+        </EpiserverContext.Provider>
+    </ReduxProvider>
 }
 
 function getLayout(config: AppConfig) : LayoutComponent

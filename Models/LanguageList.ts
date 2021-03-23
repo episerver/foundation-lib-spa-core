@@ -1,3 +1,5 @@
 import Language from './Language';
 
-export default interface LanguageList extends Array<Language> {}
+export type LanguageList = Language[];
+
+export default LanguageList;

@@ -79,7 +79,7 @@ export function Property<T extends IContent>(props: PropsWithChildren<PropertyPr
         case 'PropertyPageReference':
             const link = (prop as ContentReferenceProperty).value;
             const expValue = (prop as ContentReferenceProperty).expandedValue;
-            const ConnectedEpiComponent : EpiComponentType = EpiComponent.CreateComponent(ctx);
+            const ConnectedEpiComponent = EpiComponent.CreateComponent(ctx);
             const item = <ConnectedEpiComponent contentLink={link} expandedValue={expValue} context={props.context} className={props.className} />
             return isEditable(props.iContent, ctx) ? <div data-epi-edit={ props.field }>{item}</div> : item;
         case 'PropertyContentArea':

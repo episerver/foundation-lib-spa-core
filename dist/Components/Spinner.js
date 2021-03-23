@@ -20,3 +20,4 @@ export default class Spinner extends Component {
             "Loading...");
     }
 }
+//# sourceMappingURL=Spinner.js.map

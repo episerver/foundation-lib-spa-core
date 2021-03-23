@@ -3,7 +3,7 @@ import EventEmitter from 'eventemitter3';
 import { cloneDeep } from 'lodash';
 
 // Import framework
-import IContentDeliveryAPI from '../ContentDelivery/IContentDeliveryAPI';
+import IContentDeliveryAPI, { isNetworkError } from '../ContentDelivery/IContentDeliveryAPI';
 import { IRepositoryConfig, IRepositoryPolicy } from './IRepository';
 import { IIContentRepository, WebsiteRepositoryItem, IPatchableRepositoryEvents, IContentRepositoryItem } from './IIContentRepository';
 import { NetworkErrorData, getIContentFromPathResponse, PathResponseIsIContent } from '../ContentDeliveryAPI';
@@ -46,7 +46,7 @@ export class IContentRepository extends EventEmitter<IPatchableRepositoryEvents<
         super();
         this._api = api;
         this._config = { ...this._config, ...config }
-        this._storage = new IndexedDB("iContentRepository", 4, this.schemaUpgrade.bind(this));
+        this._storage = new IndexedDB("iContentRepository", 5, this.schemaUpgrade.bind(this));
         if (this._storage.IsAvailable) this._storage.open();
 
         // Ingest server context into the database, if we have it
@@ -65,14 +65,19 @@ export class IContentRepository extends EventEmitter<IPatchableRepositoryEvents<
      * @param { boolean } recursive Whether or all referenced content must be loaded as well
      * @returns { Promise<IContent | null> }
      */
-    public async load(reference: ContentReference, recursive: boolean = false) : Promise<IContent | null>
+    public async load<IContentType extends IContent = IContent>(reference: ContentReference, recursive: boolean = false) : Promise<IContentType | null>
     {
         const localFirst = this._config.policy === IRepositoryPolicy.LocalStorageFirst ||
                            this._config.policy === IRepositoryPolicy.PreferOffline ||
                            !this._api.OnLine;
 
-        if (localFirst && await this.has(reference)) return this.get(reference);
-        return this.update(reference, recursive);
+        if (localFirst && await this.has(reference)) return this.get<IContentType>(reference);
+        return this.update<IContentType>(reference, recursive);
+    }
+
+    protected createStorageId(reference: ContentReference, preferGuid?: boolean, editModeId?: boolean) : string
+    {
+        return ContentLinkService.createApiId(reference, preferGuid, editModeId)+'%%'+this._api.Language;
     }
 
     /**
@@ -82,22 +87,26 @@ export class IContentRepository extends EventEmitter<IPatchableRepositoryEvents<
      * @param { boolean } recursive Whether or all referenced content must be loaded as well
      * @returns { Promise<IContent | null> }
      */
-    public update(reference: ContentReference, recursive: boolean = false) : Promise<IContent | null>
+    public update<IContentType extends IContent = IContent>(reference: ContentReference, recursive: boolean = false) : Promise<IContentType | null>
     {
-        if (!this._api.OnLine) return Promise.resolve<IContent | null>(null);
+        if (!this._api.OnLine) return Promise.resolve(null);
         
-        const apiId = ContentLinkService.createApiId(reference, false);
+        const apiId = this.createStorageId(reference, false);
         if (!this._loading[apiId]) {
             const internalLoad = async () => {
-                const iContent = await this._api.getContent(reference, undefined, recursive ? ['*'] : []);
-                await this.recursiveLoad(iContent, recursive);
-                this.ingestIContent(iContent);
+                const iContent = await this._api.getContent<IContentType>(reference, undefined, recursive ? ['*'] : []);
+                if (!iContent) {
+                    if (!isNetworkError(iContent)) {
+                        await this.recursiveLoad(iContent, recursive);
+                    }
+                    this.ingestIContent(iContent);
+                }
                 delete this._loading[apiId];
                 return iContent;
             }
             this._loading[apiId] = internalLoad();
         }
-        return this._loading[apiId];
+        return this._loading[apiId] as Promise<IContentType | null>;
     }
 
     /**
@@ -143,7 +152,7 @@ export class IContentRepository extends EventEmitter<IPatchableRepositoryEvents<
      */
     public async has(reference: ContentReference) : Promise<boolean>
     {
-        const apiId = ContentLinkService.createApiId(reference, false);
+        const apiId = this.createStorageId(reference, false);
         const table = await this.getTable();
         return table.getViaIndex('contentId', apiId)
             .then(x => x ? this.isValid(x) : false)
@@ -157,24 +166,24 @@ export class IContentRepository extends EventEmitter<IPatchableRepositoryEvents<
      * @param { ContentReference } reference The reference to the content, e.g. something that can be resolved by the ContentDelivery API
      * @returns { Promise<IContent | null> }
      */
-    public async get(reference: ContentReference) : Promise<IContent | null>
+    public async get<IContentType extends IContent = IContent>(reference: ContentReference) : Promise<IContentType | null>
     {
         this.emit('beforeGet', reference);
-        let data : IContent | null = null;
-        const apiId = ContentLinkService.createApiId(reference, false);
+        let data : IContentType | null = null;
+        const apiId = this.createStorageId(reference, false);
         const table = await this.getTable();
         const repositoryContent = await table.getViaIndex('contentId', apiId).catch(() => undefined);
         if (repositoryContent && this.isValid(repositoryContent)) {
             if (this._config.policy !== IRepositoryPolicy.PreferOffline) this.updateInBackground(repositoryContent);
-            data = repositoryContent.data;
+            data = repositoryContent.data as IContentType;
         }
         this.emit('afterGet', reference, data);
         return data;
     }
 
-    public async getByContentId(contentId: string) : Promise<IContent | null>
+    public async getByContentId<IContentType extends IContent = IContent>(contentId: string) : Promise<IContentType | null>
     {
-        return this.getTable().then(table => table.getViaIndex('contentId', contentId)).then(iContent => iContent && this.isValid(iContent) ? iContent.data : null);
+        return this.getTable().then(table => table.getViaIndex('contentId', contentId)).then(iContent => iContent && this.isValid(iContent) ? iContent.data as IContentType : null);
     }
 
     /**
@@ -183,27 +192,27 @@ export class IContentRepository extends EventEmitter<IPatchableRepositoryEvents<
      * @param { string } route The route to resolve to an iContent item trough the index
      * @returns { Promise<Store<IContentRepositoryItem>> }
      */
-    public async getByRoute(route: string) : Promise<IContent | null>
+    public async getByRoute<IContentType extends IContent = IContent>(route: string) : Promise<IContentType | null>
     {
         const table = await this.getTable();
 
-        const resolveLocal = async () : Promise<IContent | null> => {
+        const resolveLocal = async () : Promise<IContentType | null> => {
             const routedContents = await table.getViaIndex('routes', route);
             if (routedContents && this.isValid(routedContents)) {
                 if (this._config.policy !== IRepositoryPolicy.PreferOffline) this.updateInBackground(routedContents);
-                return routedContents.data;
+                return routedContents.data as IContentType;
             }
             if (route === '/') { // Special case for Homepage
-                return this.getByReference('startPage');
+                return this.getByReference<IContentType>('startPage');
             }
             return null;
         }
 
-        const resolveNetwork = async () : Promise<IContent | null> => {
-            const resolvedRoute = await this._api.resolveRoute(route);
+        const resolveNetwork = async () : Promise<IContentType | null> => {
+            const resolvedRoute = await this._api.resolveRoute<any, IContentType>(route);
             const content = getIContentFromPathResponse(resolvedRoute);
             if (content) this.ingestIContent(content);
-            return content;
+            return content as IContentType;
         }
 
         switch (this._config.policy) {
@@ -217,7 +226,7 @@ export class IContentRepository extends EventEmitter<IPatchableRepositoryEvents<
         return resolveNetwork();
     }
 
-    public getByReference(reference: string, website?: Website) : Promise<IContent | null>
+    public getByReference<IContentType extends IContent = IContent>(reference: string, website?: Website) : Promise<IContentType | null>
     {
         const ws = website ? Promise.resolve<Website>(website) : this.getCurrentWebsite();
         return ws.then(x => { 
@@ -272,7 +281,7 @@ export class IContentRepository extends EventEmitter<IPatchableRepositoryEvents<
     protected async ingestIContent(iContent: IContent) : Promise<IContent | null>
     {
         const table = await this.getTable();
-        const current = await table.get(ContentLinkService.createApiId(iContent, true));
+        const current = await table.get(this.createStorageId(iContent, true));
         let isUpdate : boolean = false;
         if (current && current.data) {
             isUpdate = true;
@@ -322,19 +331,21 @@ export class IContentRepository extends EventEmitter<IPatchableRepositoryEvents<
         return {
             data: website,
             added: Date.now(),
-            accessed: Date.now()
+            accessed: Date.now(),
+            hosts: website.hosts?.map(x => x.name).join(' ') || website.id
         }
     }
 
     protected buildRepositoryItem(iContent: IContent) : IContentRepositoryItem {
         return {
-            apiId: ContentLinkService.createApiId(iContent, true),
-            contentId: ContentLinkService.createApiId(iContent, false),
+            apiId: this.createStorageId(iContent, true),
+            contentId: this.createStorageId(iContent, false),
             type: iContent.contentType?.join('/') ?? 'Errors/ContentTypeUnknown',
             route: ContentLinkService.createRoute(iContent),
             data: iContent,
             added: Date.now(),
-            accessed: Date.now()
+            accessed: Date.now(),
+            guid: this._api.Language + '-' + iContent.contentLink.guidValue
         }
     }
 
@@ -390,13 +401,13 @@ export class IContentRepository extends EventEmitter<IPatchableRepositoryEvents<
 
     protected schemaUpgrade : SchemaUpgrade = (db, t) => {
         return Promise.all([
-            db.hasStore('iContent') ? Promise.resolve(true) : db.createStore('iContent','apiId', undefined, [
-                { name: 'guid', keyPath: 'data.contentLink.guidValue', unique: true },
+            db.replaceStore('iContent','apiId', undefined, [
+                { name: 'guid', keyPath: 'guid', unique: true },
                 { name: 'contentId', keyPath: 'contentId', unique: true },
                 { name: 'routes', keyPath: 'route', unique: false }
             ]),
-            db.hasStore('website') ? Promise.resolve(true) : db.createStore('website', 'data.id', undefined, [
-                { name: 'hosts', keyPath: 'data.hosts.name', multiEntry: false, unique: false }
+            db.replaceStore('website', 'data.id', undefined, [
+                { name: 'hosts', keyPath: 'hosts', multiEntry: false, unique: false }
             ])
         ]).then(() => true)
     }

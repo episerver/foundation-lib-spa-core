@@ -8,3 +8,4 @@ export const BaseTypeMapper = TypeMapperNS.BaseTypeMapper;
 export const isComponentLoader = ComponentNS.isIComponentLoader;
 // Default loader
 export default ComponentLoader;
+//# sourceMappingURL=Loaders.js.map

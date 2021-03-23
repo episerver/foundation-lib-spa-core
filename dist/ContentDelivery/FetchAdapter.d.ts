@@ -1,6 +1,6 @@
 import { AxiosAdapter } from 'axios';
 export declare type CachingFetchAdapter = AxiosAdapter & {
-    isCachable?: ((url: URL) => boolean)[];
+    isCachable?: ((request: Readonly<Request>) => boolean)[];
 };
 /**
  * A basic implementation of an AxiosAdapter to let Axios use the Fetch API to

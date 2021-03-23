@@ -1,7 +1,5 @@
 import * as Core from './Library/Core';
-import * as ContextProvider from './Hooks/Context';
 import * as ServerSideRendering from './Library/ServerSideRendering';
-import * as ContentDeliveryNS from './Library/ContentDelivery';
 export * as Core from './Library/Core';
 export * as ContentDelivery from './Library/ContentDelivery';
 export * as Layout from './Library/Layout';
@@ -12,9 +10,9 @@ export * as Components from './Library/Components';
 export * as ComponentTypes from './Library/ComponentTypes';
 export * as ServerSideRendering from './Library/ServerSideRendering';
 export * as Tracking from './Library/Tracking';
-export * as ContextProvider from './Hooks/Context';
 export * as Loaders from './Library/Loaders';
 export * as IndexedDB from './Library/IndexedDB';
+export * as State from './Library/State';
 /**
  * Generic initialization function, usable for both Browser & Server side rendering
  *
@@ -27,39 +25,10 @@ export * as IndexedDB from './Library/IndexedDB';
  * @returns {ServerSideRendering.Response|void}  The result of the initialization method invoked
  */
 export declare function init<B extends boolean>(config: Core.IConfig, serviceContainer?: Core.IServiceContainer, containerElementId?: string, ssr?: B): B extends true ? ServerSideRendering.Response : void;
-export default init;
 /**
- * React Hook (for functional components) to retrieve the Episerver Context from
- * the nearest Provider in the virtual dom.
- *
- * @returns  { Core.IEpiserverContext }
+ * Export all hooks in the global scope
  */
-export declare const useEpiserver: () => Core.IEpiserverContext;
-/**
- * React Hook (for functional components) to retrieve the Episerver Service Container
- * from the nearest Provider in the virtual dom.
- *
- * @returns  { Core.IServiceContainer }
- */
-export declare const useServiceContainer: () => Core.IServiceContainer;
-/**
- * React Hook (for functional components) to retrieve the Episerver Content Repository
- * from the nearest Provider in the virtual dom
- */
-export declare const useIContentRepository: () => ContentDeliveryNS.IIContentRepositoryV2;
-/**
- * React Hook (for functional components) to retrieve the Episerver Content Delivery API
- * from the nearest Provider in the virtual dom
- */
-export declare const useContentDeliveryAPI: () => ContentDeliveryNS.IContentDeliveryAPI_V2;
-/**
- * Retrieve the accessor for the server side rendering data
- */
-export declare const useServerSideRendering: typeof ContextProvider.useServerSideRendering;
-/**
- * Retrieve the events accessor
- */
-export declare const useEvents: () => Core.IEventEngine;
+export * from './Hooks/Context';
 /**
  * Helper method to get the global scope at any location within the SPA, this is either
  * the 'window' or 'global' variable, depending on execution context.
@@ -67,3 +36,4 @@ export declare const useEvents: () => Core.IEventEngine;
  * @return { Window|any }
  */
 export declare const getGlobalScope: () => any;
+export default init;

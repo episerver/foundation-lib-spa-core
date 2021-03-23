@@ -27,6 +27,7 @@ import EditIContentRepositoryV2 from './PassthroughIContentRepository';
 import ContentDeliveryApiV2 from '../ContentDelivery/ContentDeliveryAPI';
 import IContentDeliveryAPI from '../ContentDelivery/IContentDeliveryAPI';
 import IContentDeliveryConfig from '../ContentDelivery/Config';
+import FetchAdapter from '../ContentDelivery/FetchAdapter';
 
 // Authorization
 import DefaultAuthService from '../ContentDelivery/DefaultAuthService';
@@ -57,6 +58,15 @@ type EpiContentSavedEvent = {
     oldContentLink: string
 }
 
+function isFetchApiAvailable() : boolean
+{
+    try {
+        return fetch && typeof(fetch) === 'function';
+    } catch (e) {
+        return false;
+    }
+}
+
 export default class RepositoryModule extends BaseInitializableModule implements IInitializableModule
 {
     protected name : string = "Episerver Content Delivery & Repository";
@@ -79,7 +89,7 @@ export default class RepositoryModule extends BaseInitializableModule implements
 
         // Build New ContentDeliveryAPI Connector
         const newApiClassicConfig : Partial<IContentDeliveryConfig> = {
-            Adapter: config.networkAdapter,
+            Adapter: config.networkAdapter || isFetchApiAvailable() ? FetchAdapter : undefined,
             BaseURL: config.epiBaseUrl,
             AutoExpandAll: config.autoExpandRequests,
             Debug: config.enableDebug,

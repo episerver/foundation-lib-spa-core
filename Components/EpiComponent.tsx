@@ -1,20 +1,20 @@
-import React, { FunctionComponent, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import StringUtils from '../Util/StringUtils';
-import { useEpiserver, useIContentRepository, useForceUpdate, useServiceContainer, useServerSideRendering } from '../Hooks/Context';
+import { useEpiserver, useIContentRepository, useServiceContainer, useServerSideRendering, useForceUpdate } from '../Hooks/Context';
 import ContentLink, { ContentReference, ContentLinkService } from '../Models/ContentLink';
 import IContent from '../Models/IContent';
-import ComponentLoader, { TComponentType } from '../Loaders/ComponentLoader';
+import ComponentLoader from '../Loaders/ComponentLoader';
 import IEpiserverContext from '../Core/IEpiserverContext';
 import { DefaultServices } from '../Core/IServiceContainer';
 import { ComponentProps } from '../EpiComponent';
 import Spinner from '../Components/Spinner';
-import ComponentNotFound from '../Components/Errors/ComponentNotFound';
 
 /**
  * The base type for the Episerver CMS Component
  */
-export type EpiComponentType<T extends IContent = IContent> = FunctionComponent<EpiComponentProps<T>> & {
-    CreateComponent<C extends IContent = IContent>(context: IEpiserverContext) : EpiComponentType<C>
+export type EpiBaseComponentType<T extends IContent = IContent> = React.ComponentType<EpiComponentProps<T>>;
+export type EpiComponentType<T extends IContent = IContent> = EpiBaseComponentType<T> & {
+    CreateComponent(context: IEpiserverContext) : EpiBaseComponentType<IContent>
 }
 
 /**
@@ -24,7 +24,7 @@ export type EpiComponentProps<T extends IContent = IContent> = Omit<ComponentPro
 	/**
 	 * The data for the component, if it has been fetched before.
 	 */
-	expandedValue?: IContent
+	expandedValue: T | undefined
     
     /**
      * Legacy context, kept as argument for now, but ignored by the implementation
@@ -34,70 +34,84 @@ export type EpiComponentProps<T extends IContent = IContent> = Omit<ComponentPro
     context?: IEpiserverContext
 }
 
-/**
- * The Episerver CMS Component wrapper
- */
-export const EpiComponent : EpiComponentType = <T extends IContent = IContent>(props: EpiComponentProps<T>) =>
-{
+const safeLanguageId = (ref: ContentReference | null | undefined, branch: string = '##', def: string = '') => {
+    try {
+        return ref ? ContentLinkService.createLanguageId(ref, branch, true) : def;
+    } catch (e) {
+        return def;
+    }
+}
+
+function _EpiComponent<T extends IContent = IContent>(props: EpiComponentProps<T>) {
+    // Get Hooks & Services
     const ctx = useEpiserver();
     const ssr = useServerSideRendering();
-    if (!props.contentLink) return ctx.isDebugActive() ? <div className="alert alert-danger">Debug: No content link provided</div> : null;
-
     const repo = useIContentRepository();
+    const repaint = useForceUpdate();
     const componentLoader = useServiceContainer().getService<ComponentLoader>(DefaultServices.ComponentLoader);
-    const forceUpdate = useForceUpdate();
-    const [ iContent, setIContent ] = useState< IContent | null >(props.expandedValue || ssr.getIContent(props.contentLink));
+
+    // Get identifiers from props
+    const expandedValueId = safeLanguageId(props.expandedValue);
+    const contentLinkId = safeLanguageId(props.contentLink, ctx.Language);
+
+    // Build iContent state and build identifier
+    const [ iContent, setIContent ] = useState<T | null>(props.expandedValue && (expandedValueId === contentLinkId) ? props.expandedValue : ssr.getIContent<T>(props.contentLink));
+    const iContentId = safeLanguageId(iContent);
 
     // Always check if the component is available
     const componentName = iContent ? buildComponentName(iContent, props.contentType) : null;
     const componentAvailable = componentName && componentLoader.isPreLoaded(componentName) ? true : false;
 
-    // Make sure the right iContent has been assigned
+    // Make sure the right iContent has been assigned and will be kept in sync
     useEffect(() => {
-        if (isExpandedValueValid(iContent, props.contentLink)) return;
-        if (props.expandedValue && isExpandedValueValid(props.expandedValue, props.contentLink)) {
-            setIContent(props.expandedValue);
-            return
-        }
-        setIContent(null);
-        repo.load(props.contentLink).then(x => setIContent(x));
-    }, [ props.contentLink, props.expandedValue, props.contentType ]);
+        let isCancelled : boolean = false;
 
-    // Update the iContent if the database changes
-    useEffect(() => {
-        const myApiId = ContentLinkService.createApiId(props.contentLink);
+        // Add listeners to ensure content changes affect the component
         const onContentPatched = (item: ContentReference, newValue: IContent) => {
-            const itemApiId = ContentLinkService.createApiId(item);
-            if (myApiId === itemApiId) setIContent(newValue);
+            const itemApiId = ContentLinkService.createLanguageId(newValue, '##', true);
+            if (ctx.isDebugActive()) console.debug('EpiComponent / onContentPatched: ', contentLinkId, itemApiId);
+            if (contentLinkId === itemApiId) setIContent(newValue as T);
         }
-        repo.addListener("afterPatch", onContentPatched, repo);
-        return () => {
+        const onContentUpdated = (item : IContent | null) => {
+            const itemApiId = item ? ContentLinkService.createLanguageId(item, '##', true) : '##';
+            if (ctx.isDebugActive()) console.debug('EpiComponent / onContentUpdated: ', contentLinkId, itemApiId);
+            if (contentLinkId === itemApiId) setIContent(item as T);
+        }
+        repo.addListener("afterPatch", onContentPatched);
+        repo.addListener("afterUpdate", onContentUpdated);
+
+        // If we don't have the correct iContent
+        if (iContentId !== contentLinkId) {
+            if (expandedValueId === contentLinkId) {
+                setIContent(props.expandedValue || null);
+            } else {
+                repo.load(props.contentLink).then(x => {if (!isCancelled) setIContent(x as T)});
+            }
+        }
+
+        // Cancel effect and remove listeners
+        return () => { 
+            isCancelled = true; 
             repo.removeListener("afterPatch", onContentPatched);
+            repo.removeListener("afterUpdate", onContentUpdated);
         }
-    }, [ props.contentLink ]);
+    }, [ contentLinkId ]);
 
-    // Load component if needed
+    // Load && update component if needed
     useEffect(() => {
-        if (!componentAvailable && componentName) {
-            componentLoader.LoadType(componentName).then(() => forceUpdate());
-        }
+        let isCancelled : boolean = false;
+        if (!componentName) return;
+        if (!componentAvailable)
+            componentLoader.LoadType<ComponentProps<T>>(componentName).then(() => { if (!isCancelled) repaint() });
+        return () => { isCancelled = true }
     }, [ componentAvailable, componentName ]);
-
-    // Update content once available
-    useEffect(() => {
-        if (!iContent) return;
-        const handleUpdate = (item : IContent | null) => {
-            if (item && item.contentLink.guidValue === iContent.contentLink.guidValue) setIContent(item);
-        }
-        repo.addListener("afterUpdate", handleUpdate);
-        return () => { repo.removeListener("afterUpdate", handleUpdate); }
-    }, [ iContent ]);
-
-    // Render the component, or a loader when not all data is present
+    
     const componentType = componentName && componentAvailable ?
-        componentLoader.getPreLoadedType(componentName) :
-        null;
-    return componentType && iContent ? React.createElement(componentType, { ...props, context: ctx, data: iContent}) : Spinner.CreateInstance({});
+            componentLoader.getPreLoadedType(componentName) :
+            null;
+    return componentType && iContent ? 
+            React.createElement(componentType, { ...props, context: ctx, data: iContent}) : 
+            Spinner.CreateInstance({});
 }
 
 /**
@@ -106,9 +120,11 @@ export const EpiComponent : EpiComponentType = <T extends IContent = IContent>(p
  * in the connect method from React-Redux.
  * 
  * @param { IEpiserverContext } context The application context
- * @returns { EpiComponentType }
+ * @returns { EpiBaseComponentType }
  */
-EpiComponent.CreateComponent = <C extends IContent = IContent>(context: IEpiserverContext) : EpiComponentType<C> => EpiComponent;
+_EpiComponent.CreateComponent = (context: IEpiserverContext): EpiBaseComponentType => _EpiComponent;
+
+const EpiComponent : EpiComponentType = _EpiComponent;
 export default EpiComponent;
 
 //#region Internal methods for the Episerver CMS Component
@@ -119,7 +135,7 @@ export default EpiComponent;
 const isExpandedValueValid : (content: IContent|null|undefined, link: ContentLink) => boolean = (content: IContent|null|undefined, link: ContentLink) =>
 {
     try {
-        return content && content.contentLink.guidValue === link.guidValue ? true : false;
+        return content?.contentLink?.guidValue === link?.guidValue ? true : false;
     } catch (e) {
         return false;
     }

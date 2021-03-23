@@ -4,3 +4,4 @@ export const hostnameFilter = (website, host, language, matchWildcard = true) =>
     }) : [];
     return matchingHosts && matchingHosts.length > 0;
 };
+//# sourceMappingURL=WebsiteList.js.map

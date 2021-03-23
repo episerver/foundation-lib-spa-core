@@ -46,3 +46,4 @@ export default class CoreIComponentLoader {
         this.debug = debug;
     }
 }
+//# sourceMappingURL=CoreIComponentLoader.js.map

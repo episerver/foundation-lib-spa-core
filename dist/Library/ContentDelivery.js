@@ -17,3 +17,4 @@ export const API_V2 = ContentDeliveryAPI_V2;
 export const DefaultAuthService = DefaultAuthServiceNS.DefaultAuthService;
 export const BrowserAuthStorage = BrowserAuthStorageNS.BrowserAuthStorage;
 export const ServerAuthStorage = ServerAuthStorageNS.ServerAuthStorage;
+//# sourceMappingURL=ContentDelivery.js.map

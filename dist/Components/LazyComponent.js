@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import Spinner from './Spinner';
 import { useEpiserver } from '../index';
-export function LazyComponent(props, context) {
+export const LazyComponent = (props) => {
     const epi = useEpiserver();
     const [loadedComponent, setLoadedComponent] = useState(undefined);
     useEffect(() => { epi.componentLoader().LoadComponent(props.component, props).then(c => setLoadedComponent(c)); }, [props]);
     if (typeof (loadedComponent) === "undefined") {
-        return props.noSpinner ? null : Spinner.CreateInstance({});
+        return props.noSpinner ? null : Spinner.CreateInstance(props);
     }
     return React.createElement(LazyComponentErrorBoundary, null, loadedComponent);
-}
+};
 class LazyComponentErrorBoundary extends React.Component {
     constructor(props) {
         super(props);
@@ -22,7 +22,7 @@ class LazyComponentErrorBoundary extends React.Component {
     componentDidCatch(error, errorInfo) {
         console.error('LazyComponentErrorBoundary caught error', error, errorInfo);
         // You can also log the error to an error reporting service
-        //logErrorToMyService(error, errorInfo);
+        // logErrorToMyService(error, errorInfo);
     }
     render() {
         if (this.state.hasError) {
@@ -33,3 +33,4 @@ class LazyComponentErrorBoundary extends React.Component {
     }
 }
 export default LazyComponent;
+//# sourceMappingURL=LazyComponent.js.map

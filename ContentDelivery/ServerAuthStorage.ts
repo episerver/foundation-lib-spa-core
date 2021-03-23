@@ -8,22 +8,9 @@ import { IOAuthSuccessResponse } from './IAuthService';
  */
 export class ServerAuthStorage implements IAuthStorage
 {
-    clearToken(): boolean
-    {
-        return true;
-    }
-    storeToken(token: IOAuthSuccessResponse): boolean
-    {
-        return false;
-    }
-    hasToken(): boolean
-    {
-        return false;
-    }
-    getToken(): IOAuthSuccessResponse | null
-    {
-        return null;
-    }
-
+    clearToken: () => boolean = () => true;
+    storeToken: (token: IOAuthSuccessResponse) => boolean = () => false;
+    hasToken: () => boolean = () => false;
+    getToken: () => IOAuthSuccessResponse | null = () => null;
 }
 export default ServerAuthStorage;
