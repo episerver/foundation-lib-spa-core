@@ -87,6 +87,7 @@ export class ContentDeliveryAPI {
         return this.doAdvancedRequest(this.AuthService, {
             method: "POST",
             data: request,
+            maxRedirects: 0,
             transformRequest: (data, headers) => {
                 headers["Content-Type"] = "application/x-www-form-urlencoded";
                 return Object.entries(data).map(x => `${encodeURIComponent(x[0])}=${encodeURIComponent(x[1])}`).join('&');

@@ -116,6 +116,7 @@ export class ContentDeliveryAPI implements IContentDeliveryAPi
         return this.doAdvancedRequest<IOAuthResponse>(this.AuthService, {
             method: "POST",
             data: request,
+            maxRedirects: 0, // Fail on redirect
             transformRequest: (data: object, headers: AxiosHeaders) : string => {
                 headers["Content-Type"] = "application/x-www-form-urlencoded";
                 return Object.entries(data).map(x => `${encodeURIComponent(x[0])}=${encodeURIComponent(x[1])}`).join('&')
