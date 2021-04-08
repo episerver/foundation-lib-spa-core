@@ -2,7 +2,6 @@
 import * as Core from './Library/Core';
 import initServer from './InitServer';
 import initBrowser from './InitBrowser';
-import AppGlobal from './AppGlobal';
 // Namespace exports
 export * as Core from './Library/Core';
 export * as ContentDelivery from './Library/ContentDelivery';
@@ -41,12 +40,6 @@ export function init(config, serviceContainer, containerElementId, ssr) {
  * Export all hooks in the global scope
  */
 export * from './Hooks/Context';
-/**
- * Helper method to get the global scope at any location within the SPA, this is either
- * the 'window' or 'global' variable, depending on execution context.
- *
- * @return { Window|any }
- */
-export const getGlobalScope = AppGlobal;
+export { default as AppGlobal } from './AppGlobal';
 export default init;
 //# sourceMappingURL=index.js.map

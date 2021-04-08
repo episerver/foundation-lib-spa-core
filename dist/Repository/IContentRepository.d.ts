@@ -7,7 +7,7 @@ import IndexedDB from '../IndexedDB/IndexedDB';
 import SchemaUpgrade from '../IndexedDB/SchemaUpgrade';
 import Store from '../IndexedDB/Store';
 import { ContentReference } from '../Models/ContentLink';
-import IContent from '../Models/IContent';
+import IContent, { IContentData } from '../Models/IContent';
 import Website from '../Models/Website';
 import WebsiteList from '../Models/WebsiteList';
 import ServerContextAccessor from '../ServerSideRendering/ServerContextAccessor';
@@ -19,7 +19,7 @@ export declare class IContentRepository extends EventEmitter<IPatchableRepositor
     protected _api: IContentDeliveryAPI;
     protected _storage: IndexedDB;
     protected _loading: {
-        [key: string]: Promise<IContent | NetworkErrorData<any> | null>;
+        [key: string]: Promise<IContent | NetworkErrorData<unknown> | null>;
     };
     protected _config: IRepositoryConfig;
     /**
@@ -93,7 +93,7 @@ export declare class IContentRepository extends EventEmitter<IPatchableRepositor
     protected getWebsiteTable(): Promise<Store<WebsiteRepositoryItem>>;
     protected buildWebsiteRepositoryItem(website: Website): WebsiteRepositoryItem;
     protected buildRepositoryItem(iContent: IContent): IContentRepositoryItem;
-    protected recursiveLoad(iContent: IContent, recurseDown?: boolean): Promise<void>;
+    protected recursiveLoad(iContent: IContentData, recurseDown?: boolean): void;
     protected schemaUpgrade: SchemaUpgrade;
 }
 export default IContentRepository;

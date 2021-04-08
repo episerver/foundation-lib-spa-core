@@ -76,7 +76,7 @@ export class StringUtils {
     }
     return out;
   }
-};
+}
 
 // Create exported functions
 export const SafeModelName = StringUtils.SafeModelName;

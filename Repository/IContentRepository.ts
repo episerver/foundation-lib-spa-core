@@ -5,7 +5,7 @@ import EventEmitter from 'eventemitter3';
 import IContentDeliveryAPI, { isNetworkError } from '../ContentDelivery/IContentDeliveryAPI';
 import { IRepositoryConfig, IRepositoryPolicy } from './IRepository';
 import { IIContentRepository, WebsiteRepositoryItem, IPatchableRepositoryEvents, IContentRepositoryItem } from './IIContentRepository';
-import { NetworkErrorData, getIContentFromPathResponse, PathResponseIsIContent } from '../ContentDeliveryAPI';
+import { NetworkErrorData, getIContentFromPathResponse } from '../ContentDeliveryAPI';
 
 // Import IndexedDB Wrappper
 import IndexedDB from '../IndexedDB/IndexedDB';
@@ -15,7 +15,7 @@ import Store from '../IndexedDB/Store';
 // Import Taxonomy
 import Property, { ContentAreaProperty, ContentReferenceProperty, ContentReferenceListProperty } from '../Property';
 import { ContentReference, ContentLinkService } from '../Models/ContentLink';
-import IContent from '../Models/IContent';
+import IContent, { IContentData, GenericProperty, genericPropertyIsProperty } from '../Models/IContent';
 import Website from '../Models/Website';
 import WebsiteList, { hostnameFilter } from '../Models/WebsiteList';
 import ServerContextAccessor from '../ServerSideRendering/ServerContextAccessor';
@@ -28,7 +28,7 @@ export class IContentRepository extends EventEmitter<IPatchableRepositoryEvents<
 {
     protected _api : IContentDeliveryAPI;
     protected _storage : IndexedDB;
-    protected _loading : { [key: string] : Promise<IContent | NetworkErrorData<any> | null> } = {};
+    protected _loading : { [key: string] : Promise<IContent | NetworkErrorData<unknown> | null> } = {};
     protected _config : IRepositoryConfig = {
         maxAge: 1440, // Default keep for one day = 24 * 60 = 1440 minutes
         policy: IRepositoryPolicy.NetworkFirst, // Default network first
@@ -64,7 +64,7 @@ export class IContentRepository extends EventEmitter<IPatchableRepositoryEvents<
      * @param { boolean } recursive Whether or all referenced content must be loaded as well
      * @returns { Promise<IContent | null> }
      */
-    public async load<IContentType extends IContent = IContent>(reference: ContentReference, recursive: boolean = false) : Promise<IContentType | null>
+    public async load<IContentType extends IContent = IContent>(reference: ContentReference, recursive = false) : Promise<IContentType | null>
     {
         const localFirst = this._config.policy === IRepositoryPolicy.LocalStorageFirst ||
                            this._config.policy === IRepositoryPolicy.PreferOffline ||
@@ -86,7 +86,7 @@ export class IContentRepository extends EventEmitter<IPatchableRepositoryEvents<
      * @param { boolean } recursive Whether or all referenced content must be loaded as well
      * @returns { Promise<IContent | null> }
      */
-    public update<IContentType extends IContent = IContent>(reference: ContentReference, recursive: boolean = false) : Promise<IContentType | null>
+    public update<IContentType extends IContent = IContent>(reference: ContentReference, recursive = false) : Promise<IContentType | null>
     {
         if (!this._api.OnLine) return Promise.resolve(null);
         
@@ -208,7 +208,7 @@ export class IContentRepository extends EventEmitter<IPatchableRepositoryEvents<
         }
 
         const resolveNetwork = async () : Promise<IContentType | null> => {
-            const resolvedRoute = await this._api.resolveRoute<any, IContentType>(route);
+            const resolvedRoute = await this._api.resolveRoute<unknown, IContentType>(route);
             const content = getIContentFromPathResponse(resolvedRoute);
             if (content) this.ingestIContent(content);
             return content as IContentType;
@@ -262,7 +262,7 @@ export class IContentRepository extends EventEmitter<IPatchableRepositoryEvents<
         return websites;
     }
 
-    public async getWebsite(hostname: string, language ?: string, matchWildCard : boolean = true) : Promise<Readonly<Website> | null>
+    public async getWebsite(hostname: string, language ?: string, matchWildCard = true) : Promise<Readonly<Website> | null>
     {
         const websites = (await this.getWebsites()).filter(w => hostnameFilter(w, hostname, language, matchWildCard));
         return websites && websites.length === 1 ? websites[0] : null;
@@ -270,18 +270,18 @@ export class IContentRepository extends EventEmitter<IPatchableRepositoryEvents<
 
     public getCurrentWebsite() : Promise<Readonly<Website> | null>
     {
-        let hostname : string = '*';
+        let hostname = '*';
         try {
             hostname = window.location.host;
         } catch (e) { /* Ignored on purpose */ }
         return this.getWebsite(hostname, undefined, false).then(w => w ? w : this.getWebsite(hostname, undefined, true));
     }
 
-    protected async ingestIContent(iContent: IContent, overwrite: boolean = true) : Promise<IContent | null>
+    protected async ingestIContent(iContent: IContent, overwrite = true) : Promise<IContent | null>
     {
         const table = await this.getTable();
         const current = await table.get(this.createStorageId(iContent, true));
-        let isUpdate : boolean = current?.data ? true : false;
+        const isUpdate = current?.data ? true : false;
         if (!overwrite && isUpdate) return current.data;
         if (isUpdate) {
             if (this._config.debug) console.log('IContentRepository: Before update', iContent, current.data);
@@ -348,59 +348,65 @@ export class IContentRepository extends EventEmitter<IPatchableRepositoryEvents<
         }
     }
 
-    protected async recursiveLoad(iContent: IContent, recurseDown: boolean = false)
+    protected recursiveLoad(iContent: IContentData, recurseDown = false) : void
     {
         for (const key of Object.keys(iContent)) {
-            const p : Property = (iContent as any)[key];
-            if (p && p.propertyDataType) switch (p.propertyDataType) {
+            const p : GenericProperty = iContent[key];
+            if (genericPropertyIsProperty<unknown>(p)) switch (p.propertyDataType) {
                 case 'PropertyContentReference':
-                case 'PropertyPageReference':
-                    const cRef = p as ContentReferenceProperty;
-                    if (cRef.expandedValue) {
-                        this.ingestIContent(cRef.expandedValue);
-                        this.recursiveLoad(cRef.expandedValue, recurseDown);
-                        delete (iContent as any)[key].expandedValue;
+                case 'PropertyPageReference': 
+                    {
+                        const cRef = p as ContentReferenceProperty;
+                        if (cRef.expandedValue) {
+                            this.ingestIContent(cRef.expandedValue);
+                            this.recursiveLoad(cRef.expandedValue, recurseDown);
+                            delete (iContent[key] as Property<unknown>).expandedValue;
+                            break;
+                        }
+                        if (cRef.value && recurseDown) {
+                            this.load(cRef.value, recurseDown);
+                        }
                         break;
                     }
-                    if (cRef.value && recurseDown) {
-                        this.load(cRef.value, recurseDown);
-                    }
-                    break;
                 case 'PropertyContentArea':
-                    const cArea = p as ContentAreaProperty;
-                    if (cArea.expandedValue) {
-                        cArea.expandedValue?.forEach(x => {
-                            this.ingestIContent(x);
-                            this.recursiveLoad(x);
-                        });
-                        delete (iContent as any)[key].expandedValue;
+                    {
+                        const cArea = p as ContentAreaProperty;
+                        if (cArea.expandedValue) {
+                            cArea.expandedValue?.forEach(x => {
+                                this.ingestIContent(x);
+                                this.recursiveLoad(x);
+                            });
+                            delete (iContent[key] as Property<unknown>).expandedValue;
+                            break;
+                        }
+                        if (cArea.value && recurseDown) {
+                            cArea.value?.forEach(x => this.load(x.contentLink, recurseDown).catch(() => null));
+                        }
                         break;
                     }
-                    if (cArea.value && recurseDown) {
-                        cArea.value?.forEach(x => this.load(x.contentLink, recurseDown).catch(() => null));
-                    }
-                    break;
                 case 'PropertyContentReferenceList':
-                    const cRefList = p as ContentReferenceListProperty;
-                    if (cRefList.expandedValue) {
-                        cRefList.expandedValue?.forEach(x => {
-                            this.ingestIContent(x);
-                            this.recursiveLoad(x);
-                        });
-                        delete (iContent as any)[key].expandedValue;
+                    {
+                        const cRefList = p as ContentReferenceListProperty;
+                        if (cRefList.expandedValue) {
+                            cRefList.expandedValue?.forEach(x => {
+                                this.ingestIContent(x);
+                                this.recursiveLoad(x);
+                            });
+                            delete (iContent[key] as Property<unknown>).expandedValue;
+                            break;
+                        }
+                        if (cRefList.value && recurseDown) {
+                            cRefList.value?.forEach(x => this.load(x, recurseDown).catch(() => null));
+                        }
                         break;
                     }
-                    if (cRefList.value && recurseDown) {
-                        cRefList.value?.forEach(x => this.load(x, recurseDown).catch(() => null));
-                    }
-                    break;
             }
         }
     }
 
-    protected schemaUpgrade : SchemaUpgrade = (db, t) => {
-        return Promise.all([
-            db.replaceStore('iContent','apiId', undefined, [
+    protected schemaUpgrade : SchemaUpgrade = async db => {
+        await Promise.all([
+            db.replaceStore('iContent', 'apiId', undefined, [
                 { name: 'guid', keyPath: 'guid', unique: true },
                 { name: 'contentId', keyPath: 'contentId', unique: true },
                 { name: 'routes', keyPath: 'route', unique: false }
@@ -408,7 +414,8 @@ export class IContentRepository extends EventEmitter<IPatchableRepositoryEvents<
             db.replaceStore('website', 'data.id', undefined, [
                 { name: 'hosts', keyPath: 'hosts', multiEntry: false, unique: false }
             ])
-        ]).then(() => true)
+        ]);
+        return true;
     }
 }
 export default IContentRepository

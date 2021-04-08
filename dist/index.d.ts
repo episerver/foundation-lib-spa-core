@@ -29,11 +29,5 @@ export declare function init<B extends boolean>(config: Core.IConfig, serviceCon
  * Export all hooks in the global scope
  */
 export * from './Hooks/Context';
-/**
- * Helper method to get the global scope at any location within the SPA, this is either
- * the 'window' or 'global' variable, depending on execution context.
- *
- * @return { Window|any }
- */
-export declare const getGlobalScope: () => any;
+export { default as AppGlobal } from './AppGlobal';
 export default init;

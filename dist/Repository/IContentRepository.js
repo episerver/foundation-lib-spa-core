@@ -16,6 +16,7 @@ import { getIContentFromPathResponse } from '../ContentDeliveryAPI';
 // Import IndexedDB Wrappper
 import IndexedDB from '../IndexedDB/IndexedDB';
 import { ContentLinkService } from '../Models/ContentLink';
+import { genericPropertyIsProperty } from '../Models/IContent';
 import { hostnameFilter } from '../Models/WebsiteList';
 /**
  * A wrapper for IndexedDB offering an Asynchronous API to load/fetch content items from the database
@@ -36,8 +37,8 @@ export class IContentRepository extends EventEmitter {
             policy: IRepositoryPolicy.NetworkFirst,
             debug: false // Default to disabling debug mode
         };
-        this.schemaUpgrade = (db, t) => {
-            return Promise.all([
+        this.schemaUpgrade = (db) => __awaiter(this, void 0, void 0, function* () {
+            yield Promise.all([
                 db.replaceStore('iContent', 'apiId', undefined, [
                     { name: 'guid', keyPath: 'guid', unique: true },
                     { name: 'contentId', keyPath: 'contentId', unique: true },
@@ -46,8 +47,9 @@ export class IContentRepository extends EventEmitter {
                 db.replaceStore('website', 'data.id', undefined, [
                     { name: 'hosts', keyPath: 'hosts', multiEntry: false, unique: false }
                 ])
-            ]).then(() => true);
-        };
+            ]);
+            return true;
+        });
         this._api = api;
         this._config = Object.assign(Object.assign({}, this._config), config);
         this._storage = new IndexedDB("iContentRepository", 5, this.schemaUpgrade.bind(this));
@@ -283,7 +285,7 @@ export class IContentRepository extends EventEmitter {
         return __awaiter(this, void 0, void 0, function* () {
             const table = yield this.getTable();
             const current = yield table.get(this.createStorageId(iContent, true));
-            let isUpdate = (current === null || current === void 0 ? void 0 : current.data) ? true : false;
+            const isUpdate = (current === null || current === void 0 ? void 0 : current.data) ? true : false;
             if (!overwrite && isUpdate)
                 return current.data;
             if (isUpdate) {
@@ -358,13 +360,13 @@ export class IContentRepository extends EventEmitter {
     }
     recursiveLoad(iContent, recurseDown = false) {
         var _a, _b, _c, _d;
-        return __awaiter(this, void 0, void 0, function* () {
-            for (const key of Object.keys(iContent)) {
-                const p = iContent[key];
-                if (p && p.propertyDataType)
-                    switch (p.propertyDataType) {
-                        case 'PropertyContentReference':
-                        case 'PropertyPageReference':
+        for (const key of Object.keys(iContent)) {
+            const p = iContent[key];
+            if (genericPropertyIsProperty(p))
+                switch (p.propertyDataType) {
+                    case 'PropertyContentReference':
+                    case 'PropertyPageReference':
+                        {
                             const cRef = p;
                             if (cRef.expandedValue) {
                                 this.ingestIContent(cRef.expandedValue);
@@ -376,7 +378,9 @@ export class IContentRepository extends EventEmitter {
                                 this.load(cRef.value, recurseDown);
                             }
                             break;
-                        case 'PropertyContentArea':
+                        }
+                    case 'PropertyContentArea':
+                        {
                             const cArea = p;
                             if (cArea.expandedValue) {
                                 (_a = cArea.expandedValue) === null || _a === void 0 ? void 0 : _a.forEach(x => {
@@ -390,7 +394,9 @@ export class IContentRepository extends EventEmitter {
                                 (_b = cArea.value) === null || _b === void 0 ? void 0 : _b.forEach(x => this.load(x.contentLink, recurseDown).catch(() => null));
                             }
                             break;
-                        case 'PropertyContentReferenceList':
+                        }
+                    case 'PropertyContentReferenceList':
+                        {
                             const cRefList = p;
                             if (cRefList.expandedValue) {
                                 (_c = cRefList.expandedValue) === null || _c === void 0 ? void 0 : _c.forEach(x => {
@@ -404,9 +410,9 @@ export class IContentRepository extends EventEmitter {
                                 (_d = cRefList.value) === null || _d === void 0 ? void 0 : _d.forEach(x => this.load(x, recurseDown).catch(() => null));
                             }
                             break;
-                    }
-            }
-        });
+                        }
+                }
+        }
     }
 }
 export default IContentRepository;

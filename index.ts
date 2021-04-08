@@ -3,7 +3,6 @@ import * as Core from './Library/Core';
 import * as ServerSideRendering from './Library/ServerSideRendering';
 import initServer from './InitServer';
 import initBrowser from './InitBrowser';
-import AppGlobal from './AppGlobal';
 
 // Namespace exports
 export * as Core from './Library/Core';
@@ -46,12 +45,6 @@ export function init<B extends boolean> (config: Core.IConfig, serviceContainer?
  */
 export * from './Hooks/Context';
 
-/**
- * Helper method to get the global scope at any location within the SPA, this is either
- * the 'window' or 'global' variable, depending on execution context.
- * 
- * @return { Window|any }
- */
-export const getGlobalScope: () => any = AppGlobal;
+export { default as AppGlobal } from './AppGlobal';
 
 export default init;

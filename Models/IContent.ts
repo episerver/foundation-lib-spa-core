@@ -14,13 +14,17 @@ export type GenericProperty =
   | LanguageList
   | ContentTypePath
   | ContentLink
-  | Property<any>;
+  | Property<unknown>;
 
 export function namePropertyIsString(prop: NameProperty): prop is string {
   if (prop && (prop as string).trim) {
     return true;
   }
   return false;
+}
+export function genericPropertyIsProperty<TData>(prop: GenericProperty) : prop is Property<TData>
+{
+  return (prop as Property<TData>)?.propertyDataType && typeof((prop as Property<TData>).propertyDataType) == 'string' ? true : false;
 }
 
 export type IContent = {
@@ -76,7 +80,7 @@ export abstract class BaseIContent<T extends IContent = IContent> implements ICo
     return this._typeName;
   }
 
-  public getTypeName() {
+  public getTypeName(): string {
     return this._typeName;
   }
 

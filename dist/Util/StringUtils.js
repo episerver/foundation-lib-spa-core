@@ -70,7 +70,6 @@ StringUtils.TrimLeft = (char, subject) => {
     }
     return out;
 };
-;
 // Create exported functions
 export const SafeModelName = StringUtils.SafeModelName;
 export const TrimRight = StringUtils.TrimRight;
