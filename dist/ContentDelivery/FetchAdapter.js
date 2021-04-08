@@ -8,6 +8,20 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 /**
+ * Check if the browser cache for Fetch Requests/Responses is available
+ *
+ * @returns Whether the caches are available
+ */
+export function cachesAvailable() {
+    try {
+        return caches ? true : false;
+    }
+    catch (e) {
+        return false;
+    }
+}
+let isCachesAvailable = cachesAvailable();
+/**
  * A basic implementation of an AxiosAdapter to let Axios use the Fetch API to
  * retrieve content.
  *
@@ -45,7 +59,7 @@ export const FetchAdapter = (config) => __awaiter(void 0, void 0, void 0, functi
     const request = new Request(requestUrl.href, requestConfig);
     let r;
     try {
-        if (FetchAdapter.isCachable && caches && FetchAdapter.isCachable.some(test => test(request))) {
+        if (isCachesAvailable && FetchAdapter.isCachable && FetchAdapter.isCachable.some(test => test(request))) {
             const cache = yield caches.open(userAgent);
             r = yield cache.match(request).then(cr => cr || fetch(request).then(fr => { cache.put(request, fr.clone()); return fr; }));
         }
@@ -54,7 +68,6 @@ export const FetchAdapter = (config) => __awaiter(void 0, void 0, void 0, functi
         }
     }
     catch (e) {
-        console.error('Fetch Error', e);
         const errorResponse = {
             config,
             request,

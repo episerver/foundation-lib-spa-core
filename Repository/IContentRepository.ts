@@ -1,6 +1,5 @@
 // Import libraries
 import EventEmitter from 'eventemitter3';
-import { cloneDeep } from 'lodash';
 
 // Import framework
 import IContentDeliveryAPI, { isNetworkError } from '../ContentDelivery/IContentDeliveryAPI';
@@ -51,9 +50,9 @@ export class IContentRepository extends EventEmitter<IPatchableRepositoryEvents<
 
         // Ingest server context into the database, if we have it
         if (serverContext) {
-            if (serverContext.IContent) this.ingestIContent(serverContext.IContent);
-            if (serverContext.StartPage) this.ingestIContent(serverContext.StartPage);
-            // if (serverContext.Website) this.ingestWebsite(serverContext.Website); // Server side the website does not contain the hosts field
+            if (serverContext.IContent) this.ingestIContent(serverContext.IContent, false);
+            (serverContext?.Contents || []).forEach(x => this.ingestIContent(x, false));
+            if (serverContext.Website && (serverContext.Website?.hosts?.length || 0) > 0) this.ingestWebsite(serverContext.Website); // Maker sure we only ingest the website if it has hosts
         }
     }
 
@@ -278,13 +277,13 @@ export class IContentRepository extends EventEmitter<IPatchableRepositoryEvents<
         return this.getWebsite(hostname, undefined, false).then(w => w ? w : this.getWebsite(hostname, undefined, true));
     }
 
-    protected async ingestIContent(iContent: IContent) : Promise<IContent | null>
+    protected async ingestIContent(iContent: IContent, overwrite: boolean = true) : Promise<IContent | null>
     {
         const table = await this.getTable();
         const current = await table.get(this.createStorageId(iContent, true));
-        let isUpdate : boolean = false;
-        if (current && current.data) {
-            isUpdate = true;
+        let isUpdate : boolean = current?.data ? true : false;
+        if (!overwrite && isUpdate) return current.data;
+        if (isUpdate) {
             if (this._config.debug) console.log('IContentRepository: Before update', iContent, current.data);
             this.emit('beforeUpdate', iContent, current.data);
         } else {

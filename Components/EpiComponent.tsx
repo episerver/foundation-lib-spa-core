@@ -106,13 +106,14 @@ function _EpiComponent<T extends IContent = IContent>(props: EpiComponentProps<T
         return () => { isCancelled = true }
     }, [ componentAvailable, componentName ]);
     
-    const componentType = componentName && componentAvailable ?
+    const IContentComponent = componentName && componentAvailable ?
             componentLoader.getPreLoadedType(componentName) :
             null;
-    return componentType && iContent ? 
-            React.createElement(componentType, { ...props, context: ctx, data: iContent}) : 
+    return IContentComponent && iContent ? 
+            <EpiComponentErrorBoundary componentName={ componentName || "unkown component" }><IContentComponent { ...{ ...props, context: ctx, data: iContent } } /></EpiComponentErrorBoundary>  : 
             Spinner.CreateInstance({});
 }
+
 
 /**
  * Create the instantiable type of the EpiComponent for the current
@@ -125,22 +126,10 @@ function _EpiComponent<T extends IContent = IContent>(props: EpiComponentProps<T
 _EpiComponent.CreateComponent = (context: IEpiserverContext): EpiBaseComponentType => _EpiComponent;
 
 const EpiComponent : EpiComponentType = _EpiComponent;
+EpiComponent.displayName = "Episerver IContent"
 export default EpiComponent;
 
 //#region Internal methods for the Episerver CMS Component
-/**
- * Check if the current expanded value is both set and relates to the current
- * content reference.
- */
-const isExpandedValueValid : (content: IContent|null|undefined, link: ContentLink) => boolean = (content: IContent|null|undefined, link: ContentLink) =>
-{
-    try {
-        return content?.contentLink?.guidValue === link?.guidValue ? true : false;
-    } catch (e) {
-        return false;
-    }
-}
-
 /**
  * Create the name of the React Component to load for this EpiComponent
  * 
@@ -155,5 +144,38 @@ const buildComponentName : (item : IContent | null, contentType?: string) => str
         baseName = context + '/' + baseName;
     }
     return `app/Components/${ baseName }`;
+}
+//#endregion
+
+//#region Error boundary
+type EpiComponentErrorBoundaryProps = React.PropsWithChildren<{
+    componentName: string
+}>
+class EpiComponentErrorBoundary extends React.Component<EpiComponentErrorBoundaryProps, { hasError: boolean }>
+{
+    constructor(props: EpiComponentErrorBoundaryProps) {
+        super(props);
+        this.state = { hasError: false };
+    }
+    
+    static getDerivedStateFromError(error: Error) {
+        // Update state so the next render will show the fallback UI.
+        return { hasError: true };
+    }
+    
+    componentDidCatch(error: any, errorInfo: any) {
+        console.error('EpiComponent caught error', error, errorInfo);
+        // You can also log the error to an error reporting service
+        // logErrorToMyService(error, errorInfo);
+    }
+    
+    render() {
+        if (this.state.hasError) {
+            // You can render any custom fallback UI
+            return <div className="alert alert-danger">Uncaught error in <span>{ this.props.componentName }</span></div>;
+        }
+    
+        return this.props.children; 
+    }
 }
 //#endregion

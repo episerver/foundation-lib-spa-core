@@ -33,8 +33,8 @@ export declare type ServerContext = {
      */
     Website: WebsiteOrSerialzed;
     /**
-     * The content of the the current start page (JSON Encoded)
+     * All content items used during server side rendering
      */
-    StartPageData: IContentOrSerialized;
+    Contents: IContentOrSerialized[];
 };
 export default ServerContext;

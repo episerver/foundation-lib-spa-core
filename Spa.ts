@@ -82,7 +82,7 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
         this._serviceContainer = serviceContainer;
 
         // Prepare services
-        const executionContext : IExecutionContext = { 
+        const executionContext : Readonly<IExecutionContext> = { 
             isServerSideRendering: (() : boolean => {
                 try {
                     return isServerSideRendering || (ctx.epi.isServerSideRendering === true);
@@ -112,7 +112,7 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
         this._serviceContainer.addService(DefaultServices.Context, this);
         this._serviceContainer.addService(DefaultServices.Config, config);
         this._serviceContainer.addService(DefaultServices.ExecutionContext, executionContext);
-        this._serviceContainer.addService(DefaultServices.ServerContext, new ServerContextAccessor())
+        this._serviceContainer.addService(DefaultServices.ServerContext, new ServerContextAccessor(executionContext.isServerSideRendering));
         this._serviceContainer.addService(DefaultServices.EventEngine, eventEngine);
         this._initialized = InitStatus.CoreServicesReady;
 

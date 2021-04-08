@@ -1,3 +1,3 @@
-import DefaultAbstractComponent from '../EpiComponent';
-export const AbstractComponent = DefaultAbstractComponent;
+import * as EpiComponentNS from '../EpiComponent';
+export var AbstractComponent = EpiComponentNS.EpiComponent;
 //# sourceMappingURL=ComponentTypes.js.map

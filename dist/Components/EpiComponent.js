@@ -75,11 +75,12 @@ function _EpiComponent(props) {
                 repaint(); });
         return () => { isCancelled = true; };
     }, [componentAvailable, componentName]);
-    const componentType = componentName && componentAvailable ?
+    const IContentComponent = componentName && componentAvailable ?
         componentLoader.getPreLoadedType(componentName) :
         null;
-    return componentType && iContent ?
-        React.createElement(componentType, Object.assign(Object.assign({}, props), { context: ctx, data: iContent })) :
+    return IContentComponent && iContent ?
+        React.createElement(EpiComponentErrorBoundary, { componentName: componentName || "unkown component" },
+            React.createElement(IContentComponent, Object.assign({}, Object.assign(Object.assign({}, props), { context: ctx, data: iContent })))) :
         Spinner.CreateInstance({});
 }
 /**
@@ -92,21 +93,9 @@ function _EpiComponent(props) {
  */
 _EpiComponent.CreateComponent = (context) => _EpiComponent;
 const EpiComponent = _EpiComponent;
+EpiComponent.displayName = "Episerver IContent";
 export default EpiComponent;
 //#region Internal methods for the Episerver CMS Component
-/**
- * Check if the current expanded value is both set and relates to the current
- * content reference.
- */
-const isExpandedValueValid = (content, link) => {
-    var _a;
-    try {
-        return ((_a = content === null || content === void 0 ? void 0 : content.contentLink) === null || _a === void 0 ? void 0 : _a.guidValue) === (link === null || link === void 0 ? void 0 : link.guidValue) ? true : false;
-    }
-    catch (e) {
-        return false;
-    }
-};
 /**
  * Create the name of the React Component to load for this EpiComponent
  *
@@ -121,5 +110,29 @@ const buildComponentName = (item, contentType) => {
     }
     return `app/Components/${baseName}`;
 };
+class EpiComponentErrorBoundary extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = { hasError: false };
+    }
+    static getDerivedStateFromError(error) {
+        // Update state so the next render will show the fallback UI.
+        return { hasError: true };
+    }
+    componentDidCatch(error, errorInfo) {
+        console.error('EpiComponent caught error', error, errorInfo);
+        // You can also log the error to an error reporting service
+        // logErrorToMyService(error, errorInfo);
+    }
+    render() {
+        if (this.state.hasError) {
+            // You can render any custom fallback UI
+            return React.createElement("div", { className: "alert alert-danger" },
+                "Uncaught error in ",
+                React.createElement("span", null, this.props.componentName));
+        }
+        return this.props.children;
+    }
+}
 //#endregion
 //# sourceMappingURL=EpiComponent.js.map

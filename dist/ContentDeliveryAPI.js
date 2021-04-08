@@ -36,7 +36,7 @@ export function getIContentFromPathResponse(response) {
  *
  * @deprecated
  */
-export default class ContentDeliveryAPI {
+export class ContentDeliveryAPI {
     /**
      * ContentDelivery API Wrapper
      *
@@ -289,7 +289,7 @@ export default class ContentDeliveryAPI {
     getHeaders(customHeaders) {
         let defaultHeaders = {
             Accept: 'application/json',
-            'Accept-Language': this.config.defaultLanguage,
+            'Accept-Language': this.config.defaultLanguage, //@ToDo: Convert to context call, with default
         };
         if (!customHeaders)
             return defaultHeaders;
@@ -320,9 +320,10 @@ export default class ContentDeliveryAPI {
             },
             error: {
                 propertyDataType: 'Unknown',
-                value: '',
+                value: '', //reason,
             },
         };
     }
 }
+export default ContentDeliveryAPI;
 //# sourceMappingURL=ContentDeliveryAPI.js.map

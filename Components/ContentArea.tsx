@@ -113,11 +113,12 @@ export const ContentArea : React.FunctionComponent<ContentAreaProps> = (props) =
     const wrapperClass = getConfigValue(config, 'wrapperClass', 'content-area');
 
     // Render the items
-    const items : React.ReactElement<ContentAreaItemProps>[] = (props.data?.value || []).map((x, i) => {
+    const items : React.ReactElement<ContentAreaItemProps>[] = [];
+    (props.data?.value || []).forEach((x,i) => {
         const className = getBlockClasses(x.displayOption, config).join(' ');
         const blockKey = `ContentAreaItem-${ ContentLinkService.createApiId(x.contentLink, true, false) }-${ i }`;
-        return <ContentAreaItem key={ blockKey } item={x} config={config} idx={i} className={ className }  expandedValue={ props.data?.expandedValue ? props.data?.expandedValue[i] : undefined } />
-    });
+        items.push(<ContentAreaItem key={ blockKey } item={x} config={config} idx={i} className={ className }  expandedValue={ props.data?.expandedValue ? props.data?.expandedValue[i] : undefined } />);
+    })
 
     // Return if no wrapping
     if (getConfigValue(config, "noWrap", false) === true)

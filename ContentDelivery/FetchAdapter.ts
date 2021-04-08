@@ -5,6 +5,22 @@ export type CachingFetchAdapter = AxiosAdapter & {
 }
 
 /**
+ * Check if the browser cache for Fetch Requests/Responses is available
+ * 
+ * @returns Whether the caches are available
+ */
+export function cachesAvailable()
+{
+    try {
+        return caches ? true : false;
+    } catch (e) {
+        return false;
+    }
+}
+
+let isCachesAvailable = cachesAvailable();
+
+/**
  * A basic implementation of an AxiosAdapter to let Axios use the Fetch API to 
  * retrieve content.
  * 
@@ -48,14 +64,13 @@ export const FetchAdapter : CachingFetchAdapter = async (config: AxiosRequestCon
     const request = new Request(requestUrl.href, requestConfig);
     let r : Response;
     try {
-        if (FetchAdapter.isCachable && caches && FetchAdapter.isCachable.some(test => test(request))) {
+        if (isCachesAvailable && FetchAdapter.isCachable && FetchAdapter.isCachable.some(test => test(request))) {
             const cache = await caches.open(userAgent);
             r = await cache.match(request).then(cr => cr || fetch(request).then(fr => { cache.put(request, fr.clone()); return fr; }))
         } else {
             r = await fetch(request);
         }
     } catch (e) {
-        console.error('Fetch Error', e);
         const errorResponse: AxiosResponse = {
             config,
             request,

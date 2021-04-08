@@ -28,6 +28,7 @@ export class IContentRepository extends EventEmitter {
      * @param { IContentDeliveryAPI } api The ContentDelivery API wrapper to use within this IContent Repository
      */
     constructor(api, config, serverContext) {
+        var _a, _b;
         super();
         this._loading = {};
         this._config = {
@@ -55,10 +56,10 @@ export class IContentRepository extends EventEmitter {
         // Ingest server context into the database, if we have it
         if (serverContext) {
             if (serverContext.IContent)
-                this.ingestIContent(serverContext.IContent);
-            if (serverContext.StartPage)
-                this.ingestIContent(serverContext.StartPage);
-            // if (serverContext.Website) this.ingestWebsite(serverContext.Website); // Server side the website does not contain the hosts field
+                this.ingestIContent(serverContext.IContent, false);
+            ((serverContext === null || serverContext === void 0 ? void 0 : serverContext.Contents) || []).forEach(x => this.ingestIContent(x, false));
+            if (serverContext.Website && (((_b = (_a = serverContext.Website) === null || _a === void 0 ? void 0 : _a.hosts) === null || _b === void 0 ? void 0 : _b.length) || 0) > 0)
+                this.ingestWebsite(serverContext.Website); // Maker sure we only ingest the website if it has hosts
         }
     }
     /**
@@ -278,13 +279,14 @@ export class IContentRepository extends EventEmitter {
         catch (e) { /* Ignored on purpose */ }
         return this.getWebsite(hostname, undefined, false).then(w => w ? w : this.getWebsite(hostname, undefined, true));
     }
-    ingestIContent(iContent) {
+    ingestIContent(iContent, overwrite = true) {
         return __awaiter(this, void 0, void 0, function* () {
             const table = yield this.getTable();
             const current = yield table.get(this.createStorageId(iContent, true));
-            let isUpdate = false;
-            if (current && current.data) {
-                isUpdate = true;
+            let isUpdate = (current === null || current === void 0 ? void 0 : current.data) ? true : false;
+            if (!overwrite && isUpdate)
+                return current.data;
+            if (isUpdate) {
                 if (this._config.debug)
                     console.log('IContentRepository: Before update', iContent, current.data);
                 this.emit('beforeUpdate', iContent, current.data);

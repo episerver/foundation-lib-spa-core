@@ -1,6 +1,7 @@
-import DefaultResponse from '../ServerSideRendering/Response';
-import DefaultServerContext from '../ServerSideRendering/ServerContext';
+import * as ResponseNS from '../ServerSideRendering/Response';
+import * as ServerContextNS from '../ServerSideRendering/ServerContext';
 import * as DefaultAccessorNS from '../ServerSideRendering/ServerContextAccessor';
-export declare type Response = DefaultResponse;
-export declare type Context = DefaultServerContext;
-export declare const Accessor: DefaultAccessorNS.IServerContextAccessor;
+export import Response = ResponseNS.Response;
+export import Context = ServerContextNS.ServerContext;
+export import IAccessor = DefaultAccessorNS.IServerContextAccessor;
+export import Accessor = DefaultAccessorNS.ServerContextAccessor;

@@ -30,8 +30,7 @@ export default function RenderServerSide(config: AppConfig, serviceContainer?: I
     config.enableDebug = true;
     EpiSpaContext.init(config, serviceContainer, true);
 
-    let staticContext : StaticRouterContext = {};
-
+    const staticContext : StaticRouterContext = {};
     const body = ReactDOMServer.renderToString(<CmsSite context={ EpiSpaContext } staticContext={ staticContext } />);
     const meta = Helmet.renderStatic();
 

@@ -19,7 +19,7 @@ export declare function getIContentFromPathResponse<IContentType extends IConten
  *
  * @deprecated
  */
-export default class ContentDeliveryAPI {
+export declare class ContentDeliveryAPI {
     protected config: AppConfig;
     protected componentService: string;
     protected websiteService: string;
@@ -106,3 +106,4 @@ export default class ContentDeliveryAPI {
     private counter;
     protected buildNetworkError(reason: any, path?: string): NetworkErrorData;
 }
+export default ContentDeliveryAPI;

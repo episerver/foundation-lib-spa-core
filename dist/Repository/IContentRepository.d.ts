@@ -82,7 +82,7 @@ export declare class IContentRepository extends EventEmitter<IPatchableRepositor
     getWebsites(): Promise<WebsiteList>;
     getWebsite(hostname: string, language?: string, matchWildCard?: boolean): Promise<Readonly<Website> | null>;
     getCurrentWebsite(): Promise<Readonly<Website> | null>;
-    protected ingestIContent(iContent: IContent): Promise<IContent | null>;
+    protected ingestIContent(iContent: IContent, overwrite?: boolean): Promise<IContent | null>;
     protected ingestWebsite(website: Website): Promise<Website | null>;
     /**
      * Get the underlying table in IndexedDB

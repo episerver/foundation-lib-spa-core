@@ -43,7 +43,7 @@ export function getIContentFromPathResponse<IContentType extends IContent = ICon
  * 
  * @deprecated
  */
-export default class ContentDeliveryAPI {
+export class ContentDeliveryAPI {
   protected config: AppConfig;
   protected componentService: string = '/api/episerver/v2.0/content/';
   protected websiteService: string = '/api/episerver/v3/site/';
@@ -366,3 +366,5 @@ export default class ContentDeliveryAPI {
     };
   }
 }
+
+export default ContentDeliveryAPI;
