@@ -21,6 +21,7 @@ export declare class IContentRepository extends EventEmitter<IPatchableRepositor
     protected _loading: {
         [key: string]: Promise<IContent | NetworkErrorData<unknown> | null>;
     };
+    protected _websitesLoading: Promise<WebsiteList> | undefined;
     protected _config: IRepositoryConfig;
     /**
      * Create a new instance
@@ -93,7 +94,13 @@ export declare class IContentRepository extends EventEmitter<IPatchableRepositor
     protected getWebsiteTable(): Promise<Store<WebsiteRepositoryItem>>;
     protected buildWebsiteRepositoryItem(website: Website): WebsiteRepositoryItem;
     protected buildRepositoryItem(iContent: IContent): IContentRepositoryItem;
-    protected recursiveLoad(iContent: IContentData, recurseDown?: boolean): void;
+    protected recursiveLoad(iContent: IContentData, recurseDown?: boolean): Promise<void>;
     protected schemaUpgrade: SchemaUpgrade;
+    /**
+     * Write a debug message
+     *
+     * @param message The message to write to the debugging system
+     */
+    protected debugMessage(...message: unknown[]): void;
 }
 export default IContentRepository;

@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import StringUtils from '../Util/StringUtils';
-import { useEpiserver, useIContentRepository, useServiceContainer, useServerSideRendering, useForceUpdate } from '../Hooks/Context';
+import { useEpiserver, useIContentRepository, useServiceContainer, useServerSideRendering } from '../Hooks/Context';
 import { ContentLinkService } from '../Models/ContentLink';
 import { DefaultServices } from '../Core/IServiceContainer';
-import Spinner from '../Components/Spinner';
+import { Spinner } from '../Components/Spinner';
 const safeLanguageId = (ref, branch = '##', def = '') => {
     try {
         return ref ? ContentLinkService.createLanguageId(ref, branch, true) : def;
@@ -17,72 +17,83 @@ function _EpiComponent(props) {
     const ctx = useEpiserver();
     const ssr = useServerSideRendering();
     const repo = useIContentRepository();
-    const repaint = useForceUpdate();
     const componentLoader = useServiceContainer().getService(DefaultServices.ComponentLoader);
+    // Get convenience variables from services
+    const debug = ctx.isDebugActive();
+    const lang = ctx.Language;
     // Get identifiers from props
-    const expandedValueId = safeLanguageId(props.expandedValue);
-    const contentLinkId = safeLanguageId(props.contentLink, ctx.Language);
-    // Build iContent state and build identifier
-    const [iContent, setIContent] = useState(props.expandedValue && (expandedValueId === contentLinkId) ? props.expandedValue : ssr.getIContent(props.contentLink));
-    const iContentId = safeLanguageId(iContent);
-    // Always check if the component is available
-    const componentName = iContent ? buildComponentName(iContent, props.contentType) : null;
-    const componentAvailable = componentName && componentLoader.isPreLoaded(componentName) ? true : false;
+    const initialContent = () => {
+        if (!props.expandedValue)
+            return ssr.getIContent(props.contentLink);
+        const expandedId = safeLanguageId(props.expandedValue, lang);
+        const linkId = safeLanguageId(props.contentLink, lang);
+        return expandedId === linkId ? props.expandedValue : ssr.getIContent(props.contentLink);
+    };
+    const [iContent, setIContent] = useState(initialContent);
+    const [loadedTypes, setLoadedTypes] = useState([]);
     // Make sure the right iContent has been assigned and will be kept in sync
     useEffect(() => {
         let isCancelled = false;
-        // Add listeners to ensure content changes affect the component
+        const linkId = safeLanguageId(props.contentLink, lang);
+        // Define listeners to ensure content changes affect the component
         const onContentPatched = (item, newValue) => {
-            const itemApiId = ContentLinkService.createLanguageId(newValue, '##', true);
-            if (ctx.isDebugActive())
-                console.debug('EpiComponent / onContentPatched: ', contentLinkId, itemApiId);
-            if (contentLinkId === itemApiId)
+            const itemApiId = safeLanguageId(newValue, lang);
+            if (linkId === itemApiId) {
+                if (debug)
+                    console.debug('EpiComponent / onContentPatched - Updating iContent', itemApiId);
                 setIContent(newValue);
+            }
         };
         const onContentUpdated = (item) => {
-            const itemApiId = item ? ContentLinkService.createLanguageId(item, '##', true) : '##';
-            if (ctx.isDebugActive())
-                console.debug('EpiComponent / onContentUpdated: ', contentLinkId, itemApiId);
-            if (contentLinkId === itemApiId)
+            const itemApiId = safeLanguageId(item, lang);
+            if (linkId === itemApiId) {
+                if (debug)
+                    console.debug('EpiComponent / onContentUpdated - Updating iContent', itemApiId);
                 setIContent(item);
+            }
         };
+        // Bind listeners and load content
         repo.addListener("afterPatch", onContentPatched);
         repo.addListener("afterUpdate", onContentUpdated);
-        // If we don't have the correct iContent
-        if (iContentId !== contentLinkId) {
-            if (expandedValueId === contentLinkId) {
-                setIContent(props.expandedValue || null);
-            }
-            else {
-                repo.load(props.contentLink).then(x => { if (!isCancelled)
-                    setIContent(x); });
-            }
-        }
+        repo.load(props.contentLink).then(x => { if (!isCancelled)
+            setIContent(x); });
         // Cancel effect and remove listeners
         return () => {
             isCancelled = true;
             repo.removeListener("afterPatch", onContentPatched);
             repo.removeListener("afterUpdate", onContentUpdated);
         };
-    }, [contentLinkId]);
+    }, [props.contentLink, repo, debug, lang]);
     // Load && update component if needed
     useEffect(() => {
         let isCancelled = false;
+        const componentName = iContent ? buildComponentName(iContent, props.contentType) : null;
         if (!componentName)
             return;
-        if (!componentAvailable)
-            componentLoader.LoadType(componentName).then(() => { if (!isCancelled)
-                repaint(); });
+        if (!componentLoader.isPreLoaded(componentName))
+            componentLoader.LoadType(componentName).then(() => {
+                if (!isCancelled)
+                    setLoadedTypes(x => [].concat(x, [componentName]));
+            });
         return () => { isCancelled = true; };
-    }, [componentAvailable, componentName]);
-    const IContentComponent = componentName && componentAvailable ?
-        componentLoader.getPreLoadedType(componentName) :
-        null;
-    return IContentComponent && iContent ?
+    }, [iContent, componentLoader, props.contentType]);
+    // Render iContent
+    const shouldRender = safeLanguageId(props.contentLink, lang) === (iContent ? safeLanguageId(iContent.contentLink, lang) : '-NO-ICONTENT-');
+    const componentName = iContent ? buildComponentName(iContent, props.contentType) : null;
+    const IContentComponent = componentName && componentLoader.isPreLoaded(componentName) ? componentLoader.getPreLoadedType(componentName) : null;
+    return shouldRender && iContent && IContentComponent ?
         React.createElement(EpiComponentErrorBoundary, { componentName: componentName || "unkown component" },
-            React.createElement(IContentComponent, Object.assign({}, Object.assign(Object.assign({}, props), { context: ctx, data: iContent })))) :
-        Spinner.CreateInstance({});
+            React.createElement(IContentComponent, Object.assign({}, Object.assign(Object.assign({}, props), { context: ctx, data: iContent }))),
+            React.createElement(DebugComponentList, { loadedComponents: loadedTypes })) :
+        React.createElement(Spinner, null);
 }
+const DebugComponentList = (props) => {
+    var _a;
+    const debug = useEpiserver().isDebugActive();
+    if (!debug)
+        return null;
+    return React.createElement("ul", { "aria-hidden": "true", style: { display: "none" } }, (_a = props === null || props === void 0 ? void 0 : props.loadedComponents) === null || _a === void 0 ? void 0 : _a.map(x => React.createElement("li", { key: x }, x)));
+};
 /**
  * Create the instantiable type of the EpiComponent for the current
  * context. It'll return the base EpiComponent or a EpiComponent wrapped
@@ -91,7 +102,7 @@ function _EpiComponent(props) {
  * @param { IEpiserverContext } context The application context
  * @returns { EpiBaseComponentType }
  */
-_EpiComponent.CreateComponent = (context) => _EpiComponent;
+_EpiComponent.CreateComponent = () => _EpiComponent;
 const EpiComponent = _EpiComponent;
 EpiComponent.displayName = "Episerver IContent";
 export default EpiComponent;
@@ -115,7 +126,7 @@ class EpiComponentErrorBoundary extends React.Component {
         super(props);
         this.state = { hasError: false };
     }
-    static getDerivedStateFromError(error) {
+    static getDerivedStateFromError() {
         // Update state so the next render will show the fallback UI.
         return { hasError: true };
     }

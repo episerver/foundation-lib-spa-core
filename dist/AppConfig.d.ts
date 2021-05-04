@@ -9,7 +9,7 @@ import { IRepositoryConfig } from './Repository/IRepository';
 import { IComponentLoaderConfig } from './Loaders/ComponentLoader';
 import IContentDeliveryConfig from './ContentDelivery/Config';
 import { TypeMapperType } from './Loaders/BaseTypeMapper';
-export default interface AppConfig {
+export declare type AppConfig = {
     /**
      * Enable debug logging to the console
      */
@@ -54,9 +54,10 @@ export default interface AppConfig {
      */
     spinner?: SpinnerComponent;
     /**
-     * Layout
+     * The layout to apply to the website, this is the "frame" around the routed
+     * content.
      */
-    layout: LayoutComponent;
+    layout?: LayoutComponent;
     /**
      * Content Area configuration
      */
@@ -95,4 +96,5 @@ export default interface AppConfig {
      * Create instance objects from raw iContent data
      */
     typeMapper?: TypeMapperType;
-}
+};
+export default AppConfig;

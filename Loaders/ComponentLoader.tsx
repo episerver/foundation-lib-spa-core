@@ -130,7 +130,7 @@ export class ComponentLoader
      * @param   component       The name/path of the component
      * @param   throwOnUnknown  Wether or not an error must be thrown if the component is not in the cache
      */
-    public getPreLoadedType<P = ComponentProps<IContent>>(component: string, throwOnUnknown: boolean = true) : ComponentType<P> | null
+    public getPreLoadedType<P = ComponentProps<IContent>>(component: string, throwOnUnknown = true) : ComponentType<P> | null
     {
         if (this.isPreLoaded(component)) {
             const c : ComponentType<P> = this.cache[component];
@@ -198,36 +198,11 @@ export class ComponentLoader
         return tryOption(0);
     }
 
-    /* protected async doLoadComponent(component: string) : Promise<TComponentType>
-    {
-        if (EpiserverSpaContext.isDebugActive()) console.debug('Loading component: '+component);
-        const type = await (import(
-            /* webpackInclude: /\.tsx$/ */
-            /* webpackExclude: /\.noimport\.tsx$/ */
-            /* webpackChunkName: "components" */
-            /* webpackMode: "lazy" */
-            /* webpackPrefetch: false */
-            /* webpackPreload: false *//*
-            "app/Components/" + component)
-            .then(exports => {
-                const c = exports.default;
-                c.displayName = component;
-                return c;
-            }).catch(reason => {
-                if (EpiserverSpaContext.isDebugActive()) {
-                    console.error(`Error while importing ${component} due to:`, reason);
-                }
-                return ComponentNotFound;
-            }));
-        this.cache[component] = type || ComponentNotFound;
-        if (EpiserverSpaContext.isDebugActive()) console.debug('Loaded component: '+component);
-        return type;
-    }*/
-
     public async LoadComponent<P = ComponentProps<IContent>>(component: string, props: P): Promise<React.ReactElement<P, any>>
     {
         const type = await this.LoadType<P>(component);
         return React.createElement(type, props);
     }
-};
+}
+
 export default ComponentLoader;

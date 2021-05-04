@@ -16,40 +16,70 @@ export function isSerializedWebsite(data: WebsiteOrSerialzed): data is string {
   return typeof data === 'string';
 }
 
+type LikeALocation = {
+  host: string
+  hostname: string
+  href: string
+  origin: string
+  pathname: string
+  protocol: string
+  search: string
+}
+
 /**
  * The TypeScript definition of the ServerContext being passed from .Net to the
  * React Application.
  */
-export type ServerContext = {
+export type DefaultServerContext = {
   /**
    * Window.location compatible location object.
    */
-  Location: any;
+  location: LikeALocation;
 
   /**
    * The current Path of the request being handled
    */
-  Path: string;
+  path: string;
 
   /**
    * The IContent passed from the execution (JSON Encoded)
    */
-  IContent: IContentOrSerialized;
+  iContent: IContentOrSerialized;
 
   /**
    * The ContentLink passed from the execution (JSON Encoded)
    */
-  ContentLink: ContentLinkOrSerialzed;
+  contentLink: ContentLinkOrSerialzed;
 
   /**
    * The Current Website (JSON encoded)
    */
-  Website: WebsiteOrSerialzed;
+  website: WebsiteOrSerialzed;
 
   /**
    * All content items used during server side rendering
    */
-  Contents: IContentOrSerialized[];
+  contents: IContentOrSerialized[];
+
+  /**
+   * Status marker for the current context
+   */
+  status ?: "available" | "loading";
+
+  /**
+   * Ready handler
+   */
+  onReady ?: () => void;
+}
+
+export type ServerContext = DefaultServerContext & {
+  
+  /**
+   * Allow custom properties to be written/read from the 
+   * context.
+   */
+   [ property: string ] : unknown | undefined;
+
 }
 
 export default ServerContext;

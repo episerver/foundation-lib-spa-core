@@ -18,7 +18,7 @@ export declare class StringUtils {
      * @param {string} subject  The string to manipulate
      * @returns {string}        The manipulated string
      */
-    static TrimRight: (char: string, subject: string) => string;
+    static TrimRight: (char: string, subject?: string) => string;
     /**
      * Trim all occurences of a string of the start of another string
      *
@@ -29,6 +29,6 @@ export declare class StringUtils {
     static TrimLeft: (char: string, subject: string) => string;
 }
 export declare const SafeModelName: (modelName: string) => string;
-export declare const TrimRight: (char: string, subject: string) => string;
+export declare const TrimRight: (char: string, subject?: string | undefined) => string;
 export declare const TrimLeft: (char: string, subject: string) => string;
 export default StringUtils;

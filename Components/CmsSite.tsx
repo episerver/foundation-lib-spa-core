@@ -1,13 +1,12 @@
 // Import libraries
 import React from 'react';
-import {Helmet} from 'react-helmet';
+import { Helmet } from 'react-helmet';
 import { Provider as ReduxProvider } from 'react-redux';
 import { StaticRouterContext } from 'react-router';
 
 // Import Episerver Core CMS
 import IEpiserverContext from '../Core/IEpiserverContext';
 import EpiserverContext from '../Hooks/Context';
-import AppConfig from '../AppConfig';
 
 // Import Episerver Taxonomy
 import Layout, { LayoutComponent } from './Layout';
@@ -26,13 +25,13 @@ export interface CmsSiteProps {
 }
 
 export const EpiserverWebsite : React.FunctionComponent<CmsSiteProps> = (props) => {
-    const SiteLayout = getLayout(props.context.config());
+    const SiteLayout = getLayout(props.context);
     const ssr = props.context.serviceContainer.getService<ServerContextAccessor>(DefaultServices.ServerContext);
     const location = (props.context.isServerSideRendering() ? ssr.Path : window.location.pathname) || undefined;
     return <ReduxProvider store={ props.context.getStore() }>
         <EpiserverContext.Provider value={ props.context }>
+            <Helmet />
             <EpiRouter location={ location } context={ props.staticContext }>
-                <Helmet />
                 <SiteLayout context={ props.context } >
                     <RoutedContent config={ props.context.config().routes || [] } keyPrefix="CmsSite-RoutedContent" />
                     { props.children }  
@@ -42,9 +41,9 @@ export const EpiserverWebsite : React.FunctionComponent<CmsSiteProps> = (props) 
     </ReduxProvider>
 }
 
-function getLayout(config: AppConfig) : LayoutComponent
+function getLayout(context: IEpiserverContext) : LayoutComponent
 {
-    return config.layout || Layout;
+    return context.config().layout || Layout;
 }
 
 export default EpiserverWebsite;

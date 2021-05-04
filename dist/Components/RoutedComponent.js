@@ -1,15 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useEpiserver, useIContentRepository, useServerSideRendering } from '../Hooks/Context';
 import EpiComponent from './EpiComponent';
-import Spinner from './Spinner';
-import { ContentLinkService } from '../Models/ContentLink';
+import { Spinner } from './Spinner';
 export const RoutedComponent = (props) => {
     const epi = useEpiserver();
     const repo = useIContentRepository();
     const ssr = useServerSideRendering();
     const path = props.location.pathname;
-    const [iContent, setIContent] = useState(path === ssr.Path ? ssr.IContent : null);
-    const iContentId = iContent ? ContentLinkService.createLanguageId(iContent, 'en') : '';
+    const [iContent, setIContent] = useState(ssr.getIContentByPath(path));
     // Handle path changes
     useEffect(() => {
         let isCancelled = false;
@@ -20,21 +18,9 @@ export const RoutedComponent = (props) => {
             setIContent(c);
         });
         return () => { isCancelled = true; epi.setRoutedContent(); };
-    }, [path]);
-    // Handle content changes
-    useEffect(() => {
-        if (!iContent)
-            return;
-        const handleUpdate = (item) => {
-            if (item && item.contentLink.guidValue === iContent.contentLink.guidValue)
-                setIContent(item);
-        };
-        repo.on("afterUpdate", handleUpdate);
-        return () => { repo.off("afterUpdate", handleUpdate); };
-    }, [iContentId]);
-    if (iContent === null) {
-        return Spinner.CreateInstance({});
-    }
+    }, [path, repo, epi]);
+    if (iContent === null)
+        return React.createElement(Spinner, null);
     return React.createElement(EpiComponent, { contentLink: iContent.contentLink, expandedValue: iContent, path: props.location.pathname });
 };
 export default RoutedComponent;

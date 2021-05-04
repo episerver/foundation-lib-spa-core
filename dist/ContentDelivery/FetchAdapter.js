@@ -20,7 +20,7 @@ export function cachesAvailable() {
         return false;
     }
 }
-let isCachesAvailable = cachesAvailable();
+const isCachesAvailable = cachesAvailable();
 /**
  * A basic implementation of an AxiosAdapter to let Axios use the Fetch API to
  * retrieve content.

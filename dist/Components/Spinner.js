@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useEpiserver } from '../Hooks/Context';
 import EpiContext from '../Spa';
 /**
@@ -9,22 +9,22 @@ import EpiContext from '../Spa';
  * @param props Spinner configuration
  * @returns The spinner
  */
-const Spinner = (props) => {
-    var ctx = useEpiserver();
-    var timeout = props.timeout || ctx.config().spinnerTimeout || 0;
-    var [isVisible, setIsVisible] = useState(timeout === 0);
-    if (ctx.config().enableSpinner)
-        return null;
+const DefaultSpinner = (props) => {
+    const cfg = useEpiserver().config();
+    const timeout = useCallback(() => { return props.timeout || (cfg === null || cfg === void 0 ? void 0 : cfg.spinnerTimeout) || 0; }, [props.timeout, cfg === null || cfg === void 0 ? void 0 : cfg.spinnerTimeout])();
+    const [isVisible, setIsVisible] = useState(timeout === 0);
     useEffect(() => {
         if (timeout === 0)
+            return;
+        if ((cfg === null || cfg === void 0 ? void 0 : cfg.enableSpinner) !== true)
             return;
         setIsVisible(false);
         const timeoutHandle = setTimeout(() => { setIsVisible(true); }, timeout);
         return () => {
             clearTimeout(timeoutHandle);
         };
-    }, []);
-    if (isVisible) {
+    }, [cfg, timeout]);
+    if ((cfg === null || cfg === void 0 ? void 0 : cfg.enableSpinner) && isVisible) {
         if (props.children)
             return React.createElement("div", { className: "spinner" }, props.children);
         return React.createElement("div", { className: "spinner alert alert-secondary", role: "alert" },
@@ -34,7 +34,7 @@ const Spinner = (props) => {
     }
     return null;
 };
-Spinner.displayName = "Default spinner";
+DefaultSpinner.displayName = "Default spinner";
 /**
  * Create a spinner instance that can be returned from a component
  *
@@ -42,23 +42,19 @@ Spinner.displayName = "Default spinner";
  * @param 		props 	The props for the spinner
  * @returns 	The spinner element
  */
-Spinner.CreateInstance = (props) => {
+DefaultSpinner.CreateInstance = DefaultSpinner.createInstance = (props) => {
     if (!EpiContext.config().enableSpinner)
         return null;
-    const SpinnerType = EpiContext.config().spinner || Spinner;
+    const SpinnerType = (EpiContext.config().spinner || DefaultSpinner);
     return React.createElement(SpinnerType, Object.assign({}, props));
 };
-/**
- * Create a spinner instance that can be returned from a component
- *
- * @param 		props 	The props for the spinner
- * @returns 	The spinner element
- */
-Spinner.createInstance = (props) => {
-    if (!EpiContext.config().enableSpinner)
+export const Spinner = (props) => {
+    const cfg = useEpiserver().config();
+    if (cfg.enableSpinner !== true)
         return null;
-    const SpinnerType = EpiContext.config().spinner || Spinner;
+    const SpinnerType = cfg.spinner || DefaultSpinner;
     return React.createElement(SpinnerType, Object.assign({}, props));
 };
-export default Spinner;
+Spinner.displayName = "Spinner wrapper";
+export default DefaultSpinner;
 //# sourceMappingURL=Spinner.js.map

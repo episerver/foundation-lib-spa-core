@@ -281,6 +281,11 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
         } catch (e) {
             // Ignore error on purpose to go to next test
         }
+        try {
+            return window !== window?.top && window?.name === 'sitePreview';
+        } catch (e) {
+            // Ignore error on purpose to go to next test
+        }
         return false;
     }
 

@@ -1,9 +1,9 @@
-import React, { HTMLAttributes, AnchorHTMLAttributes, PropsWithChildren, FunctionComponent, ReactElement } from 'react';
+import React, { HTMLAttributes, AnchorHTMLAttributes, ReactElement } from 'react';
 import IContentProperty, { ContentReferenceProperty, ContentAreaProperty } from '../Property';
-import IContent, { GenericProperty} from '../Models/IContent';
+import IContent from '../Models/IContent';
 import IEpiserverContext from '../Core/IEpiserverContext';
 import { ContentLinkService } from '../Models/ContentLink';
-import EpiComponent, { EpiComponentType } from './EpiComponent';
+import EpiComponent from './EpiComponent';
 import ContentArea from './ContentArea';
 import { useEpiserver } from '../Hooks/Context';
 
@@ -39,53 +39,62 @@ export type PropertyProps<T extends IContent> = HTMLAttributes<HTMLElement> &
     className?: string
 }
 
-export function Property<T extends IContent>(props: PropsWithChildren<PropertyProps<T>>) : ReactElement<any, any> | null
+export function Property<T extends IContent>(props: React.PropsWithChildren<PropertyProps<T>>) : ReactElement<unknown> | null
 {
     const ctx = useEpiserver();
     if (!hasProperty(props.iContent, props.field.toString())) {
         return ctx.isDebugActive() ? <div>Property <span>{ props.field }</span> not present</div> : null;
     }
-    const prop = getProperty(props.iContent, props.field.toString());
+    const prop = getProperty(props.iContent, props.field);
     const propType = isIContentProperty(prop) ? prop.propertyDataType : typeof(prop);
     let stringValue : string;
     switch (propType) {
         case 'string':
-    return isEditable(props.iContent, ctx) ? <span className={props.className} data-epi-edit={ props.field }>{ prop }</span> : (props.className ? <span className={ props.className }>{ prop }</span> : <>{ prop }</>);
+            return isEditable(props.iContent, ctx) ? <span className={props.className} data-epi-edit={ props.field }>{ prop }</span> : (props.className ? <span className={ props.className }>{ prop }</span> : <>{ prop }</>);
         case 'PropertyString':
         case 'PropertyLongString':
-            stringValue = (prop as IContentProperty<string>).value;
+            stringValue = isIContentProperty(prop) ? (prop as IContentProperty<string>).value : '';
             return isEditable(props.iContent, ctx) ? <span className={props.className} data-epi-edit={ props.field }>{ stringValue }</span> : (props.className ? <span className={ props.className }>{ stringValue }</span> : <>{ stringValue}</>);
-        case 'PropertyUrl':
-            const propUrlValue = (prop as IContentProperty<string>).value;
-            const propUrlprops : AnchorHTMLAttributes<HTMLAnchorElement> = {
-                className: props.className,
-                href: propUrlValue,
-                children: props.children || propUrlValue
-            };
-            if (isEditable(props.iContent, ctx)) {
-                (propUrlprops as any)['data-epi-edit'] = props.field;
+        case 'PropertyUrl': 
+            {
+                const propUrlValue = isIContentProperty(prop) ? (prop as IContentProperty<string>).value : '';
+                const propUrlprops : AnchorHTMLAttributes<HTMLAnchorElement> & {"data-epi-edit"?: string} = {
+                    className: props.className,
+                    href: propUrlValue,
+                    children: props.children || propUrlValue
+                };
+                if (isEditable(props.iContent, ctx)) {
+                    propUrlprops['data-epi-edit'] = props.field as string;
+                }
+                return React.createElement('a', propUrlprops);
             }
-            return React.createElement('a', propUrlprops);
         case 'PropertyDecimal':
         case 'PropertyNumber':
         case 'PropertyFloatNumber':
-            const propNumberValue : number = (prop as IContentProperty<number>).value;
-            const className : string = `number ${props.className}`;
-            return isEditable(props.iContent, ctx) ? <span className={ className } data-epi-edit={ props.field }>{ propNumberValue }</span> : <span className={ className }>{ propNumberValue }</span>;
+            {
+                const propNumberValue : number = isIContentProperty(prop) ? (prop as IContentProperty<number>).value : 0;
+                const className = `number ${props.className}`;
+                return isEditable(props.iContent, ctx) ? <span className={ className } data-epi-edit={ props.field }>{ propNumberValue }</span> : <span className={ className }>{ propNumberValue }</span>;
+            }
         case 'PropertyXhtmlString':
-            stringValue = (prop as IContentProperty<string>).value;
-            return isEditable(props.iContent, ctx) ? <div className={props.className} data-epi-edit={ props.field } dangerouslySetInnerHTML={ {__html: stringValue} }></div> : <div className={ props.className } dangerouslySetInnerHTML={ {__html: stringValue} } />;
+            stringValue = isIContentProperty(prop) ? (prop as IContentProperty<string>).value : '';
+            return isEditable(props.iContent, ctx) ? <div className={props.className} data-epi-edit={ props.field } dangerouslySetInnerHTML={ {__html: stringValue} }></div> : <div suppressHydrationWarning={true} className={ props.className } dangerouslySetInnerHTML={ {__html: stringValue} } />;
         case 'PropertyContentReference':
         case 'PropertyPageReference':
-            const link = (prop as ContentReferenceProperty).value;
-            const expValue = (prop as ContentReferenceProperty).expandedValue;
-            const ConnectedEpiComponent = EpiComponent.CreateComponent(ctx);
-            const item = <ConnectedEpiComponent contentLink={link} expandedValue={expValue} context={props.context} className={props.className} />
-            return isEditable(props.iContent, ctx) ? <div data-epi-edit={ props.field }>{item}</div> : item;
+            {
+                let item : React.ReactElement | null = null;
+                if (isIContentProperty(prop)) {
+                    const link = (prop as ContentReferenceProperty).value;
+                    const expValue = (prop as ContentReferenceProperty).expandedValue;
+                    item = <EpiComponent contentLink={link} expandedValue={expValue} className={props.className} />
+                }
+                return isEditable(props.iContent, ctx) ? <div data-epi-edit={ props.field }>{ item }</div> : item;
+            }
         case 'PropertyContentArea':
-            return isEditable(props.iContent, ctx) ? 
-                <ContentArea data={ prop as ContentAreaProperty} context={ ctx } propertyName={ props.field as string } /> :
-                <ContentArea data={ prop as ContentAreaProperty} context={ ctx } />;
+            if (isIContentProperty(prop)) return isEditable(props.iContent, ctx) ? 
+                <ContentArea data={ prop as ContentAreaProperty} propertyName={ props.field as string } /> :
+                <ContentArea data={ prop as ContentAreaProperty} />;
+            return null;
     }
     return ctx.isDebugActive() ? <div className="alert alert-warning">Property type <span>{ propType }</span> not supported</div> : null;
 }
@@ -93,18 +102,18 @@ export default Property;
 
 function hasProperty(iContent: IContent, field: string) : boolean
 {
-    return (iContent as any)[field] ? true : false;
+    return (iContent as Record<string, unknown>)[field] ? true : false;
 }
-function getProperty(iContent: IContent, field: string) : GenericProperty
+function getProperty<T extends IContent, K extends keyof T>(iContent: T, field: K) : T[K] | null
 {
-    if (hasProperty(iContent, field)) {
-        return (iContent as any)[field] as unknown as GenericProperty;
+    if (hasProperty(iContent, field as string)) {
+        return iContent[field];
     }
     return null;
 }
-function isIContentProperty(p: GenericProperty): p is IContentProperty<any>
+function isIContentProperty(p: unknown): p is IContentProperty<unknown>
 {
-    if (p && (p as IContentProperty<any>).propertyDataType && typeof((p as IContentProperty<any>).propertyDataType) === 'string') {
+    if (p && (p as IContentProperty<unknown>).propertyDataType && typeof((p as IContentProperty<unknown>).propertyDataType) === 'string') {
         return true;
     }
     return false;

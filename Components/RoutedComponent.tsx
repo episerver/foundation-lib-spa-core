@@ -4,9 +4,7 @@ import { RouteComponentProps } from 'react-router';
 import { useEpiserver, useIContentRepository, useServerSideRendering } from '../Hooks/Context';
 import IContent from '../Models/IContent';
 import EpiComponent from './EpiComponent';
-import Spinner from './Spinner';
-import { ContentLinkService } from '../Models/ContentLink';
-
+import { Spinner } from './Spinner';
 
 export const RoutedComponent : FunctionComponent<RouteComponentProps> = (props: RouteComponentProps) =>
 {
@@ -14,33 +12,20 @@ export const RoutedComponent : FunctionComponent<RouteComponentProps> = (props: 
     const repo = useIContentRepository();
     const ssr = useServerSideRendering();
     const path = props.location.pathname;
-    const [iContent, setIContent] = useState<IContent | null>(path === ssr.Path ? ssr.IContent : null);
-    const iContentId = iContent ? ContentLinkService.createLanguageId(iContent, 'en') : '';
+    const [iContent, setIContent] = useState<IContent | null>(ssr.getIContentByPath(path));
 
     // Handle path changes
     useEffect(() => {
-        let isCancelled : boolean = false;
+        let isCancelled = false;
         repo.getByRoute(path).then(c => {
             if (isCancelled) return;
             epi.setRoutedContent(c || undefined);
             setIContent(c);
         });
         return () => { isCancelled = true; epi.setRoutedContent(); };
-    }, [ path ]);
+    }, [ path, repo, epi ]);
 
-    // Handle content changes
-    useEffect(() => {
-        if (!iContent) return;
-        const handleUpdate = (item : IContent | null) => {
-            if (item && item.contentLink.guidValue === iContent.contentLink.guidValue) setIContent(item);
-        }
-        repo.on("afterUpdate", handleUpdate);
-        return () => { repo.off("afterUpdate", handleUpdate); }
-    }, [ iContentId ]);
-
-    if (iContent === null) {
-        return Spinner.CreateInstance({});
-    }
+    if (iContent === null) return <Spinner />
     return <EpiComponent contentLink={ iContent.contentLink } expandedValue={ iContent } path={ props.location.pathname } />
 }
 

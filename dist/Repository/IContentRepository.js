@@ -17,7 +17,7 @@ import { getIContentFromPathResponse } from '../ContentDeliveryAPI';
 import IndexedDB from '../IndexedDB/IndexedDB';
 import { ContentLinkService } from '../Models/ContentLink';
 import { genericPropertyIsProperty } from '../Models/IContent';
-import { hostnameFilter } from '../Models/WebsiteList';
+import { hostnameFilter, languageFilter } from '../Models/WebsiteList';
 /**
  * A wrapper for IndexedDB offering an Asynchronous API to load/fetch content items from the database
  * and underlying Episerver ContentDelivery API.
@@ -29,7 +29,7 @@ export class IContentRepository extends EventEmitter {
      * @param { IContentDeliveryAPI } api The ContentDelivery API wrapper to use within this IContent Repository
      */
     constructor(api, config, serverContext) {
-        var _a, _b;
+        var _a;
         super();
         this._loading = {};
         this._config = {
@@ -57,11 +57,34 @@ export class IContentRepository extends EventEmitter {
             this._storage.open();
         // Ingest server context into the database, if we have it
         if (serverContext) {
-            if (serverContext.IContent)
-                this.ingestIContent(serverContext.IContent, false);
-            ((serverContext === null || serverContext === void 0 ? void 0 : serverContext.Contents) || []).forEach(x => this.ingestIContent(x, false));
-            if (serverContext.Website && (((_b = (_a = serverContext.Website) === null || _a === void 0 ? void 0 : _a.hosts) === null || _b === void 0 ? void 0 : _b.length) || 0) > 0)
-                this.ingestWebsite(serverContext.Website); // Maker sure we only ingest the website if it has hosts
+            if (serverContext.IContent) {
+                const iContent = serverContext.IContent;
+                const apiId = this.createStorageId(iContent, false);
+                this._loading[apiId] = (() => __awaiter(this, void 0, void 0, function* () {
+                    this.debugMessage('Initialization: Ingesting main content', iContent);
+                    yield this.ingestIContent(iContent, false);
+                    delete this._loading[apiId];
+                    return iContent;
+                }))();
+            }
+            ((serverContext === null || serverContext === void 0 ? void 0 : serverContext.Contents) || []).forEach(iContent => {
+                const apiId = this.createStorageId(iContent, false);
+                this._loading[apiId] = (() => __awaiter(this, void 0, void 0, function* () {
+                    this.debugMessage('Initialization: Ingesting additional content', iContent);
+                    yield this.ingestIContent(iContent, false);
+                    delete this._loading[apiId];
+                    return iContent;
+                }))();
+            });
+            const website = serverContext.Website; // Fetching the website causes some processing in C#, so fetch it only once...
+            if (website && (((_a = website === null || website === void 0 ? void 0 : website.hosts) === null || _a === void 0 ? void 0 : _a.length) || 0) > 0) { // Maker sure we only ingest the website if it has hosts
+                this.debugMessage('Initialization: Ingesting current website', website);
+                this._websitesLoading = this.ingestWebsite(website).then(w => {
+                    this.debugMessage('Initialization: Ingested current website', w);
+                    this._websitesLoading = undefined;
+                    return (w ? [w] : []);
+                });
+            }
         }
     }
     /**
@@ -99,11 +122,11 @@ export class IContentRepository extends EventEmitter {
         if (!this._loading[apiId]) {
             const internalLoad = () => __awaiter(this, void 0, void 0, function* () {
                 const iContent = yield this._api.getContent(reference, undefined, recursive ? ['*'] : []);
-                if (!iContent) {
+                if (iContent) {
                     if (!isNetworkError(iContent)) {
                         yield this.recursiveLoad(iContent, recursive);
                     }
-                    this.ingestIContent(iContent);
+                    yield this.ingestIContent(iContent);
                 }
                 delete this._loading[apiId];
                 return iContent;
@@ -133,8 +156,7 @@ export class IContentRepository extends EventEmitter {
         const expired = now - added > maxAgeMiliseconds;
         // Run actual test
         const valid = !isSpaContentProvider && !expired;
-        if (this._config.debug)
-            console.log(`IContentRepository: Validation check: ${item.contentId}`, valid);
+        this.debugMessage(`Validation check: ${item.contentId}`, valid);
         return valid;
     }
     updateInBackground(item) {
@@ -193,15 +215,22 @@ export class IContentRepository extends EventEmitter {
      */
     getByRoute(route) {
         return __awaiter(this, void 0, void 0, function* () {
+            this.debugMessage(`Fetching iContent for route ${route}`);
+            if (Object.keys(this._loading).length) {
+                this.debugMessage("Loading items, awaiting current load to complete");
+                yield Promise.all(Object.values(this._loading).map(x => x.catch(() => null)));
+            }
             const table = yield this.getTable();
             const resolveLocal = () => __awaiter(this, void 0, void 0, function* () {
                 const routedContents = yield table.getViaIndex('routes', route);
                 if (routedContents && this.isValid(routedContents)) {
                     if (this._config.policy !== IRepositoryPolicy.PreferOffline)
                         this.updateInBackground(routedContents);
+                    this.debugMessage(`Fetched iContent for route ${route} locally`, routedContents.data);
                     return routedContents.data;
                 }
                 if (route === '/') { // Special case for Homepage
+                    this.debugMessage(`Fetched iContent for homepage`);
                     return this.getByReference('startPage');
                 }
                 return null;
@@ -211,29 +240,30 @@ export class IContentRepository extends EventEmitter {
                 const content = getIContentFromPathResponse(resolvedRoute);
                 if (content)
                     this.ingestIContent(content);
+                this.debugMessage(`Fetched iContent for route ${route} remotely`, content);
                 return content;
             });
             switch (this._config.policy) {
                 case IRepositoryPolicy.NetworkFirst:
                     return this._api.OnLine ? resolveNetwork() : resolveLocal();
                 case IRepositoryPolicy.PreferOffline:
-                    return resolveLocal().then(x => x ? x : resolveNetwork());
                 case IRepositoryPolicy.LocalStorageFirst:
-                    return (yield resolveLocal().then(x => { if (x) {
-                        resolveNetwork();
-                    } return x; })) || (yield resolveNetwork());
+                    {
+                        const iContent = yield resolveLocal();
+                        return iContent ? iContent : resolveNetwork();
+                    }
             }
             return resolveNetwork();
         });
     }
     getByReference(reference, website) {
-        const ws = website ? Promise.resolve(website) : this.getCurrentWebsite();
-        return ws.then(x => {
-            if (!x)
+        return __awaiter(this, void 0, void 0, function* () {
+            const ws = website ? website : yield this.getCurrentWebsite();
+            if (!ws)
                 throw new Error('There\'s no website provided and none inferred from the ContentDelivery API');
-            if (!(x === null || x === void 0 ? void 0 : x.contentRoots[reference]))
+            if (!(ws === null || ws === void 0 ? void 0 : ws.contentRoots[reference]))
                 throw new Error(`The content root ${reference} has not been defined`);
-            return this.load(x.contentRoots[reference]);
+            return this.load(ws.contentRoots[reference]);
         });
     }
     patch(reference, patch) {
@@ -242,13 +272,11 @@ export class IContentRepository extends EventEmitter {
                 const item = yield this.load(reference);
                 if (!item)
                     return null;
-                if (this._config.debug)
-                    console.log('IContentRepository: Will apply patch to content item', reference, item, patch);
+                this.debugMessage('Will apply patch to content item', reference, item, patch);
                 this.emit('beforePatch', item.contentLink, item);
                 const patchedItem = patch(item);
                 this.emit('afterPatch', patchedItem.contentLink, item, patchedItem);
-                if (this._config.debug)
-                    console.log('IContentRepository: Applied patch to content item', reference, item, patchedItem);
+                this.debugMessage('Applied patch to content item', reference, item, patchedItem);
                 return yield this.ingestIContent(patchedItem);
             }
             catch (e) {
@@ -257,20 +285,32 @@ export class IContentRepository extends EventEmitter {
         });
     }
     getWebsites() {
-        return __awaiter(this, void 0, void 0, function* () {
+        if (this._websitesLoading) {
+            this.debugMessage('Already loading websites, returning existing promise');
+            return this._websitesLoading;
+        }
+        const internalLoad = () => __awaiter(this, void 0, void 0, function* () {
             const table = yield this.getWebsiteTable();
             let websites = yield table.all().then(list => list.map(wd => wd.data));
             if (!websites || websites.length === 0) {
+                this.debugMessage('No websites in store, fetching from server');
                 websites = yield this._api.getWebsites();
                 yield table.putAll(websites.map(w => { return { data: this.buildWebsiteRepositoryItem(w) }; }));
+                this.debugMessage('Loaded websites from server and stored locally');
             }
+            this._websitesLoading = undefined;
             return websites;
         });
+        return (this._websitesLoading = internalLoad());
     }
     getWebsite(hostname, language, matchWildCard = true) {
         return __awaiter(this, void 0, void 0, function* () {
-            const websites = (yield this.getWebsites()).filter(w => hostnameFilter(w, hostname, language, matchWildCard));
-            return websites && websites.length === 1 ? websites[0] : null;
+            const lang = language || this._api.Language;
+            this.debugMessage(`Loading website by host ${hostname} in language ${lang}; ${matchWildCard ? '' : 'not '}accepting the wildcard host`);
+            const websites = yield this.getWebsites();
+            const website = websites.filter(w => hostnameFilter(w, hostname, lang, matchWildCard) && languageFilter(w, lang)).shift() || null;
+            this.debugMessage(`Loaded website by host ${hostname} in language ${lang}; ${matchWildCard ? '' : 'not '}accepting the wildcard host:`, website);
+            return website;
         });
     }
     getCurrentWebsite() {
@@ -279,7 +319,7 @@ export class IContentRepository extends EventEmitter {
             hostname = window.location.host;
         }
         catch (e) { /* Ignored on purpose */ }
-        return this.getWebsite(hostname, undefined, false).then(w => w ? w : this.getWebsite(hostname, undefined, true));
+        return this.getWebsite(hostname, undefined, true);
     }
     ingestIContent(iContent, overwrite = true) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -289,24 +329,20 @@ export class IContentRepository extends EventEmitter {
             if (!overwrite && isUpdate)
                 return current.data;
             if (isUpdate) {
-                if (this._config.debug)
-                    console.log('IContentRepository: Before update', iContent, current.data);
+                this.debugMessage('Before update', iContent, current.data);
                 this.emit('beforeUpdate', iContent, current.data);
             }
             else {
-                if (this._config.debug)
-                    console.log('IContentRepository: Before add', iContent);
+                this.debugMessage('Before add', iContent);
                 this.emit('beforeAdd', iContent);
             }
             const ingested = (yield table.put(this.buildRepositoryItem(iContent))) ? iContent : null;
             if (isUpdate) {
-                if (this._config.debug)
-                    console.log('IContentRepository: After update', ingested);
+                this.debugMessage('After update', ingested);
                 this.emit('afterUpdate', ingested);
             }
             else {
-                if (this._config.debug)
-                    console.log('IContentRepository: After add', ingested);
+                this.debugMessage('After add', ingested);
                 this.emit('afterAdd', ingested);
             }
             return ingested;
@@ -360,59 +396,70 @@ export class IContentRepository extends EventEmitter {
     }
     recursiveLoad(iContent, recurseDown = false) {
         var _a, _b, _c, _d;
-        for (const key of Object.keys(iContent)) {
-            const p = iContent[key];
-            if (genericPropertyIsProperty(p))
-                switch (p.propertyDataType) {
-                    case 'PropertyContentReference':
-                    case 'PropertyPageReference':
-                        {
-                            const cRef = p;
-                            if (cRef.expandedValue) {
-                                this.ingestIContent(cRef.expandedValue);
-                                this.recursiveLoad(cRef.expandedValue, recurseDown);
-                                delete iContent[key].expandedValue;
+        return __awaiter(this, void 0, void 0, function* () {
+            for (const key of Object.keys(iContent)) {
+                const p = iContent[key];
+                if (genericPropertyIsProperty(p))
+                    switch (p.propertyDataType) {
+                        case 'PropertyContentReference':
+                        case 'PropertyPageReference':
+                            {
+                                const cRef = p;
+                                if (cRef.expandedValue) {
+                                    yield this.ingestIContent(cRef.expandedValue);
+                                    yield this.recursiveLoad(cRef.expandedValue, recurseDown);
+                                    delete iContent[key].expandedValue;
+                                    break;
+                                }
+                                if (cRef.value && recurseDown) {
+                                    yield this.load(cRef.value, recurseDown);
+                                }
                                 break;
                             }
-                            if (cRef.value && recurseDown) {
-                                this.load(cRef.value, recurseDown);
-                            }
-                            break;
-                        }
-                    case 'PropertyContentArea':
-                        {
-                            const cArea = p;
-                            if (cArea.expandedValue) {
-                                (_a = cArea.expandedValue) === null || _a === void 0 ? void 0 : _a.forEach(x => {
-                                    this.ingestIContent(x);
-                                    this.recursiveLoad(x);
-                                });
-                                delete iContent[key].expandedValue;
+                        case 'PropertyContentArea':
+                            {
+                                const cArea = p;
+                                if (cArea.expandedValue) {
+                                    yield Promise.all((_a = cArea.expandedValue) === null || _a === void 0 ? void 0 : _a.map((x) => __awaiter(this, void 0, void 0, function* () {
+                                        yield this.ingestIContent(x);
+                                        yield this.recursiveLoad(x);
+                                    })));
+                                    delete iContent[key].expandedValue;
+                                    break;
+                                }
+                                if (cArea.value && recurseDown) {
+                                    yield Promise.all(((_b = cArea.value) === null || _b === void 0 ? void 0 : _b.map(x => this.load(x.contentLink, recurseDown).catch(() => null))) || []);
+                                }
                                 break;
                             }
-                            if (cArea.value && recurseDown) {
-                                (_b = cArea.value) === null || _b === void 0 ? void 0 : _b.forEach(x => this.load(x.contentLink, recurseDown).catch(() => null));
-                            }
-                            break;
-                        }
-                    case 'PropertyContentReferenceList':
-                        {
-                            const cRefList = p;
-                            if (cRefList.expandedValue) {
-                                (_c = cRefList.expandedValue) === null || _c === void 0 ? void 0 : _c.forEach(x => {
-                                    this.ingestIContent(x);
-                                    this.recursiveLoad(x);
-                                });
-                                delete iContent[key].expandedValue;
+                        case 'PropertyContentReferenceList':
+                            {
+                                const cRefList = p;
+                                if (cRefList.expandedValue) {
+                                    yield Promise.all((_c = cRefList.expandedValue) === null || _c === void 0 ? void 0 : _c.map((x) => __awaiter(this, void 0, void 0, function* () {
+                                        yield this.ingestIContent(x);
+                                        yield this.recursiveLoad(x);
+                                    })));
+                                    delete iContent[key].expandedValue;
+                                    break;
+                                }
+                                if (cRefList.value && recurseDown) {
+                                    yield Promise.all(((_d = cRefList.value) === null || _d === void 0 ? void 0 : _d.map(x => this.load(x, recurseDown).catch(() => null))) || []);
+                                }
                                 break;
                             }
-                            if (cRefList.value && recurseDown) {
-                                (_d = cRefList.value) === null || _d === void 0 ? void 0 : _d.forEach(x => this.load(x, recurseDown).catch(() => null));
-                            }
-                            break;
-                        }
-                }
-        }
+                    }
+            }
+        });
+    }
+    /**
+     * Write a debug message
+     *
+     * @param message The message to write to the debugging system
+     */
+    debugMessage(...message) {
+        if (this._config.debug && console)
+            console.debug.apply(console, ['IContentRepository:', ...message]);
     }
 }
 export default IContentRepository;

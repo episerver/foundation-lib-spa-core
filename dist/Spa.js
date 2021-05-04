@@ -238,6 +238,12 @@ export class EpiserverSpaContext {
         catch (e) {
             // Ignore error on purpose to go to next test
         }
+        try {
+            return window !== (window === null || window === void 0 ? void 0 : window.top) && (window === null || window === void 0 ? void 0 : window.name) === 'sitePreview';
+        }
+        catch (e) {
+            // Ignore error on purpose to go to next test
+        }
         return false;
     }
     isInEditMode() {

@@ -157,31 +157,6 @@ export class ComponentLoader {
         });
         return tryOption(0);
     }
-    /* protected async doLoadComponent(component: string) : Promise<TComponentType>
-    {
-        if (EpiserverSpaContext.isDebugActive()) console.debug('Loading component: '+component);
-        const type = await (import(
-            /* webpackInclude: /\.tsx$/ */
-    /* webpackExclude: /\.noimport\.tsx$/ */
-    /* webpackChunkName: "components" */
-    /* webpackMode: "lazy" */
-    /* webpackPrefetch: false */
-    /* webpackPreload: false */ /*
-    "app/Components/" + component)
-    .then(exports => {
-        const c = exports.default;
-        c.displayName = component;
-        return c;
-    }).catch(reason => {
-        if (EpiserverSpaContext.isDebugActive()) {
-            console.error(`Error while importing ${component} due to:`, reason);
-        }
-        return ComponentNotFound;
-    }));
-this.cache[component] = type || ComponentNotFound;
-if (EpiserverSpaContext.isDebugActive()) console.debug('Loaded component: '+component);
-return type;
-}*/
     LoadComponent(component, props) {
         return __awaiter(this, void 0, void 0, function* () {
             const type = yield this.LoadType(component);
@@ -189,6 +164,5 @@ return type;
         });
     }
 }
-;
 export default ComponentLoader;
 //# sourceMappingURL=ComponentLoader.js.map

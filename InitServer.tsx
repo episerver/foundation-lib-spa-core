@@ -17,7 +17,8 @@ import AppConfig from './AppConfig';
 // Episerver SPA/PWA Server Side Rendering libs
 import SSRResponse from './ServerSideRendering/Response';
 
-export default function RenderServerSide(config: AppConfig, serviceContainer?: IServiceContainer): SSRResponse {
+export default function RenderServerSide(config: AppConfig, serviceContainer?: IServiceContainer): SSRResponse
+{
     // Update context
     const ctx = getGlobal();
     ctx.epi = ctx.epi || {};

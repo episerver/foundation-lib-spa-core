@@ -8,10 +8,12 @@ import { DefaultServices } from '../Core/IServiceContainer';
 import ContentDeliveryAPI from '../ContentDeliveryAPI';
 // Module resources
 import { IRepositoryPolicy } from './IRepository';
-import IContentRepositoryV2 from './IContentRepository';
-import EditIContentRepositoryV2 from './PassthroughIContentRepository';
 import ContentDeliveryApiV2 from '../ContentDelivery/ContentDeliveryAPI';
 import FetchAdapter from '../ContentDelivery/FetchAdapter';
+// Repository flavours
+import IContentRepositoryV2 from './IContentRepository';
+import EditIContentRepositoryV2 from './PassthroughIContentRepository';
+import SSRIContentRepository from './ServerSideIContentRepository';
 // Authorization
 import DefaultAuthService from '../ContentDelivery/DefaultAuthService';
 import BrowserAuthStorage from '../ContentDelivery/BrowserAuthStorage';
@@ -41,7 +43,6 @@ export default class RepositoryModule extends BaseInitializableModule {
         // Get Application Config
         const config = container.getService(DefaultServices.Config);
         const epiContext = container.getService(DefaultServices.Context);
-        const ssr = container.getService(DefaultServices.ServerContext);
         const context = container.getService(DefaultServices.ExecutionContext);
         // Build New ContentDeliveryAPI Connector
         const newApiClassicConfig = {
@@ -63,9 +64,7 @@ export default class RepositoryModule extends BaseInitializableModule {
         };
         const repositoryConfig = config.iContentRepository ? Object.assign(Object.assign({}, defaultRepositoryConfig), config.iContentRepository) : Object.assign({}, defaultRepositoryConfig);
         // Create repository
-        const repository = newAPI.InEpiserverShell ?
-            new EditIContentRepositoryV2(newAPI, repositoryConfig) :
-            new IContentRepositoryV2(newAPI, repositoryConfig, ssr);
+        const repository = this.IIContentRepositoryFactory(container, newAPI, repositoryConfig);
         if (config.enableDebug && newAPI.InEpiserverShell)
             this.log(`${this.name}: Detected Episerver Shell - Disabling IndexedDB`);
         // Configure Authentication
@@ -76,14 +75,22 @@ export default class RepositoryModule extends BaseInitializableModule {
         container.addService(DefaultServices.ContentDeliveryAPI_V2, newAPI);
         container.addService(DefaultServices.IContentRepository_V2, repository);
     }
+    IIContentRepositoryFactory(container, api, config) {
+        const ssr = container.getService(DefaultServices.ServerContext);
+        const context = container.getService(DefaultServices.ExecutionContext);
+        if (context.isServerSideRendering)
+            return new SSRIContentRepository(api, config, ssr);
+        if (context.isInEditMode)
+            return new EditIContentRepositoryV2(api, config);
+        return new IContentRepositoryV2(api, config, ssr);
+    }
     StartModule(context) {
         super.StartModule(context);
         const debug = context.isDebugActive();
-        const _ = this;
         // Define event listeners
         const onEpiReady = (eventData) => {
             if (debug)
-                _.log(`${_.name}: OnEpiReady`, eventData);
+                this.log(`${this.name}: OnEpiReady`, eventData);
             if (eventData.isEditable) {
                 // Determine window name
                 let windowName = 'server';
@@ -102,13 +109,13 @@ export default class RepositoryModule extends BaseInitializableModule {
         };
         const onEpiContentSaved = (event) => {
             if (debug)
-                _.log('EpiContentSaved: Received updated content from the Episerver Shell', event);
+                this.log('EpiContentSaved: Received updated content from the Episerver Shell', event);
             if (event.successful) {
                 if (debug)
-                    _.log('EpiContentSaved: Epi reported success, starting patching process');
+                    this.log('EpiContentSaved: Epi reported success, starting patching process');
                 const repo = context.serviceContainer.getService(DefaultServices.IContentRepository_V2);
                 const baseId = event.savedContentLink;
-                _.patchContentRepository(repo, baseId, event, debug);
+                this.patchContentRepository(repo, baseId, event, debug);
             }
         };
         // Bind event listener
@@ -119,13 +126,13 @@ export default class RepositoryModule extends BaseInitializableModule {
         eventEngine.addListener('contentSaved', 'EpiContentSaved', onEpiContentSaved.bind(this), true);
     }
     patchContentRepository(repo, baseId, event, debug = false) {
-        const isStringProperty = (toTest, propName) => {
+        function isStringProperty(toTest, propName) {
             try {
-                return toTest[propName] && typeof toTest[propName] === 'string';
+                return toTest[propName] && typeof toTest[propName] === 'string' ? true : false;
             }
             catch (e) { /* Empty on purpose */ }
             return false;
-        };
+        }
         repo.patch(baseId, (item) => {
             const out = clone(item);
             event.properties.forEach(property => {

@@ -1,24 +1,24 @@
-import React, { ReactNode, ComponentType, ReactElement, useState, useEffect } from 'react';
+import React, { ComponentType, ReactElement, useState, useEffect, useCallback } from 'react';
 import { useEpiserver } from '../Hooks/Context';
 import EpiContext from '../Spa';
+
+/**
+ * The property definition for a spinner
+ */
+export type SpinnerProps = {
+	timeout?: number
+}
 
 /**
  * Interface definition of the instance type of a Spinner
  * component.
  */
 export type SpinnerComponent<P extends SpinnerProps = SpinnerProps> = ComponentType<P>
-export type SpinnerInstance<P extends SpinnerProps = SpinnerProps> = ReactElement<P>
+export type SpinnerInstance<P extends SpinnerProps = SpinnerProps> = ReactElement<P> | null
 export type CoreSpinnerComponent = SpinnerComponent<SpinnerProps> & {
-	createInstance: <InstanceProps extends SpinnerProps = SpinnerProps>(props: InstanceProps) => ReactElement<InstanceProps, any> | null
-	CreateInstance: <InstanceProps extends SpinnerProps = SpinnerProps>(props: InstanceProps) => ReactElement<InstanceProps, any> | null
+	createInstance: <InstanceProps extends SpinnerProps = SpinnerProps>(props: InstanceProps) => SpinnerInstance<InstanceProps>
+	CreateInstance: <InstanceProps extends SpinnerProps = SpinnerProps>(props: InstanceProps) => SpinnerInstance<InstanceProps>
 }
-
-/**
- * The property definition for a spinner
- */
-export type SpinnerProps = React.PropsWithChildren<{
-	timeout?: number
-}>
 
 /**
  * Default spinner component, it will show either the children or the default 
@@ -28,22 +28,22 @@ export type SpinnerProps = React.PropsWithChildren<{
  * @param props Spinner configuration
  * @returns The spinner
  */
-const Spinner : CoreSpinnerComponent = (props) => {
-	var ctx = useEpiserver();
-	var timeout = props.timeout || ctx.config().spinnerTimeout || 0;
-	var [isVisible, setIsVisible] = useState<boolean>(timeout === 0);
-	if (ctx.config().enableSpinner) return null;
+const DefaultSpinner : CoreSpinnerComponent = (props) => {
+	const cfg = useEpiserver().config();
+	const timeout = useCallback(() => { return props.timeout || cfg?.spinnerTimeout || 0; }, [ props.timeout, cfg?.spinnerTimeout ])();
+	const [isVisible, setIsVisible] = useState<boolean>(timeout === 0);
 
 	useEffect(() => {
 		if (timeout === 0) return;
+		if (cfg?.enableSpinner !== true) return;
 		setIsVisible(false);
 		const timeoutHandle = setTimeout(() => { setIsVisible(true) }, timeout);
 		return () => {
 			clearTimeout(timeoutHandle)
 		}
-	}, []);
+	}, [ cfg, timeout ]);
 
-	if (isVisible) {
+	if (cfg?.enableSpinner && isVisible) {
 		if (props.children) return <div className="spinner">{ props.children }</div>
 		return <div className="spinner alert alert-secondary" role="alert">
 			<div className="spinner-border text-primary" role="status">
@@ -55,7 +55,7 @@ const Spinner : CoreSpinnerComponent = (props) => {
 	return null;
 }
 
-Spinner.displayName = "Default spinner";
+DefaultSpinner.displayName = "Default spinner";
 
 /**
  * Create a spinner instance that can be returned from a component
@@ -64,22 +64,19 @@ Spinner.displayName = "Default spinner";
  * @param 		props 	The props for the spinner
  * @returns 	The spinner element
  */
-Spinner.CreateInstance = <InstanceProps extends SpinnerProps = SpinnerProps>(props: InstanceProps) => {
+DefaultSpinner.CreateInstance = DefaultSpinner.createInstance = <InstanceProps extends SpinnerProps = SpinnerProps>(props: InstanceProps) => {
 	if (!EpiContext.config().enableSpinner) return null;
-	const SpinnerType : React.ComponentType<any> = EpiContext.config().spinner || Spinner;
+	const SpinnerType : SpinnerComponent<InstanceProps> = (EpiContext.config().spinner || DefaultSpinner) as SpinnerComponent<InstanceProps>;
 	return <SpinnerType {...props} />
 }
 
-/**
- * Create a spinner instance that can be returned from a component
- * 
- * @param 		props 	The props for the spinner
- * @returns 	The spinner element
- */
-Spinner.createInstance = <InstanceProps extends SpinnerProps = SpinnerProps>(props: InstanceProps) => {
-	if (!EpiContext.config().enableSpinner) return null;
-	const SpinnerType : React.ComponentType<any> = EpiContext.config().spinner || Spinner;
-	return <SpinnerType {...props} />
+export const Spinner : SpinnerComponent = (props) =>
+{
+	const cfg = useEpiserver().config();
+	if (cfg.enableSpinner !== true) return null;
+	const SpinnerType = cfg.spinner || DefaultSpinner;
+	return <SpinnerType { ...props } />
 }
+Spinner.displayName = "Spinner wrapper"
 
-export default Spinner;
+export default DefaultSpinner;

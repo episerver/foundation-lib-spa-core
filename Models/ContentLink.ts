@@ -46,7 +46,7 @@ export class ContentLinkService {
      * @param { boolean }           editModeId    If set, get the identifier, including work-id to load a specific version of the content
      * @returns { ContentApiId }
      */
-    public static createLanguageId(reference: ContentReference, languageCode?: string, editModeId: boolean = false) : ContentApiId 
+    public static createLanguageId(reference: ContentReference, languageCode?: string, editModeId = false) : ContentApiId 
     {
         const baseId = this.createApiId(reference, false, editModeId);
 
@@ -67,7 +67,7 @@ export class ContentLinkService {
    * @param { boolean }           editModeId  If set, get the identifier, including work-id to load a specific version of the content
    * @returns { ContentApiId }
    */
-  public static createApiId(ref: ContentReference, preferGuid: boolean = false, editModeId: boolean = false): ContentApiId {
+  public static createApiId(ref: ContentReference, preferGuid = false, editModeId = false): ContentApiId {
     if (this.referenceIsString(ref)) {
       return ref;
     }
@@ -122,7 +122,7 @@ export class ContentLinkService {
     return null;
   }
 
-  protected static getUrlFromLink(link: ContentLink) {
+  protected static getUrlFromLink(link: ContentLink):string {
     let linkUrl = link.url || '';
     if (linkUrl.substr(0, 1) === '/') {
       // Absolute URL

@@ -24,6 +24,7 @@
     "@typescript-eslint/parser": "^4.21.0",
     "axios": "^0.21.1",
     "eslint": "^7.23.0",
+    "eslint-plugin-react-hooks": "^4.2.0",
     "esm": "^3.2.25",
     "eventemitter3": "^4.0.7",
     "lodash": "^4.17.20",
@@ -63,7 +64,7 @@
   "scripts": {
     "build": "npx tsc --pretty --project tsconfig.json",
     "watch": "npx tsc --watch --pretty tsconfig.json",
-    "lint": "npx eslint . --ext .ts"
+    "lint": "npx eslint . --ext .ts --color"
   },
   "version": "0.1.0"
 }

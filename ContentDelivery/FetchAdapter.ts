@@ -9,7 +9,7 @@ export type CachingFetchAdapter = AxiosAdapter & {
  * 
  * @returns Whether the caches are available
  */
-export function cachesAvailable()
+export function cachesAvailable() : boolean
 {
     try {
         return caches ? true : false;
@@ -18,7 +18,7 @@ export function cachesAvailable()
     }
 }
 
-let isCachesAvailable = cachesAvailable();
+const isCachesAvailable = cachesAvailable();
 
 /**
  * A basic implementation of an AxiosAdapter to let Axios use the Fetch API to 
@@ -29,7 +29,7 @@ let isCachesAvailable = cachesAvailable();
  */
 export const FetchAdapter : CachingFetchAdapter = async (config: AxiosRequestConfig) : Promise<AxiosResponse> => 
 {
-    const userAgent : string = 'Axios-Fetch-Adapter/0.0.1';
+    const userAgent = 'Axios-Fetch-Adapter/0.0.1';
     const requestUrl : URL = new URL(config.url || '', config.baseURL);
     if (config.auth) {
         requestUrl.username = config.auth.username

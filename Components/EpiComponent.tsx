@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import StringUtils from '../Util/StringUtils';
-import { useEpiserver, useIContentRepository, useServiceContainer, useServerSideRendering, useForceUpdate } from '../Hooks/Context';
-import ContentLink, { ContentReference, ContentLinkService } from '../Models/ContentLink';
+import { useEpiserver, useIContentRepository, useServiceContainer, useServerSideRendering } from '../Hooks/Context';
+import { ContentReference, ContentLinkService } from '../Models/ContentLink';
 import IContent from '../Models/IContent';
 import ComponentLoader from '../Loaders/ComponentLoader';
 import IEpiserverContext from '../Core/IEpiserverContext';
 import { DefaultServices } from '../Core/IServiceContainer';
 import { ComponentProps } from '../EpiComponent';
-import Spinner from '../Components/Spinner';
+import { Spinner } from '../Components/Spinner';
 
 /**
  * The base type for the Episerver CMS Component
@@ -34,7 +34,7 @@ export type EpiComponentProps<T extends IContent = IContent> = Omit<ComponentPro
     context?: IEpiserverContext
 }
 
-const safeLanguageId = (ref: ContentReference | null | undefined, branch: string = '##', def: string = '') => {
+const safeLanguageId = (ref: ContentReference | null | undefined, branch = '##', def = '') => {
     try {
         return ref ? ContentLinkService.createLanguageId(ref, branch, true) : def;
     } catch (e) {
@@ -42,52 +42,52 @@ const safeLanguageId = (ref: ContentReference | null | undefined, branch: string
     }
 }
 
-function _EpiComponent<T extends IContent = IContent>(props: EpiComponentProps<T>) {
+function _EpiComponent<T extends IContent = IContent>(props: EpiComponentProps<T>) : React.ReactElement<unknown> |null {
     // Get Hooks & Services
     const ctx = useEpiserver();
     const ssr = useServerSideRendering();
     const repo = useIContentRepository();
-    const repaint = useForceUpdate();
     const componentLoader = useServiceContainer().getService<ComponentLoader>(DefaultServices.ComponentLoader);
 
+    // Get convenience variables from services
+    const debug = ctx.isDebugActive();
+    const lang = ctx.Language;
+
     // Get identifiers from props
-    const expandedValueId = safeLanguageId(props.expandedValue);
-    const contentLinkId = safeLanguageId(props.contentLink, ctx.Language);
-
-    // Build iContent state and build identifier
-    const [ iContent, setIContent ] = useState<T | null>(props.expandedValue && (expandedValueId === contentLinkId) ? props.expandedValue : ssr.getIContent<T>(props.contentLink));
-    const iContentId = safeLanguageId(iContent);
-
-    // Always check if the component is available
-    const componentName = iContent ? buildComponentName(iContent, props.contentType) : null;
-    const componentAvailable = componentName && componentLoader.isPreLoaded(componentName) ? true : false;
+    const initialContent = () => {
+        if (!props.expandedValue) return ssr.getIContent<T>(props.contentLink);
+        const expandedId = safeLanguageId(props.expandedValue, lang);
+        const linkId = safeLanguageId(props.contentLink, lang);
+        return expandedId === linkId ? props.expandedValue : ssr.getIContent<T>(props.contentLink);
+    };
+    const [ iContent, setIContent ] = useState(initialContent);
+    const [ loadedTypes, setLoadedTypes ] = useState<string[]>([]);
 
     // Make sure the right iContent has been assigned and will be kept in sync
     useEffect(() => {
-        let isCancelled : boolean = false;
+        let isCancelled = false;
+        const linkId = safeLanguageId(props.contentLink, lang);
 
-        // Add listeners to ensure content changes affect the component
+        // Define listeners to ensure content changes affect the component
         const onContentPatched = (item: ContentReference, newValue: IContent) => {
-            const itemApiId = ContentLinkService.createLanguageId(newValue, '##', true);
-            if (ctx.isDebugActive()) console.debug('EpiComponent / onContentPatched: ', contentLinkId, itemApiId);
-            if (contentLinkId === itemApiId) setIContent(newValue as T);
-        }
-        const onContentUpdated = (item : IContent | null) => {
-            const itemApiId = item ? ContentLinkService.createLanguageId(item, '##', true) : '##';
-            if (ctx.isDebugActive()) console.debug('EpiComponent / onContentUpdated: ', contentLinkId, itemApiId);
-            if (contentLinkId === itemApiId) setIContent(item as T);
-        }
-        repo.addListener("afterPatch", onContentPatched);
-        repo.addListener("afterUpdate", onContentUpdated);
-
-        // If we don't have the correct iContent
-        if (iContentId !== contentLinkId) {
-            if (expandedValueId === contentLinkId) {
-                setIContent(props.expandedValue || null);
-            } else {
-                repo.load(props.contentLink).then(x => {if (!isCancelled) setIContent(x as T)});
+            const itemApiId = safeLanguageId(newValue, lang);
+            if (linkId === itemApiId) {
+                if (debug) console.debug('EpiComponent / onContentPatched - Updating iContent', itemApiId);
+                setIContent(newValue as T);
             }
         }
+        const onContentUpdated = (item : IContent | null) => {
+            const itemApiId = safeLanguageId(item, lang);
+            if (linkId === itemApiId) {
+                if (debug) console.debug('EpiComponent / onContentUpdated - Updating iContent', itemApiId);
+                setIContent(item as T);
+            }
+        }
+
+        // Bind listeners and load content
+        repo.addListener("afterPatch", onContentPatched);
+        repo.addListener("afterUpdate", onContentUpdated);
+        repo.load(props.contentLink).then(x => { if (!isCancelled) setIContent(x as T) });
 
         // Cancel effect and remove listeners
         return () => { 
@@ -95,25 +95,40 @@ function _EpiComponent<T extends IContent = IContent>(props: EpiComponentProps<T
             repo.removeListener("afterPatch", onContentPatched);
             repo.removeListener("afterUpdate", onContentUpdated);
         }
-    }, [ contentLinkId ]);
+    }, [ props.contentLink, repo, debug, lang ]);
 
     // Load && update component if needed
     useEffect(() => {
-        let isCancelled : boolean = false;
+        let isCancelled = false;
+        const componentName = iContent ? buildComponentName(iContent, props.contentType) : null;
         if (!componentName) return;
-        if (!componentAvailable)
-            componentLoader.LoadType<ComponentProps<T>>(componentName).then(() => { if (!isCancelled) repaint() });
+
+        if (!componentLoader.isPreLoaded(componentName))
+            componentLoader.LoadType<ComponentProps<T>>(componentName).then(() => { 
+                if (!isCancelled) 
+                    setLoadedTypes(x => ([] as string[]).concat(x, [ componentName ]))
+            });
+
         return () => { isCancelled = true }
-    }, [ componentAvailable, componentName ]);
+    }, [ iContent, componentLoader, props.contentType ]);
     
-    const IContentComponent = componentName && componentAvailable ?
-            componentLoader.getPreLoadedType(componentName) :
-            null;
-    return IContentComponent && iContent ? 
-            <EpiComponentErrorBoundary componentName={ componentName || "unkown component" }><IContentComponent { ...{ ...props, context: ctx, data: iContent } } /></EpiComponentErrorBoundary>  : 
-            Spinner.CreateInstance({});
+    // Render iContent
+    const shouldRender = safeLanguageId(props.contentLink, lang) === (iContent ? safeLanguageId(iContent.contentLink, lang) : '-NO-ICONTENT-');
+    const componentName = iContent ? buildComponentName(iContent, props.contentType) : null;
+    const IContentComponent = componentName && componentLoader.isPreLoaded(componentName) ? componentLoader.getPreLoadedType<ComponentProps<T>>(componentName) : null;
+    return shouldRender && iContent && IContentComponent ? 
+            <EpiComponentErrorBoundary componentName={ componentName || "unkown component" }>
+                <IContentComponent { ...{ ...props, context: ctx, data: iContent } } />
+                <DebugComponentList loadedComponents={ loadedTypes } />
+            </EpiComponentErrorBoundary>  : 
+            <Spinner />;
 }
 
+const DebugComponentList : React.FunctionComponent<{ loadedComponents: string[] }> = (props) => {
+    const debug = useEpiserver().isDebugActive();
+    if (!debug) return null;
+    return <ul aria-hidden="true" style={ { display: "none" }}>{ props?.loadedComponents?.map(x => <li key={ x }>{ x }</li>) }</ul>
+}
 
 /**
  * Create the instantiable type of the EpiComponent for the current
@@ -123,7 +138,7 @@ function _EpiComponent<T extends IContent = IContent>(props: EpiComponentProps<T
  * @param { IEpiserverContext } context The application context
  * @returns { EpiBaseComponentType }
  */
-_EpiComponent.CreateComponent = (context: IEpiserverContext): EpiBaseComponentType => _EpiComponent;
+_EpiComponent.CreateComponent = (): EpiBaseComponentType => _EpiComponent;
 
 const EpiComponent : EpiComponentType = _EpiComponent;
 EpiComponent.displayName = "Episerver IContent"
@@ -158,12 +173,12 @@ class EpiComponentErrorBoundary extends React.Component<EpiComponentErrorBoundar
         this.state = { hasError: false };
     }
     
-    static getDerivedStateFromError(error: Error) {
+    static getDerivedStateFromError() {
         // Update state so the next render will show the fallback UI.
         return { hasError: true };
     }
     
-    componentDidCatch(error: any, errorInfo: any) {
+    componentDidCatch(error: unknown, errorInfo: unknown) {
         console.error('EpiComponent caught error', error, errorInfo);
         // You can also log the error to an error reporting service
         // logErrorToMyService(error, errorInfo);

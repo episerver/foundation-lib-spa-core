@@ -21,13 +21,16 @@ import ContentDeliveryAPI from '../ContentDeliveryAPI';
 
 // Module resources
 import { IRepositoryConfig, IRepositoryPolicy } from './IRepository';
-import IContentRepositoryV2 from './IContentRepository';
 import IIContentRepository from './IIContentRepository';
-import EditIContentRepositoryV2 from './PassthroughIContentRepository';
 import ContentDeliveryApiV2 from '../ContentDelivery/ContentDeliveryAPI';
 import IContentDeliveryAPI from '../ContentDelivery/IContentDeliveryAPI';
 import IContentDeliveryConfig from '../ContentDelivery/Config';
 import FetchAdapter from '../ContentDelivery/FetchAdapter';
+
+// Repository flavours
+import IContentRepositoryV2 from './IContentRepository';
+import EditIContentRepositoryV2 from './PassthroughIContentRepository';
+import SSRIContentRepository from './ServerSideIContentRepository';
 
 // Authorization
 import DefaultAuthService from '../ContentDelivery/DefaultAuthService';
@@ -51,10 +54,10 @@ type EpiContentSavedEvent = {
     properties: {
         name: string;
         successful: boolean;
-        validationErrors: any;
-        value: any;
+        validationErrors: unknown;
+        value: unknown;
     }[]
-    validationErrors: any[]
+    validationErrors: unknown[]
     oldContentLink: string
 }
 
@@ -69,7 +72,7 @@ function isFetchApiAvailable() : boolean
 
 export default class RepositoryModule extends BaseInitializableModule implements IInitializableModule
 {
-    protected name : string = "Episerver Content Delivery & Repository";
+    protected name = "Episerver Content Delivery & Repository";
     public readonly SortOrder : number = 10;
 
     /**
@@ -84,7 +87,6 @@ export default class RepositoryModule extends BaseInitializableModule implements
         // Get Application Config
         const config = container.getService<AppConfig>(DefaultServices.Config);
         const epiContext = container.getService<IEpiserverContext>(DefaultServices.Context);
-        const ssr = container.getService<ServerContextAccessor>(DefaultServices.ServerContext);
         const context = container.getService<IExecutionContext>(DefaultServices.ExecutionContext);
 
         // Build New ContentDeliveryAPI Connector
@@ -110,9 +112,7 @@ export default class RepositoryModule extends BaseInitializableModule implements
         const repositoryConfig = config.iContentRepository ? { ...defaultRepositoryConfig, ...config.iContentRepository } : { ...defaultRepositoryConfig }
 
         // Create repository
-        const repository : IIContentRepository = newAPI.InEpiserverShell ?
-                                new EditIContentRepositoryV2(newAPI, repositoryConfig) :
-                                new IContentRepositoryV2(newAPI, repositoryConfig, ssr);
+        const repository = this.IIContentRepositoryFactory(container, newAPI, repositoryConfig);
         if (config.enableDebug && newAPI.InEpiserverShell) this.log(`${ this.name }: Detected Episerver Shell - Disabling IndexedDB`);
 
         // Configure Authentication
@@ -125,16 +125,26 @@ export default class RepositoryModule extends BaseInitializableModule implements
         container.addService(DefaultServices.IContentRepository_V2, repository);
     }
 
-    public StartModule(context: IEpiserverContext)
+    protected IIContentRepositoryFactory(container: IServiceContainer, api: IContentDeliveryAPI, config: Partial<IRepositoryConfig>) : IIContentRepository
+    {
+        const ssr = container.getService<ServerContextAccessor>(DefaultServices.ServerContext);
+        const context = container.getService<IExecutionContext>(DefaultServices.ExecutionContext);
+        if (context.isServerSideRendering)
+            return new SSRIContentRepository(api, config, ssr);
+        if (context.isInEditMode)
+            return new EditIContentRepositoryV2(api, config);
+        return new IContentRepositoryV2(api, config, ssr);
+    }
+
+    public StartModule(context: IEpiserverContext) : void
     {
         super.StartModule(context);
         const debug = context.isDebugActive();
-        const _ = this;
 
         // Define event listeners
         const onEpiReady : (eventData: EpiReadyEvent) => void = (eventData) =>
         {
-            if (debug) _.log(`${ _.name }: OnEpiReady`, eventData);
+            if (debug) this.log(`${ this.name }: OnEpiReady`, eventData);
             if (eventData.isEditable) {
                 // Determine window name
                 let windowName = 'server';
@@ -155,12 +165,12 @@ export default class RepositoryModule extends BaseInitializableModule implements
 
         const onEpiContentSaved : (eventData : EpiContentSavedEvent) => void = (event) =>
         {
-            if (debug) _.log('EpiContentSaved: Received updated content from the Episerver Shell', event);
+            if (debug) this.log('EpiContentSaved: Received updated content from the Episerver Shell', event);
             if (event.successful) {
-                if (debug) _.log('EpiContentSaved: Epi reported success, starting patching process');
+                if (debug) this.log('EpiContentSaved: Epi reported success, starting patching process');
                 const repo = context.serviceContainer.getService<IIContentRepository>(DefaultServices.IContentRepository_V2);
                 const baseId = event.savedContentLink;
-                _.patchContentRepository(repo, baseId, event, debug);
+                this.patchContentRepository(repo, baseId, event, debug);
             }
         }
 
@@ -172,11 +182,11 @@ export default class RepositoryModule extends BaseInitializableModule implements
         eventEngine.addListener('contentSaved', 'EpiContentSaved', onEpiContentSaved.bind(this), true);
     }
 
-    protected patchContentRepository(repo : IIContentRepository, baseId : string , event : EpiContentSavedEvent, debug : boolean = false) : void
+    protected patchContentRepository(repo : IIContentRepository, baseId : string , event : EpiContentSavedEvent, debug = false) : void
     {
-        const isStringProperty : (toTest: object, propName: string) => boolean = (toTest, propName) => {
+        function isStringProperty<T extends Record<string, unknown>, K extends keyof T>(toTest: T, propName: K) : boolean {
             try {
-                return (toTest as any)[propName] && typeof (toTest as any)[propName] === 'string';
+                return toTest[propName] && typeof toTest[propName] === 'string' ? true : false;
             } catch (e) { /* Empty on purpose */ }
             return false;
         }
@@ -190,7 +200,7 @@ export default class RepositoryModule extends BaseInitializableModule implements
                         switch (property.name.substr(9)) {
                         case 'name':
                             if (debug) this.log('EpiContentSaved: Received updated name');
-                            propertyData.name = isStringProperty(out, 'name') ? property.value : { expandedValue: undefined, value: property.value };
+                            propertyData.name = isStringProperty(out, 'name') ? property.value as string : { expandedValue: undefined, value: property.value };
                             break;
                         default:
                             if (debug) this.warn('EpiContentSaved: Received unsupported property ', property);
@@ -211,6 +221,6 @@ export default class RepositoryModule extends BaseInitializableModule implements
         })
     }
 
-    protected log(...args : any[]) : void { console.debug( ...args ) }
-    protected warn (...args : any[]) : void { console.warn( ...args) }
+    protected log(...args : unknown[]) : void { console.debug( ...args ) }
+    protected warn (...args : unknown[]) : void { console.warn( ...args) }
 }

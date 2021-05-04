@@ -4,11 +4,20 @@ import CmsSite from './Components/CmsSite';
 import EpiContext from './Spa';
 import ComponentPreLoader from "./Loaders/ComponentPreLoader";
 import DefaultServiceContainer from './Core/DefaultServiceContainer';
-export default function InitBrowser(config, containerId, serviceContainer) {
-    if (!serviceContainer) {
-        serviceContainer = new DefaultServiceContainer();
+export function InitBrowser(config, containerId, serviceContainer) {
+    try {
+        if ((__INITIAL_DATA__ === null || __INITIAL_DATA__ === void 0 ? void 0 : __INITIAL_DATA__.status) === 'loading') {
+            __INITIAL_DATA__.onReady = () => _doInitBrowser(config, containerId, serviceContainer);
+            return;
+        }
     }
-    EpiContext.init(config, serviceContainer);
+    catch (e) {
+        // Ignore on purpose
+    }
+    return _doInitBrowser(config, containerId, serviceContainer);
+}
+function _doInitBrowser(config, containerId, serviceContainer) {
+    EpiContext.init(config, serviceContainer || new DefaultServiceContainer());
     const container = document.getElementById(containerId ? containerId : "epi-page-container");
     if (container && container.childElementCount > 0) {
         const components = EpiContext.config().preLoadComponents || [];
@@ -27,4 +36,5 @@ export default function InitBrowser(config, containerId, serviceContainer) {
         ReactDOM.render(React.createElement(CmsSite, { context: EpiContext }), container);
     }
 }
+export default InitBrowser;
 //# sourceMappingURL=InitBrowser.js.map

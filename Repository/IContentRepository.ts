@@ -17,7 +17,7 @@ import Property, { ContentAreaProperty, ContentReferenceProperty, ContentReferen
 import { ContentReference, ContentLinkService } from '../Models/ContentLink';
 import IContent, { IContentData, GenericProperty, genericPropertyIsProperty } from '../Models/IContent';
 import Website from '../Models/Website';
-import WebsiteList, { hostnameFilter } from '../Models/WebsiteList';
+import WebsiteList, { hostnameFilter, languageFilter } from '../Models/WebsiteList';
 import ServerContextAccessor from '../ServerSideRendering/ServerContextAccessor';
 
 /**
@@ -29,6 +29,7 @@ export class IContentRepository extends EventEmitter<IPatchableRepositoryEvents<
     protected _api : IContentDeliveryAPI;
     protected _storage : IndexedDB;
     protected _loading : { [key: string] : Promise<IContent | NetworkErrorData<unknown> | null> } = {};
+    protected _websitesLoading : Promise<WebsiteList> | undefined;
     protected _config : IRepositoryConfig = {
         maxAge: 1440, // Default keep for one day = 24 * 60 = 1440 minutes
         policy: IRepositoryPolicy.NetworkFirst, // Default network first
@@ -50,9 +51,34 @@ export class IContentRepository extends EventEmitter<IPatchableRepositoryEvents<
 
         // Ingest server context into the database, if we have it
         if (serverContext) {
-            if (serverContext.IContent) this.ingestIContent(serverContext.IContent, false);
-            (serverContext?.Contents || []).forEach(x => this.ingestIContent(x, false));
-            if (serverContext.Website && (serverContext.Website?.hosts?.length || 0) > 0) this.ingestWebsite(serverContext.Website); // Maker sure we only ingest the website if it has hosts
+            if (serverContext.IContent) {
+                const iContent = serverContext.IContent;
+                const apiId = this.createStorageId(iContent, false);
+                this._loading[apiId] = (async () => {
+                    this.debugMessage('Initialization: Ingesting main content', iContent);
+                    await this.ingestIContent(iContent, false);
+                    delete this._loading[apiId];
+                    return iContent;
+                })();
+            }
+            (serverContext?.Contents || []).forEach(iContent => {
+                const apiId = this.createStorageId(iContent, false);
+                this._loading[apiId] = (async () => {
+                    this.debugMessage('Initialization: Ingesting additional content', iContent);
+                    await this.ingestIContent(iContent, false);
+                    delete this._loading[apiId];
+                    return iContent;
+                })();
+            });
+            const website = serverContext.Website; // Fetching the website causes some processing in C#, so fetch it only once...
+            if (website && (website?.hosts?.length || 0) > 0) { // Maker sure we only ingest the website if it has hosts
+                this.debugMessage('Initialization: Ingesting current website', website);
+                this._websitesLoading = this.ingestWebsite(website).then(w => {
+                    this.debugMessage('Initialization: Ingested current website', w);
+                    this._websitesLoading = undefined;
+                    return (w ? [w] : []) as WebsiteList;
+                });
+            }
         }
     }
 
@@ -94,11 +120,11 @@ export class IContentRepository extends EventEmitter<IPatchableRepositoryEvents<
         if (!this._loading[apiId]) {
             const internalLoad = async () => {
                 const iContent = await this._api.getContent<IContentType>(reference, undefined, recursive ? ['*'] : []);
-                if (!iContent) {
+                if (iContent) {
                     if (!isNetworkError(iContent)) {
                         await this.recursiveLoad(iContent, recursive);
                     }
-                    this.ingestIContent(iContent);
+                    await this.ingestIContent(iContent);
                 }
                 delete this._loading[apiId];
                 return iContent;
@@ -133,7 +159,7 @@ export class IContentRepository extends EventEmitter<IPatchableRepositoryEvents<
 
         // Run actual test
         const valid = !isSpaContentProvider && !expired;
-        if (this._config.debug) console.log(`IContentRepository: Validation check: ${ item.contentId }`, valid);
+        this.debugMessage(`Validation check: ${ item.contentId }`, valid);
         return valid;
     }
 
@@ -193,15 +219,23 @@ export class IContentRepository extends EventEmitter<IPatchableRepositoryEvents<
      */
     public async getByRoute<IContentType extends IContent = IContent>(route: string) : Promise<IContentType | null>
     {
+        this.debugMessage(`Fetching iContent for route ${ route }`);
+        if (Object.keys(this._loading).length) {
+            this.debugMessage("Loading items, awaiting current load to complete");
+            await Promise.all(Object.values(this._loading).map(x => x.catch(() => null)));
+        }
+
         const table = await this.getTable();
 
         const resolveLocal = async () : Promise<IContentType | null> => {
             const routedContents = await table.getViaIndex('routes', route);
             if (routedContents && this.isValid(routedContents)) {
                 if (this._config.policy !== IRepositoryPolicy.PreferOffline) this.updateInBackground(routedContents);
+                this.debugMessage(`Fetched iContent for route ${ route } locally`, routedContents.data);
                 return routedContents.data as IContentType;
             }
             if (route === '/') { // Special case for Homepage
+                this.debugMessage(`Fetched iContent for homepage`);
                 return this.getByReference<IContentType>('startPage');
             }
             return null;
@@ -211,6 +245,7 @@ export class IContentRepository extends EventEmitter<IPatchableRepositoryEvents<
             const resolvedRoute = await this._api.resolveRoute<unknown, IContentType>(route);
             const content = getIContentFromPathResponse(resolvedRoute);
             if (content) this.ingestIContent(content);
+            this.debugMessage(`Fetched iContent for route ${ route } remotely`, content);
             return content as IContentType;
         }
 
@@ -218,21 +253,21 @@ export class IContentRepository extends EventEmitter<IPatchableRepositoryEvents<
             case IRepositoryPolicy.NetworkFirst:
                 return this._api.OnLine ? resolveNetwork() : resolveLocal();
             case IRepositoryPolicy.PreferOffline:
-                return resolveLocal().then(x => x ? x : resolveNetwork());
             case IRepositoryPolicy.LocalStorageFirst:
-                return await resolveLocal().then(x => { if (x) { resolveNetwork(); } return x; }) || await resolveNetwork();
+                {
+                    const iContent = await resolveLocal();
+                    return iContent ? iContent : resolveNetwork();
+                }
         }
         return resolveNetwork();
     }
 
-    public getByReference<IContentType extends IContent = IContent>(reference: string, website?: Website) : Promise<IContentType | null>
+    public async getByReference<IContentType extends IContent = IContent>(reference: string, website?: Website) : Promise<IContentType | null>
     {
-        const ws = website ? Promise.resolve<Website>(website) : this.getCurrentWebsite();
-        return ws.then(x => { 
-            if (!x) throw new Error('There\'s no website provided and none inferred from the ContentDelivery API');
-            if (!(x?.contentRoots[reference])) throw new Error (`The content root ${ reference } has not been defined`);
-            return this.load(x.contentRoots[reference]);
-        });
+        const ws = website ? website : await this.getCurrentWebsite();
+        if (!ws) throw new Error('There\'s no website provided and none inferred from the ContentDelivery API');
+        if (!(ws?.contentRoots[reference])) throw new Error (`The content root ${ reference } has not been defined`);
+        return this.load(ws.contentRoots[reference]);
     }
 
     public async patch(reference: ContentReference, patch: (item: Readonly<IContent>) => IContent) : Promise<IContent | null>
@@ -240,32 +275,47 @@ export class IContentRepository extends EventEmitter<IPatchableRepositoryEvents<
         try {
             const item = await this.load(reference);
             if (!item) return null;
-            if (this._config.debug) console.log('IContentRepository: Will apply patch to content item', reference, item, patch);
+            this.debugMessage('Will apply patch to content item', reference, item, patch);
             this.emit('beforePatch', item.contentLink, item);
             const patchedItem = patch(item);
             this.emit('afterPatch', patchedItem.contentLink, item, patchedItem)
-            if (this._config.debug) console.log('IContentRepository: Applied patch to content item', reference, item, patchedItem);
+            this.debugMessage('Applied patch to content item', reference, item, patchedItem);
             return await this.ingestIContent(patchedItem);
         } catch (e) {
             return null;
         }
     }
 
-    public async getWebsites() : Promise<WebsiteList>
+    public getWebsites() : Promise<WebsiteList>
     {
-        const table = await this.getWebsiteTable();
-        let websites : WebsiteList = await table.all().then(list => list.map(wd => wd.data));
-        if (!websites || websites.length === 0) {
-            websites = await this._api.getWebsites();
-            await table.putAll(websites.map(w => { return { data: this.buildWebsiteRepositoryItem(w) }}));
+        if (this._websitesLoading) {
+            this.debugMessage('Already loading websites, returning existing promise');
+            return this._websitesLoading;
         }
-        return websites;
+        const internalLoad : () => Promise<WebsiteList> = async () =>
+        {
+            const table = await this.getWebsiteTable();
+            let websites  = await table.all().then(list => list.map(wd => wd.data));
+            if (!websites || websites.length === 0) {
+                this.debugMessage('No websites in store, fetching from server');
+                websites = await this._api.getWebsites();
+                await table.putAll(websites.map(w => { return { data: this.buildWebsiteRepositoryItem(w) }}));
+                this.debugMessage('Loaded websites from server and stored locally');
+            }
+            this._websitesLoading = undefined;
+            return websites;
+        }
+        return (this._websitesLoading = internalLoad());
     }
 
     public async getWebsite(hostname: string, language ?: string, matchWildCard = true) : Promise<Readonly<Website> | null>
     {
-        const websites = (await this.getWebsites()).filter(w => hostnameFilter(w, hostname, language, matchWildCard));
-        return websites && websites.length === 1 ? websites[0] : null;
+        const lang = language || this._api.Language;
+        this.debugMessage(`Loading website by host ${ hostname } in language ${ lang }; ${ matchWildCard ? '' : 'not '}accepting the wildcard host`);
+        const websites = await this.getWebsites();
+        const website = websites.filter(w => hostnameFilter(w, hostname, lang, matchWildCard) && languageFilter(w, lang)).shift() || null;
+        this.debugMessage(`Loaded website by host ${ hostname } in language ${ lang }; ${ matchWildCard ? '' : 'not '}accepting the wildcard host:`, website);
+        return website;
     }
 
     public getCurrentWebsite() : Promise<Readonly<Website> | null>
@@ -274,7 +324,7 @@ export class IContentRepository extends EventEmitter<IPatchableRepositoryEvents<
         try {
             hostname = window.location.host;
         } catch (e) { /* Ignored on purpose */ }
-        return this.getWebsite(hostname, undefined, false).then(w => w ? w : this.getWebsite(hostname, undefined, true));
+        return this.getWebsite(hostname, undefined, true);
     }
 
     protected async ingestIContent(iContent: IContent, overwrite = true) : Promise<IContent | null>
@@ -284,18 +334,18 @@ export class IContentRepository extends EventEmitter<IPatchableRepositoryEvents<
         const isUpdate = current?.data ? true : false;
         if (!overwrite && isUpdate) return current.data;
         if (isUpdate) {
-            if (this._config.debug) console.log('IContentRepository: Before update', iContent, current.data);
+            this.debugMessage('Before update', iContent, current.data);
             this.emit('beforeUpdate', iContent, current.data);
         } else {
-            if (this._config.debug) console.log('IContentRepository: Before add', iContent);
+            this.debugMessage('Before add', iContent);
             this.emit('beforeAdd', iContent);
         }
         const ingested = (await table.put(this.buildRepositoryItem(iContent))) ? iContent : null;
         if (isUpdate) {
-            if (this._config.debug) console.log('IContentRepository: After update', ingested);
+            this.debugMessage('After update', ingested);
             this.emit('afterUpdate', ingested);
         } else {
-            if (this._config.debug) console.log('IContentRepository: After add', ingested);
+            this.debugMessage('After add', ingested);
             this.emit('afterAdd', ingested);
         }
         return ingested;
@@ -348,7 +398,7 @@ export class IContentRepository extends EventEmitter<IPatchableRepositoryEvents<
         }
     }
 
-    protected recursiveLoad(iContent: IContentData, recurseDown = false) : void
+    protected async recursiveLoad(iContent: IContentData, recurseDown = false) : Promise<void>
     {
         for (const key of Object.keys(iContent)) {
             const p : GenericProperty = iContent[key];
@@ -358,13 +408,13 @@ export class IContentRepository extends EventEmitter<IPatchableRepositoryEvents<
                     {
                         const cRef = p as ContentReferenceProperty;
                         if (cRef.expandedValue) {
-                            this.ingestIContent(cRef.expandedValue);
-                            this.recursiveLoad(cRef.expandedValue, recurseDown);
+                            await this.ingestIContent(cRef.expandedValue);
+                            await this.recursiveLoad(cRef.expandedValue, recurseDown);
                             delete (iContent[key] as Property<unknown>).expandedValue;
                             break;
                         }
                         if (cRef.value && recurseDown) {
-                            this.load(cRef.value, recurseDown);
+                            await this.load(cRef.value, recurseDown);
                         }
                         break;
                     }
@@ -372,15 +422,15 @@ export class IContentRepository extends EventEmitter<IPatchableRepositoryEvents<
                     {
                         const cArea = p as ContentAreaProperty;
                         if (cArea.expandedValue) {
-                            cArea.expandedValue?.forEach(x => {
-                                this.ingestIContent(x);
-                                this.recursiveLoad(x);
-                            });
+                            await Promise.all(cArea.expandedValue?.map(async x => {
+                                await this.ingestIContent(x);
+                                await this.recursiveLoad(x);
+                            }));
                             delete (iContent[key] as Property<unknown>).expandedValue;
                             break;
                         }
                         if (cArea.value && recurseDown) {
-                            cArea.value?.forEach(x => this.load(x.contentLink, recurseDown).catch(() => null));
+                            await Promise.all(cArea.value?.map(x => this.load(x.contentLink, recurseDown).catch(() => null)) || []);
                         }
                         break;
                     }
@@ -388,15 +438,15 @@ export class IContentRepository extends EventEmitter<IPatchableRepositoryEvents<
                     {
                         const cRefList = p as ContentReferenceListProperty;
                         if (cRefList.expandedValue) {
-                            cRefList.expandedValue?.forEach(x => {
-                                this.ingestIContent(x);
-                                this.recursiveLoad(x);
-                            });
+                            await Promise.all(cRefList.expandedValue?.map(async x => {
+                                await this.ingestIContent(x);
+                                await this.recursiveLoad(x);
+                            }));
                             delete (iContent[key] as Property<unknown>).expandedValue;
                             break;
                         }
                         if (cRefList.value && recurseDown) {
-                            cRefList.value?.forEach(x => this.load(x, recurseDown).catch(() => null));
+                            await Promise.all(cRefList.value?.map(x => this.load(x, recurseDown).catch(() => null)) || []);
                         }
                         break;
                     }
@@ -416,6 +466,17 @@ export class IContentRepository extends EventEmitter<IPatchableRepositoryEvents<
             ])
         ]);
         return true;
+    }
+
+    /**
+     * Write a debug message
+     * 
+     * @param message The message to write to the debugging system
+     */
+    protected debugMessage(...message: unknown[]) : void
+    {
+        if (this._config.debug && console)
+            console.debug.apply(console, ['IContentRepository:', ...message]);
     }
 }
 export default IContentRepository

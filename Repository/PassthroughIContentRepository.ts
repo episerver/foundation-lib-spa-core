@@ -102,7 +102,7 @@ export class PassthroughIContentRepository extends EventEmitter<IPatchableReposi
     }
     public getCurrentWebsite() : Promise<Readonly<Website> | null>
     {
-        let hostname : string = '*';
+        let hostname = '*';
         try {
             hostname = window.location.hostname;
         } catch (e) { /* Ignored on purpose */ }
