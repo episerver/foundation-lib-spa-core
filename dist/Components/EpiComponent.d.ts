@@ -29,3 +29,9 @@ export declare const IContentRenderer: React.FunctionComponent<{
     path?: string;
 }>;
 export default EpiComponent;
+/**
+ * Create the name of the React Component to load for this EpiComponent
+ *
+ * @param item The IContent to be presented by this EpiComponent
+ */
+export declare const buildComponentName: (item: IContent | null, contentType?: string) => string;

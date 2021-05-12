@@ -76,11 +76,13 @@ export const IContentRenderer = (props) => {
     const [componentAvailable, setComponentAvailable] = useState(componentLoader.isPreLoaded(componentName));
     useEffect(() => {
         let isCancelled = false;
-        componentLoader.LoadType(componentName).then(component => {
-            if (isCancelled)
-                return;
-            setComponentAvailable(component ? true : false);
-        });
+        if (!componentLoader.isPreLoaded(componentName)) {
+            setComponentAvailable(false);
+            componentLoader.LoadType(componentName).then(component => {
+                if (!isCancelled)
+                    setComponentAvailable(component ? true : false);
+            });
+        }
         return () => { isCancelled = true; };
     }, [componentName, componentLoader]);
     if (!componentAvailable)
@@ -99,7 +101,7 @@ export default EpiComponent;
  *
  * @param item The IContent to be presented by this EpiComponent
  */
-const buildComponentName = (item, contentType) => {
+export const buildComponentName = (item, contentType) => {
     const context = contentType || '';
     const iContentType = (item === null || item === void 0 ? void 0 : item.contentType) || ['Error', 'ContentNotPresent'];
     let baseName = iContentType.map((s) => StringUtils.SafeModelName(s)).join('/');

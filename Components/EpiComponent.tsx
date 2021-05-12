@@ -104,10 +104,12 @@ export const IContentRenderer : React.FunctionComponent<{ data: IContent, conten
 
     useEffect(() => {
         let isCancelled = false;
-        componentLoader.LoadType(componentName).then(component => {
-            if (isCancelled) return;
-            setComponentAvailable(component ? true : false);
-        });
+        if (!componentLoader.isPreLoaded(componentName)) {
+            setComponentAvailable(false);
+            componentLoader.LoadType(componentName).then(component => {
+                if (!isCancelled) setComponentAvailable(component ? true : false);
+            });
+        }
         return () => { isCancelled = true }
     }, [componentName, componentLoader])
 
@@ -132,7 +134,7 @@ export default EpiComponent;
  * 
  * @param item The IContent to be presented by this EpiComponent
  */
-const buildComponentName : (item : IContent | null, contentType?: string) => string = (item, contentType) =>
+export const buildComponentName : (item : IContent | null, contentType?: string) => string = (item, contentType) =>
 {
     const context : string = contentType || '';
     const iContentType = item?.contentType || ['Error', 'ContentNotPresent'];
