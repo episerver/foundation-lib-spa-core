@@ -8,7 +8,7 @@ import CoreIComponentLoader from './CoreIComponentLoader';
  * The variable containing the pre-loaded modules, as injected by the
  * server side rendering process.
  */
-declare let PreLoad: LoadedModuleList<any>;
+declare let PreLoad: LoadedModuleList;
 
 export type TComponentType<T extends unknown = ComponentProps<IContent>> = ComponentType<T>;
 export type TComponentTypePromise<T extends unknown = ComponentProps<IContent>> = Promise<TComponentType<T>>;
@@ -16,11 +16,11 @@ export type TComponentTypePromise<T extends unknown = ComponentProps<IContent>> 
 /**
  * Type defintiion to allow access to the pre-loaded modules
  */
-export type LoadedModuleList<T = ComponentProps<IContent>> = {
-    [key: string]: TComponentType<T>
+export type LoadedModuleList = {
+    [key: string]: ComponentType
 }
-export type LoadingModuleList<T = ComponentProps<IContent>> = {
-    [key: string]: TComponentTypePromise<T>
+export type LoadingModuleList = {
+    [key: string]: Promise<ComponentType>
 }
 export type IComponentLoaderList = IComponentLoader[];
 export type IComponentLoaderConfig = (IComponentLoader | IComponentLoaderType)[] & { debug?: boolean }
@@ -49,13 +49,13 @@ export class ComponentLoader
     /**
      * The cache of components already pre-loaded by this loader
      */
-    protected cache : LoadedModuleList<any> = {};
+    protected cache : LoadedModuleList = {};
 
     /**
      * The list of promises currenlty being awaited by this loader, prior
      * to adding them to the cache.
      */
-    protected loading : LoadingModuleList<any> = {};
+    protected loading : LoadingModuleList = {};
 
     /**
      * The list of IComponent Loaders
@@ -65,7 +65,7 @@ export class ComponentLoader
     /**
      * State of the debug
      */
-    protected debug : boolean = false;
+    protected debug = false;
 
     /**
      * Create a new instance and populate the cache with the data prepared
@@ -89,14 +89,13 @@ export class ComponentLoader
         return loader;
     }
 
-    public addLoaders(loaders: IComponentLoaderList)
+    public addLoaders(loaders: IComponentLoaderList) : void
     {
-        const me = this;
-        loaders.forEach(x => { x.setDebug(me.debug); me.loaders.push(x); });
+        loaders.forEach(x => { x.setDebug(this.debug); this.loaders.push(x); });
         this.loaders.sort((a, b) => a.order - b.order);
     }
 
-    public createLoader(loaderType : IComponentLoaderType, add : boolean = true) : IComponentLoader
+    public createLoader(loaderType : IComponentLoaderType, add = true) : IComponentLoader
     {
         const loader : IComponentLoader = new loaderType();
         if (add) this.addLoader(loader);
@@ -133,9 +132,9 @@ export class ComponentLoader
     public getPreLoadedType<P = ComponentProps<IContent>>(component: string, throwOnUnknown = true) : ComponentType<P> | null
     {
         if (this.isPreLoaded(component)) {
-            const c : ComponentType<P> = this.cache[component];
+            const c = this.cache[component];
             if (!c.displayName) c.displayName = component;
-            return c;
+            return c as ComponentType<P>;
         }
         if (throwOnUnknown) {
             throw new Error(`The component ${component} has not been pre-loaded!`);
@@ -154,16 +153,17 @@ export class ComponentLoader
 
     public LoadType<P = ComponentProps<IContent>>(component: string) : Promise<ComponentType<P>>
     {
-        if (this.isPreLoaded(component)) {
-            return Promise.resolve<ComponentType<P>>(this.getPreLoadedType(component) as ComponentType<P>);
-        }
+        if (this.isPreLoaded(component)) 
+            return Promise.resolve(this.getPreLoadedType(component) as ComponentType<P>);
+        
         try {
             if (this.loading[component]) {
-                return this.loading[component];
+                return this.loading[component] as Promise<ComponentType<P>>;
             }
         } catch (e) {
             // Ignored on purpose
         }
+
         this.loading[component] = this.doLoadComponentType(component).then(c => {
             this.cache[component] = c;
             delete this.loading[component];
@@ -173,19 +173,19 @@ export class ComponentLoader
             delete this.loading[component];
             return this.cache[component];
         });
-        return this.loading[component];
+        return this.loading[component] as Promise<ComponentType<P>>;
     }
 
-    protected doLoadComponentType(component: string) : Promise<TComponentType>
+    protected doLoadComponentType(component: string) : Promise<ComponentType>
     {
         const options = this.loaders.filter(x => x.canLoad(component));
-        if (!options || options.length === 0) {
-            return Promise.resolve(ComponentNotFound);
-        }
-        const tryOption = (idx : number) => new Promise<TComponentType>((resolve, reject) => {
+        if (!options || options.length === 0)
+            return Promise.resolve<ComponentType>(ComponentNotFound as unknown as ComponentType);
+        
+        const tryOption = (idx : number) => new Promise<ComponentType>((resolve, reject) => {
             options[idx].load(component).then(c => {
                 c.displayName = component;
-                resolve(c);
+                resolve(c as unknown as ComponentType);
             }).catch(e => {
                 if (this.debug) console.debug(`CL: Error loading ${ component }, resulting in error`, e);
                 if (options[idx + 1]) {
@@ -198,7 +198,7 @@ export class ComponentLoader
         return tryOption(0);
     }
 
-    public async LoadComponent<P = ComponentProps<IContent>>(component: string, props: P): Promise<React.ReactElement<P, any>>
+    public async LoadComponent<P = ComponentProps<IContent>>(component: string, props: P): Promise<React.ReactElement<P>>
     {
         const type = await this.LoadType<P>(component);
         return React.createElement(type, props);

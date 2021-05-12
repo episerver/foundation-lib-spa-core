@@ -59,8 +59,7 @@ export class ComponentLoader {
         return loader;
     }
     addLoaders(loaders) {
-        const me = this;
-        loaders.forEach(x => { x.setDebug(me.debug); me.loaders.push(x); });
+        loaders.forEach(x => { x.setDebug(this.debug); this.loaders.push(x); });
         this.loaders.sort((a, b) => a.order - b.order);
     }
     createLoader(loaderType, add = true) {
@@ -113,9 +112,8 @@ export class ComponentLoader {
         throw new Error(`The component ${component} has not been pre-loaded!`);
     }
     LoadType(component) {
-        if (this.isPreLoaded(component)) {
+        if (this.isPreLoaded(component))
             return Promise.resolve(this.getPreLoadedType(component));
-        }
         try {
             if (this.loading[component]) {
                 return this.loading[component];
@@ -137,9 +135,8 @@ export class ComponentLoader {
     }
     doLoadComponentType(component) {
         const options = this.loaders.filter(x => x.canLoad(component));
-        if (!options || options.length === 0) {
+        if (!options || options.length === 0)
             return Promise.resolve(ComponentNotFound);
-        }
         const tryOption = (idx) => new Promise((resolve, reject) => {
             options[idx].load(component).then(c => {
                 c.displayName = component;

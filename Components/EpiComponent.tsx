@@ -114,7 +114,7 @@ export const IContentRenderer : React.FunctionComponent<{ data: IContent, conten
     if (!componentAvailable)
         return <Spinner />
 
-    const IContentComponent = componentLoader.getPreLoadedType<ComponentProps<IContent>>(componentName);
+    const IContentComponent = componentLoader.getPreLoadedType<ComponentProps<IContent>>(componentName, false);
     if (!IContentComponent)
         return <Spinner />
 

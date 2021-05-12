@@ -85,7 +85,7 @@ export const IContentRenderer = (props) => {
     }, [componentName, componentLoader]);
     if (!componentAvailable)
         return React.createElement(Spinner, null);
-    const IContentComponent = componentLoader.getPreLoadedType(componentName);
+    const IContentComponent = componentLoader.getPreLoadedType(componentName, false);
     if (!IContentComponent)
         return React.createElement(Spinner, null);
     return React.createElement(EpiComponentErrorBoundary, { componentName: componentName || "Error resolving component" },
