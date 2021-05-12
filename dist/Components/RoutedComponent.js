@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useEpiserver, useIContentRepository, useServerSideRendering } from '../Hooks/Context';
-import EpiComponent from './EpiComponent';
+import { IContentRenderer } from './EpiComponent';
 import { Spinner } from './Spinner';
 export const RoutedComponent = (props) => {
     const epi = useEpiserver();
@@ -21,7 +21,8 @@ export const RoutedComponent = (props) => {
     }, [path, repo, epi]);
     if (iContent === null)
         return React.createElement(Spinner, null);
-    return React.createElement(EpiComponent, { contentLink: iContent.contentLink, expandedValue: iContent, path: props.location.pathname });
+    return React.createElement(IContentRenderer, { data: iContent, path: props.location.pathname });
 };
+RoutedComponent.displayName = "Optimizely CMS: Path IContent resolver";
 export default RoutedComponent;
 //# sourceMappingURL=RoutedComponent.js.map

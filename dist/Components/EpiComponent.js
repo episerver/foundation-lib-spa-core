@@ -4,6 +4,7 @@ import { useEpiserver, useIContentRepository, useServiceContainer, useServerSide
 import { ContentLinkService } from '../Models/ContentLink';
 import { DefaultServices } from '../Core/IServiceContainer';
 import { Spinner } from '../Components/Spinner';
+import { useLocation } from 'react-router';
 const safeLanguageId = (ref, branch = '##', def = '') => {
     try {
         return ref ? ContentLinkService.createLanguageId(ref, branch, true) : def;
@@ -12,12 +13,11 @@ const safeLanguageId = (ref, branch = '##', def = '') => {
         return def;
     }
 };
-function _EpiComponent(props) {
+function EpiComponent(props) {
     // Get Hooks & Services
     const ctx = useEpiserver();
     const ssr = useServerSideRendering();
     const repo = useIContentRepository();
-    const componentLoader = useServiceContainer().getService(DefaultServices.ComponentLoader);
     // Get convenience variables from services
     const debug = ctx.isDebugActive();
     const lang = ctx.Language;
@@ -30,7 +30,6 @@ function _EpiComponent(props) {
         return expandedId === linkId ? props.expandedValue : ssr.getIContent(props.contentLink);
     };
     const [iContent, setIContent] = useState(initialContent);
-    const [loadedTypes, setLoadedTypes] = useState([]);
     // Make sure the right iContent has been assigned and will be kept in sync
     useEffect(() => {
         let isCancelled = false;
@@ -64,47 +63,35 @@ function _EpiComponent(props) {
             repo.removeListener("afterUpdate", onContentUpdated);
         };
     }, [props.contentLink, repo, debug, lang]);
-    // Load && update component if needed
+    if (!iContent)
+        return React.createElement(Spinner, null);
+    return React.createElement(IContentRenderer, { data: iContent, contentType: props.contentType, actionName: props.actionName, actionData: props.actionData });
+}
+EpiComponent.displayName = "Optimizely CMS: ContentLink IContent resolver";
+export const IContentRenderer = (props) => {
+    const context = useEpiserver();
+    const path = useLocation().pathname;
+    const componentLoader = useServiceContainer().getService(DefaultServices.ComponentLoader);
+    const componentName = buildComponentName(props.data, props.contentType);
+    const [componentAvailable, setComponentAvailable] = useState(componentLoader.isPreLoaded(componentName));
     useEffect(() => {
         let isCancelled = false;
-        const componentName = iContent ? buildComponentName(iContent, props.contentType) : null;
-        if (!componentName)
-            return;
-        if (!componentLoader.isPreLoaded(componentName))
-            componentLoader.LoadType(componentName).then(() => {
-                if (!isCancelled)
-                    setLoadedTypes(x => [].concat(x, [componentName]));
-            });
+        componentLoader.LoadType(componentName).then(component => {
+            if (isCancelled)
+                return;
+            setComponentAvailable(component ? true : false);
+        });
         return () => { isCancelled = true; };
-    }, [iContent, componentLoader, props.contentType]);
-    // Render iContent
-    const shouldRender = safeLanguageId(props.contentLink, lang) === (iContent ? safeLanguageId(iContent.contentLink, lang) : '-NO-ICONTENT-');
-    const componentName = iContent ? buildComponentName(iContent, props.contentType) : null;
-    const IContentComponent = componentName && componentLoader.isPreLoaded(componentName) ? componentLoader.getPreLoadedType(componentName) : null;
-    return shouldRender && iContent && IContentComponent ?
-        React.createElement(EpiComponentErrorBoundary, { componentName: componentName || "unkown component" },
-            React.createElement(IContentComponent, Object.assign({}, Object.assign(Object.assign({}, props), { context: ctx, data: iContent }))),
-            React.createElement(DebugComponentList, { loadedComponents: loadedTypes })) :
-        React.createElement(Spinner, null);
-}
-const DebugComponentList = (props) => {
-    var _a;
-    const debug = useEpiserver().isDebugActive();
-    if (!debug)
-        return null;
-    return React.createElement("ul", { "aria-hidden": "true", style: { display: "none" } }, (_a = props === null || props === void 0 ? void 0 : props.loadedComponents) === null || _a === void 0 ? void 0 : _a.map(x => React.createElement("li", { key: x }, x)));
+    }, [componentName, componentLoader]);
+    if (!componentAvailable)
+        return React.createElement(Spinner, null);
+    const IContentComponent = componentLoader.getPreLoadedType(componentName);
+    if (!IContentComponent)
+        return React.createElement(Spinner, null);
+    return React.createElement(EpiComponentErrorBoundary, { componentName: componentName || "Error resolving component" },
+        React.createElement(IContentComponent, Object.assign({}, Object.assign(Object.assign({}, props), { context, contentLink: props.data.contentLink, path: props.path || path }))));
 };
-/**
- * Create the instantiable type of the EpiComponent for the current
- * context. It'll return the base EpiComponent or a EpiComponent wrapped
- * in the connect method from React-Redux.
- *
- * @param { IEpiserverContext } context The application context
- * @returns { EpiBaseComponentType }
- */
-_EpiComponent.CreateComponent = () => _EpiComponent;
-const EpiComponent = _EpiComponent;
-EpiComponent.displayName = "Episerver IContent";
+IContentRenderer.displayName = "Optimizely CMS: IContent renderer";
 export default EpiComponent;
 //#region Internal methods for the Episerver CMS Component
 /**
@@ -145,5 +132,6 @@ class EpiComponentErrorBoundary extends React.Component {
         return this.props.children;
     }
 }
+EpiComponentErrorBoundary.displayName = "Optimizely CMS: IContent Error Boundary";
 //#endregion
 //# sourceMappingURL=EpiComponent.js.map

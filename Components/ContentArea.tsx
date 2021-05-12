@@ -103,11 +103,12 @@ export type ContentAreaProps = ContentAreaSiteConfig & {
 }
 
 export const ContentArea : React.FunctionComponent<ContentAreaProps> = (props) => {
+    const ctx = useEpiserver();
+
     // Check if the areay is empty
     if (!props.data?.value) return props.children ? <div>{ props.children }</div> : <DefaultEmptyContentArea propertyName={ props.propertyName } />
 
     // Build the configuration
-    const ctx = useEpiserver();
     const globalConfig = ctx.config()?.contentArea || {};
     const config : ContentAreaSiteConfig = { ...globalConfig, ...props };
     const wrapperClass = getConfigValue(config, 'wrapperClass', 'content-area');
@@ -173,7 +174,7 @@ export const ContentArea : React.FunctionComponent<ContentAreaProps> = (props) =
     // Output HTML
     return <div className={ wrapperClass } data-epi-edit={ ctx.isEditable() ? props.propertyName : undefined}>{ rendered }</div>
 }
-ContentArea.displayName = "ContentArea";
+ContentArea.displayName = "Optimizely CMS: Content Area";
 export default ContentArea;
 
 /**
@@ -224,7 +225,7 @@ const ContentAreaItem : React.FunctionComponent<ContentAreaItemProps> = (props) 
     if (ctx.isEditable()) wrapperProps["data-epi-block-id"] = blockId;
     return <div { ...wrapperProps }/>
 }
-ContentAreaItem.displayName = "ContentAreaItem";
+ContentAreaItem.displayName = "Optimizely CMS: Content Area Item";
 
 /**
  * Render and empty Content Area
@@ -237,4 +238,4 @@ const DefaultEmptyContentArea : React.FunctionComponent<{ propertyName?: string 
         return <div data-epi-edit={ props.propertyName }><div className="alert alert-info m-5">There're no blocks in <i>{ props.propertyName || 'this area' }</i></div></div>
     return null;
 }
-DefaultEmptyContentArea.displayName = "DefaultEmptyContentArea";
+DefaultEmptyContentArea.displayName = "Optimizely CMS: Empty Content Area";

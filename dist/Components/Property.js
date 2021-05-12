@@ -68,6 +68,7 @@ export function Property(props) {
         React.createElement("span", null, propType),
         " not supported") : null;
 }
+Property.displayName = "Optimizely CMS: IContent Property Renderer";
 export default Property;
 function hasProperty(iContent, field) {
     return iContent[field] ? true : false;

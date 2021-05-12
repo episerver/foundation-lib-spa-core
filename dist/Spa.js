@@ -13,7 +13,7 @@ import { DefaultServices } from './Core/IServiceContainer';
 import DefaultEventEngine from './Core/DefaultEventEngine';
 import { ContentLinkService } from './Models/ContentLink';
 import getGlobal from './AppGlobal';
-import ServerContextAccessor from './ServerSideRendering/ServerContextAccessor';
+import { Factory as ServerContextFactory } from './ServerSideRendering/IServerContextAccessor';
 // Core Modules
 import RoutingModule from './Routing/RoutingModule';
 import RepositoryModule from './Repository/RepositoryModule';
@@ -89,7 +89,7 @@ export class EpiserverSpaContext {
         this._serviceContainer.addService(DefaultServices.Context, this);
         this._serviceContainer.addService(DefaultServices.Config, config);
         this._serviceContainer.addService(DefaultServices.ExecutionContext, executionContext);
-        this._serviceContainer.addService(DefaultServices.ServerContext, new ServerContextAccessor(executionContext.isServerSideRendering));
+        this._serviceContainer.addService(DefaultServices.ServerContext, ServerContextFactory.create(executionContext, config));
         this._serviceContainer.addService(DefaultServices.EventEngine, eventEngine);
         this._initialized = InitStatus.CoreServicesReady;
         // Have modules add services of their own
@@ -168,7 +168,7 @@ export class EpiserverSpaContext {
         this.enforceInitialized();
         return this._serviceContainer.getService(DefaultServices.ContentDeliveryApi);
     }
-    getContentByGuid(guid) {
+    getContentByGuid() {
         throw new Error('Synchronous content loading is no longer supported');
     }
     loadContentByGuid(id) {
@@ -177,7 +177,7 @@ export class EpiserverSpaContext {
         return repo.load(id).then(iContent => { if (!iContent)
             throw new Error('Content not resolved!'); return iContent; });
     }
-    getContentById(id) {
+    getContentById() {
         throw new Error('Synchronous content loading is no longer supported');
     }
     loadContentById(id) {
@@ -186,7 +186,7 @@ export class EpiserverSpaContext {
         return repo.load(id).then(iContent => { if (!iContent)
             throw new Error('Content not resolved!'); return iContent; });
     }
-    getContentByRef(ref) {
+    getContentByRef() {
         throw new Error('Synchronous content loading is no longer supported');
     }
     loadContentByRef(ref) {
@@ -195,7 +195,7 @@ export class EpiserverSpaContext {
         return repo.getByReference(ref).then(iContent => { if (!iContent)
             throw new Error('Content not resolved!'); return iContent; });
     }
-    getContentByPath(path) {
+    getContentByPath() {
         throw new Error('Synchronous content loading is no longer supported');
     }
     loadContentByPath(path) {
@@ -204,7 +204,7 @@ export class EpiserverSpaContext {
         return repo.getByRoute(path).then(iContent => { if (!iContent)
             throw new Error('Content not resolved!'); return iContent; });
     }
-    injectContent(iContent) {
+    injectContent() {
         // Ignore on purpose, will be removed
     }
     /**
@@ -309,7 +309,7 @@ export class EpiserverSpaContext {
         }
         return newPath;
     }
-    navigateTo(path, noHistory = false) {
+    navigateTo(path) {
         let newPath = '';
         if (ContentLinkService.referenceIsString(path)) {
             newPath = path;
@@ -343,7 +343,6 @@ export class EpiserverSpaContext {
             catch (e) {
                 // Ignored on purpose
             }
-            ;
             const website = yield repo.getWebsite(domain);
             if (!website)
                 throw new Error('Current website not loadable');
@@ -368,9 +367,8 @@ export class EpiserverSpaContext {
     hasRoutedContent() {
         return this._routedContent ? true : false;
     }
-    getContentByContentRef(ref) {
-        const id = ContentLinkService.createApiId(ref);
-        return id ? this.getContentById(id) : null;
+    getContentByContentRef() {
+        throw new Error('No longer supported');
     }
     /**
      * Get the base path where the SPA is running. If it's configured to be

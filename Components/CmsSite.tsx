@@ -13,7 +13,7 @@ import Layout, { LayoutComponent } from './Layout';
 
 // Import Episerver Components
 import EpiRouter, {  RoutedContent } from '../Routing/EpiSpaRouter';
-import ServerContextAccessor from '../ServerSideRendering/ServerContextAccessor';
+import IServerContextAccessor from '../ServerSideRendering/IServerContextAccessor';
 import { DefaultServices } from '../Core/IServiceContainer';
 
 /**
@@ -26,7 +26,7 @@ export interface CmsSiteProps {
 
 export const EpiserverWebsite : React.FunctionComponent<CmsSiteProps> = (props) => {
     const SiteLayout = getLayout(props.context);
-    const ssr = props.context.serviceContainer.getService<ServerContextAccessor>(DefaultServices.ServerContext);
+    const ssr = props.context.serviceContainer.getService<IServerContextAccessor>(DefaultServices.ServerContext);
     const location = (props.context.isServerSideRendering() ? ssr.Path : window.location.pathname) || undefined;
     return <ReduxProvider store={ props.context.getStore() }>
         <EpiserverContext.Provider value={ props.context }>
@@ -46,4 +46,5 @@ function getLayout(context: IEpiserverContext) : LayoutComponent
     return context.config().layout || Layout;
 }
 
+EpiserverWebsite.displayName = "Optimizely CMS: Website";
 export default EpiserverWebsite;

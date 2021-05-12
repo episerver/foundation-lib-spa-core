@@ -34,7 +34,7 @@ const DefaultSpinner = (props) => {
     }
     return null;
 };
-DefaultSpinner.displayName = "Default spinner";
+DefaultSpinner.displayName = "Optimizely CMS: Default spinner";
 /**
  * Create a spinner instance that can be returned from a component
  *
@@ -55,6 +55,6 @@ export const Spinner = (props) => {
     const SpinnerType = cfg.spinner || DefaultSpinner;
     return React.createElement(SpinnerType, Object.assign({}, props));
 };
-Spinner.displayName = "Spinner wrapper";
+Spinner.displayName = "Optimizely CMS: Spinner resolver";
 export default DefaultSpinner;
 //# sourceMappingURL=Spinner.js.map

@@ -32,6 +32,32 @@ export declare type DefaultServerContext = {
     /**
      * The IContent passed from the execution (JSON Encoded)
      */
+    iContent: IContent;
+    /**
+     * The ContentLink passed from the execution (JSON Encoded)
+     */
+    contentLink: ContentLink;
+    /**
+     * The Current Website (JSON encoded)
+     */
+    website: Website;
+    /**
+     * All content items used during server side rendering
+     */
+    contents: IContent[];
+    /**
+     * Status marker for the current context
+     */
+    status?: "available" | "loading";
+    /**
+     * Ready handler
+     */
+    onReady?: () => void;
+};
+export declare type SerializedServerContext = DefaultServerContext & {
+    /**
+     * The IContent passed from the execution (JSON Encoded)
+     */
     iContent: IContentOrSerialized;
     /**
      * The ContentLink passed from the execution (JSON Encoded)
@@ -45,16 +71,8 @@ export declare type DefaultServerContext = {
      * All content items used during server side rendering
      */
     contents: IContentOrSerialized[];
-    /**
-     * Status marker for the current context
-     */
-    status?: "available" | "loading";
-    /**
-     * Ready handler
-     */
-    onReady?: () => void;
 };
-export declare type ServerContext = DefaultServerContext & {
+export declare type ServerContext<T extends DefaultServerContext = DefaultServerContext> = T & {
     /**
      * Allow custom properties to be written/read from the
      * context.

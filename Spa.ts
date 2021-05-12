@@ -13,7 +13,7 @@ import AppConfig from './AppConfig';
 import getGlobal from './AppGlobal';
 import PathProvider from './PathProvider';
 import IExecutionContext from './Core/IExecutionContext';
-import ServerContextAccessor from './ServerSideRendering/ServerContextAccessor';
+import { Factory as ServerContextFactory } from './ServerSideRendering/IServerContextAccessor';
 
 // Core Modules
 import RoutingModule from './Routing/RoutingModule';
@@ -76,7 +76,7 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
             this.config().defaultLanguage;
     }
 
-    public init(config: AppConfig, serviceContainer: IServiceContainer, isServerSideRendering: boolean = false): void {
+    public init(config: AppConfig, serviceContainer: IServiceContainer, isServerSideRendering = false): void {
         // Generic init
         this._initialized = InitStatus.Initializing;
         this._serviceContainer = serviceContainer;
@@ -112,7 +112,7 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
         this._serviceContainer.addService(DefaultServices.Context, this);
         this._serviceContainer.addService(DefaultServices.Config, config);
         this._serviceContainer.addService(DefaultServices.ExecutionContext, executionContext);
-        this._serviceContainer.addService(DefaultServices.ServerContext, new ServerContextAccessor(executionContext.isServerSideRendering));
+        this._serviceContainer.addService(DefaultServices.ServerContext, ServerContextFactory.create(executionContext, config));
         this._serviceContainer.addService(DefaultServices.EventEngine, eventEngine);
         this._initialized = InitStatus.CoreServicesReady;
 
@@ -210,7 +210,7 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
         return this._serviceContainer.getService<API>(DefaultServices.ContentDeliveryApi);
     }
 
-    public getContentByGuid(guid: string): IContent | null {
+    public getContentByGuid(): IContent | null {
         throw new Error('Synchronous content loading is no longer supported');
     }
 
@@ -220,7 +220,7 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
         return repo.load(id).then(iContent => { if (!iContent) throw new Error('Content not resolved!'); return iContent; });
     }
 
-    public getContentById(id: ContentApiId): IContent | null {
+    public getContentById(): IContent | null {
         throw new Error('Synchronous content loading is no longer supported');
     }
 
@@ -230,7 +230,7 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
         return repo.load(id).then(iContent => { if (!iContent) throw new Error('Content not resolved!'); return iContent; });
     }
 
-    public getContentByRef(ref: string): IContent | null {
+    public getContentByRef(): IContent | null {
         throw new Error('Synchronous content loading is no longer supported');
     }
 
@@ -240,7 +240,7 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
         return repo.getByReference(ref).then(iContent => { if (!iContent) throw new Error('Content not resolved!'); return iContent; });
     }
 
-    public getContentByPath(path: string): IContent | null {
+    public getContentByPath(): IContent | null {
         throw new Error('Synchronous content loading is no longer supported');
     }
 
@@ -250,7 +250,7 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
         return repo.getByRoute(path).then(iContent => { if (!iContent) throw new Error('Content not resolved!'); return iContent; });
     }
 
-    public injectContent(iContent: IContent): void {
+    public injectContent(): void {
         // Ignore on purpose, will be removed
     }
 
@@ -298,7 +298,7 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
     }
 
     public getEpiserverUrl(path: ContentReference = '', action?: string): string {
-        let itemPath: string = '';
+        let itemPath = '';
         if (ContentLinkService.referenceIsString(path)) {
             itemPath = path;
         } else if (ContentLinkService.referenceIsContentLink(path)) {
@@ -317,7 +317,7 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
 
     public getSpaRoute(path: ContentReference) : string
     {
-        let newPath: string = '';
+        let newPath = '';
         if (ContentLinkService.referenceIsString(path)) {
             newPath = path;
         } else if (ContentLinkService.referenceIsIContent(path)) {
@@ -334,9 +334,9 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
      * @param content   The content item load, by path, content link or IContent
      * @param action    The action to invoke on the content controller
      */
-    public buildPath(content: ContentReference, action: string = "") : string
+    public buildPath(content: ContentReference, action = "") : string
     {
-        let newPath: string = '';
+        let newPath = '';
         if (ContentLinkService.referenceIsString(content)) {
             newPath = content;
         } else if (ContentLinkService.referenceIsIContent(content)) {
@@ -357,8 +357,8 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
         return newPath;
     }
 
-  public navigateTo(path: ContentReference, noHistory: boolean = false): void {
-    let newPath: string = '';
+  public navigateTo(path: ContentReference): void {
+    let newPath = '';
     if (ContentLinkService.referenceIsString(path)) {
       newPath = path;
     } else if (ContentLinkService.referenceIsIContent(path)) {
@@ -382,13 +382,13 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
     }
 
   public async loadCurrentWebsite(): Promise<Website> {
-    let domain : string = '';
+    let domain = '';
     const repo = this.serviceContainer.getService<IIContentRepositoryV2>(DefaultServices.IContentRepository_V2);
     try {
       domain = window.location.hostname;
     } catch (e) {
       // Ignored on purpose
-    };
+    }
     const website = await repo.getWebsite(domain);
     if (!website) throw new Error('Current website not loadable');
     this.serviceContainer.getService<IContentDeliveryApiV2>(DefaultServices.ContentDeliveryAPI_V2).CurrentWebsite = website;
@@ -417,9 +417,8 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
     return this._routedContent ? true : false;
   }
 
-  public getContentByContentRef(ref: ContentReference) {
-    const id: string | null = ContentLinkService.createApiId(ref);
-    return id ? this.getContentById(id) : null;
+  public getContentByContentRef() : IContent | null {
+    throw new Error('No longer supported')
   }
 
   /**

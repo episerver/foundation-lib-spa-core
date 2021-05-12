@@ -1,80 +1,80 @@
-import { ContentReference, ContentLinkService } from '../Models/ContentLink';
+import ServerContext, { DefaultServerContext } from './ServerContext';
+import IServerContextAccessor from './IServerContextAccessor';
+
 import IContent from '../Models/IContent';
 import Website from '../Models/Website';
-import ServerContext, { DefaultServerContext, isSerializedIContent, isSerializedWebsite } from './ServerContext';
+import { ContentLinkService, ContentReference } from '../Models/ContentLink';
+
+import IExecutionContext from '../Core/IExecutionContext';
 import StringUtils from '../Util/StringUtils';
+import IAppConfig from '../AppConfig';
 
-export type IServerContextAccessor = new() => ServerContextAccessor;
+export interface ServerSideEnumerator<TData> {
+    GetEnumerator: ()=>void
+    Map: <TOut>(func: (item: TData) => TOut) => TOut[]
+    forEach: (func: (item: TData) => void)=>void
+}
 
+export type ServerSideAPI = {
+    GetService: <T = unknown>(name: string) => T
+    MakeSafe: <T = unknown>(object: unknown) => T
+    LoadIContent: <T extends IContent = IContent>(complexReference: string) => T | null
+}
+
+declare const __EpiserverAPI__ : ServerSideAPI;
 declare const __INITIAL__DATA__ : ServerContext;
 
-/**
- * Simple accessor to quickly and conveniently access the context created by the
- * server side rendering. This context is available both on the server (as an instance
- * of Foundation.SpaViewEngine.JsInterop.Models.ServerSideRenderingContext) or on the
- * client (as standard JavaScript object, restored from JSON).
- */
-export class ServerContextAccessor
+export class DotNetServerContextAccessor implements IServerContextAccessor
 {
-    private _ssr ?: Readonly<boolean>;
+    private readonly _context : Readonly<IExecutionContext>;
+    private readonly _config : Readonly<IAppConfig>;
 
-    constructor(isServerSideRendering?: boolean) 
+    constructor(execContext: Readonly<IExecutionContext>, config: Readonly<IAppConfig>) 
     {
-        this._ssr = isServerSideRendering;
+        this._context = execContext;
+        this._config = config;
     }
 
     public get IsAvailable() : boolean
     {
-        return this.hasContext();
+        let available = false;
+        try {
+            const dataType = typeof(__INITIAL__DATA__);
+            const initData = __INITIAL__DATA__;
+            available = dataType === "object" && initData !== null;
+        } catch(e) { 
+            // Ignored on purpose
+        }
+        return available;
     }
 
-    public get IsServerSideRendering() : boolean
-    {
-        return this._ssr || false;
-    }
+    public readonly IsServerSideRendering : boolean = true
 
     /**
      * 
      */
     public get IContent() : IContent | null
     {
-        if (!this.hasContext()) return null;
-        const iContent = this.get('iContent');
-        if (!iContent) return null;
-        if (isSerializedIContent(iContent)) return JSON.parse(iContent);
-        return iContent;
+        if (!this.IsAvailable) return null;
+        return this.get('iContent') || null;
     }
 
     public get Website() : Website | null
     {
-        if (!this.hasContext()) return null;
-        const website = this.get('website');
-        if (!website) return null;
-        if (isSerializedWebsite(website)) return JSON.parse(website);
-        return website;
+        if (!this.IsAvailable) return null;
+        return this.get('website') || null
     }
 
     public get Path() : string | null
     {
-        if (!this.hasContext()) return null;
+        if (!this.IsAvailable) return null;
         return this.get('path') || null;
     }
 
     public get Contents() : IContent[]
     {
-        if (!this.hasContext) return [];
-        return this.get('contents')?.map(x => isSerializedIContent(x) ? JSON.parse(x) : x) || [];
-    }
-
-    public hasContext() : boolean
-    {
-        try {
-            const dataType = typeof(__INITIAL__DATA__);
-            return dataType === "object" && __INITIAL__DATA__ !== null;
-        } catch(e) { 
-            // Ignored on purpose
-        }
-        return false;
+        if (!this.IsAvailable) return [];
+        return this.get('contents') || [];
     }
 
     /**
@@ -84,8 +84,11 @@ export class ServerContextAccessor
      */
     public getIContentByPath<T extends IContent = IContent>(path: string) : T | null
     {
+        const baseUrl = new URL(this._config.basePath, this._config.spaBaseUrl || this._config.epiBaseUrl);
+        const contentPath = this.IContent ? (new URL(this.IContent.url || '', baseUrl)).pathname : undefined;
+
         // First see if the given content matches the route
-        if (StringUtils.TrimRight('/', path) === StringUtils.TrimRight('/', this.IContent?.url || undefined))
+        if (StringUtils.TrimRight('/', path) === StringUtils.TrimRight('/', contentPath))
             return this.IContent as T;
 
         // Then, if no match, see if we're rendering the homepage
@@ -107,40 +110,6 @@ export class ServerContextAccessor
 
     public getIContent<T extends IContent = IContent>(ref : ContentReference) : T | null 
     {
-        // Try loading through the .Net API
-        if (this.IsServerSideRendering)
-            return this.ssrLoadIContent(ref);
-
-        // Build the identifier of the requested content    
-        const refId = ContentLinkService.createApiId(ref || 'args.ref', false, true);
-
-        // See if we're requesting the main content item
-        if (ContentLinkService.createApiId(this.IContent || 'this.icontent', false, true) === refId)
-            return this.IContent as T;
-
-        // See if we're requesting one of the related items, prior loaded through the EpiserverAPI
-        if (!this.IsServerSideRendering) {
-            let serverItem : T | null = null;
-            this.Contents.forEach(x => {
-                serverItem = serverItem || (ContentLinkService.createApiId(x || 'this.Contents', false, true) === refId ? x as T : serverItem)
-            });
-            return serverItem;
-        }
-
-        // Return null
-        return null;
-    }
-
-    /**
-     * Load an item from the Content Cloud repository whilest rendering within the .Net 
-     * Server Side Rendering logic.
-     * 
-     * @param ref The content reference of the requested content
-     * @returns The loaded content item or null if we're not server side rendering or the content item has not been found
-     */
-    public ssrLoadIContent<T extends IContent = IContent>(ref : ContentReference) : T | null 
-    {
-        if (!this.IsServerSideRendering) return null;
         const refId = ContentLinkService.createApiId(ref || 'args.ref', false, true);
         try {
             return __EpiserverAPI__.LoadIContent<T>(refId);
@@ -248,17 +217,4 @@ export class ServerContextAccessor
     }
 }
 
-interface ServerSideEnumerator<TData> {
-    GetEnumerator: ()=>void
-    Map: <TOut>(func: (item: TData) => TOut) => TOut[]
-    forEach: (func: (item: TData) => void)=>void
-}
-
-declare const __EpiserverAPI__ : ServerSideAPI;
-type ServerSideAPI = {
-    GetService: <T = unknown>(name: string) => T
-    MakeSafe: <T = unknown>(object: unknown) => T
-    LoadIContent: <T extends IContent = IContent>(complexReference: string) => T | null
-}
-
-export default ServerContextAccessor;
+export default DotNetServerContextAccessor;

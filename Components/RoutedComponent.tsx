@@ -3,7 +3,7 @@ import { RouteComponentProps } from 'react-router';
 
 import { useEpiserver, useIContentRepository, useServerSideRendering } from '../Hooks/Context';
 import IContent from '../Models/IContent';
-import EpiComponent from './EpiComponent';
+import { IContentRenderer } from './EpiComponent';
 import { Spinner } from './Spinner';
 
 export const RoutedComponent : FunctionComponent<RouteComponentProps> = (props: RouteComponentProps) =>
@@ -26,7 +26,7 @@ export const RoutedComponent : FunctionComponent<RouteComponentProps> = (props: 
     }, [ path, repo, epi ]);
 
     if (iContent === null) return <Spinner />
-    return <EpiComponent contentLink={ iContent.contentLink } expandedValue={ iContent } path={ props.location.pathname } />
+    return <IContentRenderer data={ iContent } path={ props.location.pathname } />
 }
-
+RoutedComponent.displayName = "Optimizely CMS: Path IContent resolver";
 export default RoutedComponent;

@@ -24,9 +24,13 @@ export declare type AppConfig = {
      */
     noAjax?: boolean;
     /**
-     * The base URL where the SPA is running
+     * The base path, relative to the domain where the SPA is running
      */
     basePath: string;
+    /**
+     * The base URL where the spa is running, if different then the epiBaseUrl;
+     */
+    spaBaseUrl?: string;
     /**
      * The URL where Episerver is running, may or may not be the same as the basePath
      */

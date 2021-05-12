@@ -10,7 +10,7 @@ import { ContentReference } from '../Models/ContentLink';
 import IContent, { IContentData } from '../Models/IContent';
 import Website from '../Models/Website';
 import WebsiteList from '../Models/WebsiteList';
-import ServerContextAccessor from '../ServerSideRendering/ServerContextAccessor';
+import IServerContextAccessor from '../ServerSideRendering/IServerContextAccessor';
 /**
  * A wrapper for IndexedDB offering an Asynchronous API to load/fetch content items from the database
  * and underlying Episerver ContentDelivery API.
@@ -28,7 +28,7 @@ export declare class IContentRepository extends EventEmitter<IPatchableRepositor
      *
      * @param { IContentDeliveryAPI } api The ContentDelivery API wrapper to use within this IContent Repository
      */
-    constructor(api: IContentDeliveryAPI, config?: Partial<IRepositoryConfig>, serverContext?: ServerContextAccessor);
+    constructor(api: IContentDeliveryAPI, config?: Partial<IRepositoryConfig>, serverContext?: IServerContextAccessor);
     /**
      * Load the IContent, first try IndexedDB, if not found in the IndexedDB load it from the
      * ContentDelivery API

@@ -98,6 +98,7 @@ export function Property<T extends IContent>(props: React.PropsWithChildren<Prop
     }
     return ctx.isDebugActive() ? <div className="alert alert-warning">Property type <span>{ propType }</span> not supported</div> : null;
 }
+Property.displayName = "Optimizely CMS: IContent Property Renderer";
 export default Property;
 
 function hasProperty(iContent: IContent, field: string) : boolean

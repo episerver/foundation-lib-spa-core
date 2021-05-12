@@ -21,6 +21,7 @@ export const Router = (props) => {
     return React.createElement(BrowserRouter, Object.assign({}, browserRouterProps),
         React.createElement(ElementNavigation, null, props.children));
 };
+Router.displayName = "Optimizely CMS: Router";
 export default Router;
 const ElementNavigation = (props) => {
     const history = useHistory();
@@ -88,6 +89,7 @@ const ElementNavigation = (props) => {
     });
     return props.children;
 };
+ElementNavigation.displayName = "Optimizely CMS: Generic click event handler";
 export const RoutedContent = (props) => {
     const ctx = useEpiserver();
     const switchProps = { location: props.location };
@@ -95,6 +97,7 @@ export const RoutedContent = (props) => {
         props.children,
         (props.config || []).map((item, idx) => createRouteNode(item, props.basePath, `${props.keyPrefix}-route-${idx}`, ctx)));
 };
+RoutedContent.displayName = "Optimizely CMS: Route container";
 function createRouteNode(route, basePath = "", key, ctx) {
     let createdRoute = basePath ? (basePath.substr(-1) === "/" ? basePath.substr(0, -1) : basePath) : "";
     createdRoute = createdRoute + "/" + (route.path ? (route.path.substr(0, 1) === "/" ? route.path.substr(1) : route.path) : "");

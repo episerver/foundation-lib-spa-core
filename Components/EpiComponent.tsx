@@ -8,14 +8,7 @@ import IEpiserverContext from '../Core/IEpiserverContext';
 import { DefaultServices } from '../Core/IServiceContainer';
 import { ComponentProps } from '../EpiComponent';
 import { Spinner } from '../Components/Spinner';
-
-/**
- * The base type for the Episerver CMS Component
- */
-export type EpiBaseComponentType<T extends IContent = IContent> = React.ComponentType<EpiComponentProps<T>>;
-export type EpiComponentType<T extends IContent = IContent> = EpiBaseComponentType<T> & {
-    CreateComponent(context: IEpiserverContext) : EpiBaseComponentType<IContent>
-}
+import { useLocation } from 'react-router';
 
 /**
  * The properties for the Episerver CMS Component
@@ -42,12 +35,11 @@ const safeLanguageId = (ref: ContentReference | null | undefined, branch = '##',
     }
 }
 
-function _EpiComponent<T extends IContent = IContent>(props: EpiComponentProps<T>) : React.ReactElement<unknown> |null {
+function EpiComponent<T extends IContent = IContent>(props: EpiComponentProps<T>) : React.ReactElement<unknown> |null {
     // Get Hooks & Services
     const ctx = useEpiserver();
     const ssr = useServerSideRendering();
     const repo = useIContentRepository();
-    const componentLoader = useServiceContainer().getService<ComponentLoader>(DefaultServices.ComponentLoader);
 
     // Get convenience variables from services
     const debug = ctx.isDebugActive();
@@ -61,7 +53,6 @@ function _EpiComponent<T extends IContent = IContent>(props: EpiComponentProps<T
         return expandedId === linkId ? props.expandedValue : ssr.getIContent<T>(props.contentLink);
     };
     const [ iContent, setIContent ] = useState(initialContent);
-    const [ loadedTypes, setLoadedTypes ] = useState<string[]>([]);
 
     // Make sure the right iContent has been assigned and will be kept in sync
     useEffect(() => {
@@ -97,51 +88,42 @@ function _EpiComponent<T extends IContent = IContent>(props: EpiComponentProps<T
         }
     }, [ props.contentLink, repo, debug, lang ]);
 
-    // Load && update component if needed
+    if (!iContent)
+        return <Spinner />
+    return <IContentRenderer data={ iContent } contentType={ props.contentType } actionName={ props.actionName } actionData={ props.actionData } />
+}
+EpiComponent.displayName = "Optimizely CMS: ContentLink IContent resolver";
+
+export const IContentRenderer : React.FunctionComponent<{ data: IContent, contentType?: string, actionName?: string, actionData?: unknown, path?: string }> = (props) =>
+{
+    const context = useEpiserver();
+    const path = useLocation().pathname;
+    const componentLoader = useServiceContainer().getService<ComponentLoader>(DefaultServices.ComponentLoader);
+    const componentName = buildComponentName(props.data, props.contentType);
+    const [ componentAvailable, setComponentAvailable ] = useState<boolean>(componentLoader.isPreLoaded(componentName));
+
     useEffect(() => {
         let isCancelled = false;
-        const componentName = iContent ? buildComponentName(iContent, props.contentType) : null;
-        if (!componentName) return;
-
-        if (!componentLoader.isPreLoaded(componentName))
-            componentLoader.LoadType<ComponentProps<T>>(componentName).then(() => { 
-                if (!isCancelled) 
-                    setLoadedTypes(x => ([] as string[]).concat(x, [ componentName ]))
-            });
-
+        componentLoader.LoadType(componentName).then(component => {
+            if (isCancelled) return;
+            setComponentAvailable(component ? true : false);
+        });
         return () => { isCancelled = true }
-    }, [ iContent, componentLoader, props.contentType ]);
-    
-    // Render iContent
-    const shouldRender = safeLanguageId(props.contentLink, lang) === (iContent ? safeLanguageId(iContent.contentLink, lang) : '-NO-ICONTENT-');
-    const componentName = iContent ? buildComponentName(iContent, props.contentType) : null;
-    const IContentComponent = componentName && componentLoader.isPreLoaded(componentName) ? componentLoader.getPreLoadedType<ComponentProps<T>>(componentName) : null;
-    return shouldRender && iContent && IContentComponent ? 
-            <EpiComponentErrorBoundary componentName={ componentName || "unkown component" }>
-                <IContentComponent { ...{ ...props, context: ctx, data: iContent } } />
-                <DebugComponentList loadedComponents={ loadedTypes } />
-            </EpiComponentErrorBoundary>  : 
-            <Spinner />;
+    }, [componentName, componentLoader])
+
+    if (!componentAvailable)
+        return <Spinner />
+
+    const IContentComponent = componentLoader.getPreLoadedType<ComponentProps<IContent>>(componentName);
+    if (!IContentComponent)
+        return <Spinner />
+
+    return <EpiComponentErrorBoundary componentName={ componentName || "Error resolving component" }>
+        <IContentComponent { ...{ ...props, context, contentLink: props.data.contentLink, path: props.path || path }} />
+    </EpiComponentErrorBoundary>
 }
+IContentRenderer.displayName = "Optimizely CMS: IContent renderer";
 
-const DebugComponentList : React.FunctionComponent<{ loadedComponents: string[] }> = (props) => {
-    const debug = useEpiserver().isDebugActive();
-    if (!debug) return null;
-    return <ul aria-hidden="true" style={ { display: "none" }}>{ props?.loadedComponents?.map(x => <li key={ x }>{ x }</li>) }</ul>
-}
-
-/**
- * Create the instantiable type of the EpiComponent for the current
- * context. It'll return the base EpiComponent or a EpiComponent wrapped
- * in the connect method from React-Redux.
- * 
- * @param { IEpiserverContext } context The application context
- * @returns { EpiBaseComponentType }
- */
-_EpiComponent.CreateComponent = (): EpiBaseComponentType => _EpiComponent;
-
-const EpiComponent : EpiComponentType = _EpiComponent;
-EpiComponent.displayName = "Episerver IContent"
 export default EpiComponent;
 
 //#region Internal methods for the Episerver CMS Component
@@ -168,14 +150,16 @@ type EpiComponentErrorBoundaryProps = React.PropsWithChildren<{
 }>
 class EpiComponentErrorBoundary extends React.Component<EpiComponentErrorBoundaryProps, { hasError: boolean }>
 {
-    constructor(props: EpiComponentErrorBoundaryProps) {
-        super(props);
-        this.state = { hasError: false };
-    }
+    static displayName = "Optimizely CMS: IContent Error Boundary";
     
     static getDerivedStateFromError() {
         // Update state so the next render will show the fallback UI.
         return { hasError: true };
+    }
+
+    constructor(props: EpiComponentErrorBoundaryProps) {
+        super(props);
+        this.state = { hasError: false };
     }
     
     componentDidCatch(error: unknown, errorInfo: unknown) {

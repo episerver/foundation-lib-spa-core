@@ -18,7 +18,7 @@ import { ContentReference, ContentLinkService } from '../Models/ContentLink';
 import IContent, { IContentData, GenericProperty, genericPropertyIsProperty } from '../Models/IContent';
 import Website from '../Models/Website';
 import WebsiteList, { hostnameFilter, languageFilter } from '../Models/WebsiteList';
-import ServerContextAccessor from '../ServerSideRendering/ServerContextAccessor';
+import IServerContextAccessor from '../ServerSideRendering/IServerContextAccessor';
 
 /**
  * A wrapper for IndexedDB offering an Asynchronous API to load/fetch content items from the database
@@ -41,7 +41,7 @@ export class IContentRepository extends EventEmitter<IPatchableRepositoryEvents<
      * 
      * @param { IContentDeliveryAPI } api The ContentDelivery API wrapper to use within this IContent Repository
      */
-    public constructor (api: IContentDeliveryAPI, config?: Partial<IRepositoryConfig>, serverContext ?: ServerContextAccessor)
+    public constructor (api: IContentDeliveryAPI, config?: Partial<IRepositoryConfig>, serverContext ?: IServerContextAccessor)
     {
         super();
         this._api = api;

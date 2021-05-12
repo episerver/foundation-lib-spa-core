@@ -23,5 +23,6 @@ export const EpiserverWebsite = (props) => {
 function getLayout(context) {
     return context.config().layout || Layout;
 }
+EpiserverWebsite.displayName = "Optimizely CMS: Website";
 export default EpiserverWebsite;
 //# sourceMappingURL=CmsSite.js.map

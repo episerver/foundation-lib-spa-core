@@ -29,4 +29,7 @@ export declare type PropertyProps<T extends IContent> = HTMLAttributes<HTMLEleme
     className?: string;
 };
 export declare function Property<T extends IContent>(props: React.PropsWithChildren<PropertyProps<T>>): ReactElement<unknown> | null;
+export declare namespace Property {
+    var displayName: string;
+}
 export default Property;

@@ -5,7 +5,7 @@ import IEpiserverContext from '../Core/IEpiserverContext';
 import IEventEngine from '../Core/IEventEngine';
 import IServiceContainer, { DefaultServices } from '../Core/IServiceContainer';
 import IContentRepository from '../Repository/IContentRepository';
-import ServerContextAccessor from '../ServerSideRendering/ServerContextAccessor';
+import IServerContextAccessor from '../ServerSideRendering/IServerContextAccessor';
 import CmsState from '../State/CmsState'
 import { ContentAppState } from '../State/Reducer';
 
@@ -77,9 +77,9 @@ export function useForceUpdate(){
     return () => setValue(value + 1); // update the state to force render
 }
 
-export function useServerSideRendering() : ServerContextAccessor {
+export function useServerSideRendering() : IServerContextAccessor {
     const sc = useServiceContainer();
-    return sc.getService<ServerContextAccessor>(DefaultServices.ServerContext);
+    return sc.getService<IServerContextAccessor>(DefaultServices.ServerContext);
 }
 
 export function useEvents() : IEventEngine {

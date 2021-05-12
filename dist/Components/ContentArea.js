@@ -4,11 +4,11 @@ import { ContentLinkService } from '../Models/ContentLink';
 import EpiComponent from './EpiComponent';
 export const ContentArea = (props) => {
     var _a, _b, _c;
+    const ctx = useEpiserver();
     // Check if the areay is empty
     if (!((_a = props.data) === null || _a === void 0 ? void 0 : _a.value))
         return props.children ? React.createElement("div", null, props.children) : React.createElement(DefaultEmptyContentArea, { propertyName: props.propertyName });
     // Build the configuration
-    const ctx = useEpiserver();
     const globalConfig = ((_b = ctx.config()) === null || _b === void 0 ? void 0 : _b.contentArea) || {};
     const config = Object.assign(Object.assign({}, globalConfig), props);
     const wrapperClass = getConfigValue(config, 'wrapperClass', 'content-area');
@@ -67,7 +67,7 @@ export const ContentArea = (props) => {
     // Output HTML
     return React.createElement("div", { className: wrapperClass, "data-epi-edit": ctx.isEditable() ? props.propertyName : undefined }, rendered);
 };
-ContentArea.displayName = "ContentArea";
+ContentArea.displayName = "Optimizely CMS: Content Area";
 export default ContentArea;
 /**
  * A type-checked method that reads a value from the configuration, eliminating the "undefined" value option when
@@ -109,7 +109,7 @@ const ContentAreaItem = (props) => {
         wrapperProps["data-epi-block-id"] = blockId;
     return React.createElement("div", Object.assign({}, wrapperProps));
 };
-ContentAreaItem.displayName = "ContentAreaItem";
+ContentAreaItem.displayName = "Optimizely CMS: Content Area Item";
 /**
  * Render and empty Content Area
  *
@@ -124,5 +124,5 @@ const DefaultEmptyContentArea = (props) => {
                 React.createElement("i", null, props.propertyName || 'this area')));
     return null;
 };
-DefaultEmptyContentArea.displayName = "DefaultEmptyContentArea";
+DefaultEmptyContentArea.displayName = "Optimizely CMS: Empty Content Area";
 //# sourceMappingURL=ContentArea.js.map

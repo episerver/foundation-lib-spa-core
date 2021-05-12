@@ -5,7 +5,7 @@ import EventEmitter from 'eventemitter3';
 import IContentDeliveryAPI from '../ContentDelivery/IContentDeliveryAPI';
 import { IRepositoryConfig } from './IRepository';
 import IIContentRepository, { IPatchableRepositoryEvents } from './IIContentRepository';
-import ServerContextAccessor from '../ServerSideRendering/ServerContextAccessor';
+import IServerContextAccessor from '../ServerSideRendering/IServerContextAccessor';
 import StringUtils from '../Util/StringUtils';
 
 // Import Taxonomy
@@ -18,9 +18,9 @@ export class ServerSideIContentRepository extends EventEmitter<IPatchableReposit
 {
     private _api : IContentDeliveryAPI;
     private _config : Readonly<Partial<IRepositoryConfig>>
-    private _context : ServerContextAccessor
+    private _context : IServerContextAccessor
 
-    public constructor(api: IContentDeliveryAPI, config: Partial<IRepositoryConfig>, serverContext: ServerContextAccessor)
+    public constructor(api: IContentDeliveryAPI, config: Partial<IRepositoryConfig>, serverContext: IServerContextAccessor)
     {
         super();
         this._api = api;

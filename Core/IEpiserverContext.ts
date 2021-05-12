@@ -243,6 +243,7 @@ export default interface IEpiserverContext {
     /**
      * Get the cached content by ContentReference object
      *
+     * @deprecated Use the repository / server side rendering instead
      * @param ref The content reference to load
      */
     getContentByContentRef(ref: ContentReference): IContent | null;

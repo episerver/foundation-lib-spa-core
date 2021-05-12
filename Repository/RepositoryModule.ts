@@ -39,7 +39,7 @@ import BrowserAuthStorage from '../ContentDelivery/BrowserAuthStorage';
 import ServerAuthStorage from '../ContentDelivery/ServerAuthStorage';
 
 // Server side rendering support
-import ServerContextAccessor from '../ServerSideRendering/ServerContextAccessor';
+import IServerContextAccessor from '../ServerSideRendering/IServerContextAccessor';
 
 // Private types
 type EpiReadyEvent = {
@@ -127,7 +127,7 @@ export default class RepositoryModule extends BaseInitializableModule implements
 
     protected IIContentRepositoryFactory(container: IServiceContainer, api: IContentDeliveryAPI, config: Partial<IRepositoryConfig>) : IIContentRepository
     {
-        const ssr = container.getService<ServerContextAccessor>(DefaultServices.ServerContext);
+        const ssr = container.getService<IServerContextAccessor>(DefaultServices.ServerContext);
         const context = container.getService<IExecutionContext>(DefaultServices.ExecutionContext);
         if (context.isServerSideRendering)
             return new SSRIContentRepository(api, config, ssr);

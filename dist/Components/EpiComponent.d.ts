@@ -3,13 +3,6 @@ import IContent from '../Models/IContent';
 import IEpiserverContext from '../Core/IEpiserverContext';
 import { ComponentProps } from '../EpiComponent';
 /**
- * The base type for the Episerver CMS Component
- */
-export declare type EpiBaseComponentType<T extends IContent = IContent> = React.ComponentType<EpiComponentProps<T>>;
-export declare type EpiComponentType<T extends IContent = IContent> = EpiBaseComponentType<T> & {
-    CreateComponent(context: IEpiserverContext): EpiBaseComponentType<IContent>;
-};
-/**
  * The properties for the Episerver CMS Component
  */
 export declare type EpiComponentProps<T extends IContent = IContent> = Omit<ComponentProps<T>, "data" | "context"> & {
@@ -24,5 +17,15 @@ export declare type EpiComponentProps<T extends IContent = IContent> = Omit<Comp
      */
     context?: IEpiserverContext;
 };
-declare const EpiComponent: EpiComponentType;
+declare function EpiComponent<T extends IContent = IContent>(props: EpiComponentProps<T>): React.ReactElement<unknown> | null;
+declare namespace EpiComponent {
+    var displayName: string;
+}
+export declare const IContentRenderer: React.FunctionComponent<{
+    data: IContent;
+    contentType?: string;
+    actionName?: string;
+    actionData?: unknown;
+    path?: string;
+}>;
 export default EpiComponent;
