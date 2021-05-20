@@ -1,6 +1,6 @@
 // Lodash
 import merge from 'lodash/merge';
-import clone from 'lodash/clone';
+import clone from 'lodash/cloneDeep';
 
 // Core libraries
 import IInitializableModule, { BaseInitializableModule } from '../Core/IInitializableModule';
@@ -192,7 +192,6 @@ export default class RepositoryModule extends BaseInitializableModule implements
         }
 
         repo.patch(baseId, (item) => {
-            const out = clone<IContent>(item);
             event.properties.forEach(property => {
                 if (property.successful) {
                     const propertyData : { [key: string ]: Partial<IContentProperty> | string } = { };
@@ -200,7 +199,7 @@ export default class RepositoryModule extends BaseInitializableModule implements
                         switch (property.name.substr(9)) {
                         case 'name':
                             if (debug) this.log('EpiContentSaved: Received updated name');
-                            propertyData.name = isStringProperty(out, 'name') ? property.value as string : { expandedValue: undefined, value: property.value };
+                            propertyData.name = isStringProperty(item, 'name') ? property.value as string : { expandedValue: undefined, value: property.value };
                             break;
                         default:
                             if (debug) this.warn('EpiContentSaved: Received unsupported property ', property);
@@ -213,11 +212,11 @@ export default class RepositoryModule extends BaseInitializableModule implements
                             value: property.value
                         }
                     }
-                    merge(out, propertyData);
+                    merge(item, propertyData);
                 }
             });
-            if (debug) this.log('EpiContentSaved: Patched iContent', out);
-            return out;
+            if (debug) this.log('EpiContentSaved: Patched iContent', item);
+            return item;
         })
     }
 

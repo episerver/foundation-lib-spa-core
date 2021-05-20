@@ -1,5 +1,6 @@
 // Import libraries
 import EventEmitter from 'eventemitter3';
+import clone from 'lodash/cloneDeep';
 
 // Import framework
 import IContentDeliveryAPI, { isNetworkError } from '../ContentDelivery/IContentDeliveryAPI';
@@ -277,7 +278,7 @@ export class IContentRepository extends EventEmitter<IPatchableRepositoryEvents<
             if (!item) return null;
             this.debugMessage('Will apply patch to content item', reference, item, patch);
             this.emit('beforePatch', item.contentLink, item);
-            const patchedItem = patch(item);
+            const patchedItem = patch(clone(item)); // Always work on a cloned version of the content
             this.emit('afterPatch', patchedItem.contentLink, item, patchedItem)
             this.debugMessage('Applied patch to content item', reference, item, patchedItem);
             return await this.ingestIContent(patchedItem);

@@ -18,6 +18,8 @@ export const Router = (props) => {
         getUserConfirmation: props.getUserConfirmation,
         keyLength: props.keyLength
     };
+    if (epi.isInEditMode() || epi.isEditable())
+        return React.createElement(BrowserRouter, Object.assign({}, browserRouterProps), props.children);
     return React.createElement(BrowserRouter, Object.assign({}, browserRouterProps),
         React.createElement(ElementNavigation, null, props.children));
 };

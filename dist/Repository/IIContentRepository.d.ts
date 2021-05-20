@@ -25,7 +25,7 @@ export interface IReadonlyRepositoryEvents<KeyType extends unknown = any, DataTy
 }
 export interface IPatchableRepositoryEvents<KeyType extends unknown = any, DataType extends unknown = any> extends IReadonlyRepositoryEvents<KeyType, DataType> {
     'beforePatch': [item: Readonly<KeyType>, value: DataType];
-    'afterPatch': [item: Readonly<KeyType>, newValue: DataType, oldValue: Readonly<DataType>];
+    'afterPatch': [item: Readonly<KeyType>, oldValue: Readonly<DataType>, newValue: DataType];
 }
 export interface IEventingRepository<EventTypes extends EventEmitter.ValidEventTypes = string | symbol, Context extends unknown = any> {
     /**

@@ -1,6 +1,5 @@
 // Lodash
 import merge from 'lodash/merge';
-import clone from 'lodash/clone';
 // Core libraries
 import { BaseInitializableModule } from '../Core/IInitializableModule';
 import { DefaultServices } from '../Core/IServiceContainer';
@@ -134,7 +133,6 @@ export default class RepositoryModule extends BaseInitializableModule {
             return false;
         }
         repo.patch(baseId, (item) => {
-            const out = clone(item);
             event.properties.forEach(property => {
                 if (property.successful) {
                     const propertyData = {};
@@ -143,7 +141,7 @@ export default class RepositoryModule extends BaseInitializableModule {
                             case 'name':
                                 if (debug)
                                     this.log('EpiContentSaved: Received updated name');
-                                propertyData.name = isStringProperty(out, 'name') ? property.value : { expandedValue: undefined, value: property.value };
+                                propertyData.name = isStringProperty(item, 'name') ? property.value : { expandedValue: undefined, value: property.value };
                                 break;
                             default:
                                 if (debug)
@@ -159,12 +157,12 @@ export default class RepositoryModule extends BaseInitializableModule {
                             value: property.value
                         };
                     }
-                    merge(out, propertyData);
+                    merge(item, propertyData);
                 }
             });
             if (debug)
-                this.log('EpiContentSaved: Patched iContent', out);
-            return out;
+                this.log('EpiContentSaved: Patched iContent', item);
+            return item;
         });
     }
     log(...args) { console.debug(...args); }

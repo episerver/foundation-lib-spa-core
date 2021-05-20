@@ -9,6 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 // Import libraries
 import EventEmitter from 'eventemitter3';
+import cloneDeep from 'lodash/cloneDeep';
 import { IRepositoryPolicy } from './IRepository';
 import { PathResponseIsIContent } from '../ContentDeliveryAPI';
 export class PassthroughIContentRepository extends EventEmitter {
@@ -43,18 +44,18 @@ export class PassthroughIContentRepository extends EventEmitter {
                     return null;
                 if (((_a = item.contentLink) === null || _a === void 0 ? void 0 : _a.workId) && ((_b = item.contentLink) === null || _b === void 0 ? void 0 : _b.workId) > 0) {
                     if (this._config.debug)
-                        console.log('PassthroughIContentRepository: Skipping patch to content item', reference, item);
+                        console.debug('PassthroughIContentRepository: Skipping patch to content item', reference, item);
                     this.emit('beforePatch', item.contentLink, item);
                     this.emit('afterPatch', item.contentLink, item, item);
                     return item;
                 }
                 if (this._config.debug)
-                    console.log('PassthroughIContentRepository: Will apply patch to content item', reference, item, patch);
+                    console.debug('PassthroughIContentRepository: Will apply patch to content item', reference, item, patch);
                 this.emit('beforePatch', item.contentLink, item);
-                const patchedItem = patch(item);
+                const patchedItem = patch(cloneDeep(item));
                 this.emit('afterPatch', patchedItem.contentLink, item, patchedItem);
                 if (this._config.debug)
-                    console.log('PassthroughIContentRepository: Applied patch to content item', reference, item, patchedItem);
+                    console.debug('PassthroughIContentRepository: Applied patch to content item', reference, item, patchedItem);
                 return patchedItem;
             }
             catch (e) {
@@ -75,15 +76,15 @@ export class PassthroughIContentRepository extends EventEmitter {
         }
         catch (e) { /* Ignored on purpose */ }
         if (this._config.debug)
-            console.log(`Passthrough IContent Repository: Resolving ${reference} for ${website ? website.name : hostname}`);
+            console.debug(`Passthrough IContent Repository: Resolving ${reference} for ${website ? website.name : hostname}`);
         const websitePromise = website ? Promise.resolve(website) : this.getWebsite(hostname);
         return websitePromise.then(w => {
             if (w && w.contentRoots[reference]) {
                 if (this._config.debug)
-                    console.log(`Passthrough IContent Repository: Loading ${reference} (${w.contentRoots[reference].guidValue}) for ${website ? website.name : hostname}`);
+                    console.debug(`Passthrough IContent Repository: Loading ${reference} (${w.contentRoots[reference].guidValue}) for ${website ? website.name : hostname}`);
                 return this._api.getContent(w.contentRoots[reference]).then(c => {
                     if (this._config.debug)
-                        console.log(`Passthrough IContent Repository: Laoded ${reference} (${w.contentRoots[reference].guidValue}) for ${website ? website.name : hostname}`);
+                        console.debug(`Passthrough IContent Repository: Laoded ${reference} (${w.contentRoots[reference].guidValue}) for ${website ? website.name : hostname}`);
                     return c;
                 });
             }

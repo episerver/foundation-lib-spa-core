@@ -5,7 +5,7 @@ import IRouteConfig, { IRouteConfigItem } from './IRouteConfig';
 import IEpiserverContext from '../Core/IEpiserverContext';
 import { useEpiserver } from '../Hooks/Context';
 
-export interface RouterProps extends StaticRouterProps, BrowserRouterProps {}
+export type RouterProps = StaticRouterProps & BrowserRouterProps;
 export const Router : React.FunctionComponent<RouterProps> = (props) =>
 {
     const epi = useEpiserver();
@@ -25,12 +25,16 @@ export const Router : React.FunctionComponent<RouterProps> = (props) =>
         getUserConfirmation: props.getUserConfirmation,
         keyLength: props.keyLength
     };
+
+    if (epi.isInEditMode() || epi.isEditable())
+        return <BrowserRouter {...browserRouterProps}>{ props.children }</BrowserRouter>
+
     return <BrowserRouter {...browserRouterProps}><ElementNavigation>{ props.children }</ElementNavigation></BrowserRouter>
 }
 Router.displayName = "Optimizely CMS: Router";
 export default Router;
 
-const ElementNavigation : React.FunctionComponent<{}> = (props) : React.ReactElement => {
+const ElementNavigation : React.FunctionComponent = (props) : React.ReactElement => {
     const history = useHistory();
     const location = useLocation();
     const epi = useEpiserver();

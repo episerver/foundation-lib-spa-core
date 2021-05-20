@@ -1,5 +1,6 @@
 // Import libraries
 import EventEmitter from 'eventemitter3';
+import cloneDeep from 'lodash/cloneDeep';
 
 // Import framework
 import IContentDeliveryAPI, { isNetworkError } from '../ContentDelivery/IContentDeliveryAPI';
@@ -52,16 +53,16 @@ export class PassthroughIContentRepository extends EventEmitter<IPatchableReposi
             const item = await this.load(reference);
             if (!item) return null;
             if (item.contentLink?.workId && item.contentLink?.workId > 0) {
-                if (this._config.debug) console.log('PassthroughIContentRepository: Skipping patch to content item', reference, item);
+                if (this._config.debug) console.debug('PassthroughIContentRepository: Skipping patch to content item', reference, item);
                 this.emit('beforePatch', item.contentLink, item);
                 this.emit('afterPatch', item.contentLink, item, item);
                 return item;
             }
-            if (this._config.debug) console.log('PassthroughIContentRepository: Will apply patch to content item', reference, item, patch);
+            if (this._config.debug) console.debug('PassthroughIContentRepository: Will apply patch to content item', reference, item, patch);
             this.emit('beforePatch', item.contentLink, item);
-            const patchedItem = patch(item);
+            const patchedItem = patch(cloneDeep(item));
             this.emit('afterPatch', patchedItem.contentLink, item, patchedItem)
-            if (this._config.debug) console.log('PassthroughIContentRepository: Applied patch to content item', reference, item, patchedItem);
+            if (this._config.debug) console.debug('PassthroughIContentRepository: Applied patch to content item', reference, item, patchedItem);
             return patchedItem;
         } catch (e) {
             return null;
@@ -79,13 +80,13 @@ export class PassthroughIContentRepository extends EventEmitter<IPatchableReposi
     {
         let hostname = '*';
         try { hostname = window.location.hostname } catch (e) { /* Ignored on purpose */ }
-        if (this._config.debug) console.log(`Passthrough IContent Repository: Resolving ${ reference } for ${ website ? website.name : hostname }`);
+        if (this._config.debug) console.debug(`Passthrough IContent Repository: Resolving ${ reference } for ${ website ? website.name : hostname }`);
         const websitePromise = website ? Promise.resolve(website) : this.getWebsite(hostname);
         return websitePromise.then(w => {
             if (w && w.contentRoots[reference]) {
-                if (this._config.debug) console.log(`Passthrough IContent Repository: Loading ${ reference } (${ w.contentRoots[reference].guidValue }) for ${ website ? website.name : hostname }`);
+                if (this._config.debug) console.debug(`Passthrough IContent Repository: Loading ${ reference } (${ w.contentRoots[reference].guidValue }) for ${ website ? website.name : hostname }`);
                 return this._api.getContent<IContentType>(w.contentRoots[reference]).then(c => {
-                    if (this._config.debug) console.log(`Passthrough IContent Repository: Laoded ${ reference } (${ w.contentRoots[reference].guidValue }) for ${ website ? website.name : hostname }`);
+                    if (this._config.debug) console.debug(`Passthrough IContent Repository: Laoded ${ reference } (${ w.contentRoots[reference].guidValue }) for ${ website ? website.name : hostname }`);
                     return c as IContentType | null;
                 });
             }

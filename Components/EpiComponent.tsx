@@ -27,9 +27,9 @@ export type EpiComponentProps<T extends IContent = IContent> = Omit<ComponentPro
     context?: IEpiserverContext
 }
 
-const safeLanguageId = (ref: ContentReference | null | undefined, branch = '##', def = '') => {
+const safeLanguageId = (ref: ContentReference | null | undefined, branch = '##', def = '', inclWorkId = true) => {
     try {
-        return ref ? ContentLinkService.createLanguageId(ref, branch, true) : def;
+        return ref ? ContentLinkService.createLanguageId(ref, branch, inclWorkId) : def;
     } catch (e) {
         return def;
     }
@@ -57,20 +57,21 @@ function EpiComponent<T extends IContent = IContent>(props: EpiComponentProps<T>
     // Make sure the right iContent has been assigned and will be kept in sync
     useEffect(() => {
         let isCancelled = false;
-        const linkId = safeLanguageId(props.contentLink, lang);
+        const linkId = safeLanguageId(props.contentLink, lang, 'linkId');
 
         // Define listeners to ensure content changes affect the component
-        const onContentPatched = (item: ContentReference, newValue: IContent) => {
-            const itemApiId = safeLanguageId(newValue, lang);
+        const onContentPatched = (contentLink: ContentReference, oldValue: IContent, newValue: IContent) => {
+            const itemApiId = safeLanguageId(contentLink, lang, 'patchedId');
+            if (debug) console.debug('EpiComponent.onContentPatched => Checking content ids (link, received)', linkId, itemApiId);
             if (linkId === itemApiId) {
-                if (debug) console.debug('EpiComponent / onContentPatched - Updating iContent', itemApiId);
+                if (debug) console.debug('EpiComponent.onContentPatched => Updating iContent', itemApiId, newValue);
                 setIContent(newValue as T);
             }
         }
         const onContentUpdated = (item : IContent | null) => {
-            const itemApiId = safeLanguageId(item, lang);
+            const itemApiId = safeLanguageId(item, lang, 'updatedId');
             if (linkId === itemApiId) {
-                if (debug) console.debug('EpiComponent / onContentUpdated - Updating iContent', itemApiId);
+                if (debug) console.debug('EpiComponent.onContentUpdated => Updating iContent', itemApiId, item);
                 setIContent(item as T);
             }
         }
@@ -90,6 +91,7 @@ function EpiComponent<T extends IContent = IContent>(props: EpiComponentProps<T>
 
     if (!iContent)
         return <Spinner />
+
     return <IContentRenderer data={ iContent } contentType={ props.contentType } actionName={ props.actionName } actionData={ props.actionData } />
 }
 EpiComponent.displayName = "Optimizely CMS: ContentLink IContent resolver";
@@ -101,17 +103,20 @@ export const IContentRenderer : React.FunctionComponent<{ data: IContent, conten
     const componentLoader = useServiceContainer().getService<ComponentLoader>(DefaultServices.ComponentLoader);
     const componentName = buildComponentName(props.data, props.contentType);
     const [ componentAvailable, setComponentAvailable ] = useState<boolean>(componentLoader.isPreLoaded(componentName));
+    const debug = context.isDebugActive();
 
     useEffect(() => {
         let isCancelled = false;
         if (!componentLoader.isPreLoaded(componentName)) {
             setComponentAvailable(false);
             componentLoader.LoadType(componentName).then(component => {
+                if (debug) console.debug('IContentRenderer.loadType => Loaded component: ', componentName, component ? 'success' : 'failed', component?.displayName || "Unnamed / no component");
                 if (!isCancelled) setComponentAvailable(component ? true : false);
             });
-        }
+        } else 
+            setComponentAvailable(true);
         return () => { isCancelled = true }
-    }, [componentName, componentLoader])
+    }, [componentName, componentLoader, props.data, debug])
 
     if (!componentAvailable)
         return <Spinner />
@@ -120,8 +125,9 @@ export const IContentRenderer : React.FunctionComponent<{ data: IContent, conten
     if (!IContentComponent)
         return <Spinner />
 
+    if (debug) console.debug('IContentRenderer.render => Component & IContent: ', componentName, props.data);
     return <EpiComponentErrorBoundary componentName={ componentName || "Error resolving component" }>
-        <IContentComponent { ...{ ...props, context, contentLink: props.data.contentLink, path: props.path || path }} />
+        <IContentComponent data={props.data} contentLink={props.data.contentLink} path={path || ''} context={context} actionName={props.actionName} actionData={props.actionData} />
     </EpiComponentErrorBoundary>
 }
 IContentRenderer.displayName = "Optimizely CMS: IContent renderer";

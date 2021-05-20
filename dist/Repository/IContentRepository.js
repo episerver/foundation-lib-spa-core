@@ -9,6 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 // Import libraries
 import EventEmitter from 'eventemitter3';
+import clone from 'lodash/cloneDeep';
 // Import framework
 import { isNetworkError } from '../ContentDelivery/IContentDeliveryAPI';
 import { IRepositoryPolicy } from './IRepository';
@@ -274,7 +275,7 @@ export class IContentRepository extends EventEmitter {
                     return null;
                 this.debugMessage('Will apply patch to content item', reference, item, patch);
                 this.emit('beforePatch', item.contentLink, item);
-                const patchedItem = patch(item);
+                const patchedItem = patch(clone(item)); // Always work on a cloned version of the content
                 this.emit('afterPatch', patchedItem.contentLink, item, patchedItem);
                 this.debugMessage('Applied patch to content item', reference, item, patchedItem);
                 return yield this.ingestIContent(patchedItem);

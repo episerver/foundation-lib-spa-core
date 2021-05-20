@@ -5,9 +5,9 @@ import { ContentLinkService } from '../Models/ContentLink';
 import { DefaultServices } from '../Core/IServiceContainer';
 import { Spinner } from '../Components/Spinner';
 import { useLocation } from 'react-router';
-const safeLanguageId = (ref, branch = '##', def = '') => {
+const safeLanguageId = (ref, branch = '##', def = '', inclWorkId = true) => {
     try {
-        return ref ? ContentLinkService.createLanguageId(ref, branch, true) : def;
+        return ref ? ContentLinkService.createLanguageId(ref, branch, inclWorkId) : def;
     }
     catch (e) {
         return def;
@@ -33,21 +33,23 @@ function EpiComponent(props) {
     // Make sure the right iContent has been assigned and will be kept in sync
     useEffect(() => {
         let isCancelled = false;
-        const linkId = safeLanguageId(props.contentLink, lang);
+        const linkId = safeLanguageId(props.contentLink, lang, 'linkId');
         // Define listeners to ensure content changes affect the component
-        const onContentPatched = (item, newValue) => {
-            const itemApiId = safeLanguageId(newValue, lang);
+        const onContentPatched = (contentLink, oldValue, newValue) => {
+            const itemApiId = safeLanguageId(contentLink, lang, 'patchedId');
+            if (debug)
+                console.debug('EpiComponent.onContentPatched => Checking content ids (link, received)', linkId, itemApiId);
             if (linkId === itemApiId) {
                 if (debug)
-                    console.debug('EpiComponent / onContentPatched - Updating iContent', itemApiId);
+                    console.debug('EpiComponent.onContentPatched => Updating iContent', itemApiId, newValue);
                 setIContent(newValue);
             }
         };
         const onContentUpdated = (item) => {
-            const itemApiId = safeLanguageId(item, lang);
+            const itemApiId = safeLanguageId(item, lang, 'updatedId');
             if (linkId === itemApiId) {
                 if (debug)
-                    console.debug('EpiComponent / onContentUpdated - Updating iContent', itemApiId);
+                    console.debug('EpiComponent.onContentUpdated => Updating iContent', itemApiId, item);
                 setIContent(item);
             }
         };
@@ -74,24 +76,31 @@ export const IContentRenderer = (props) => {
     const componentLoader = useServiceContainer().getService(DefaultServices.ComponentLoader);
     const componentName = buildComponentName(props.data, props.contentType);
     const [componentAvailable, setComponentAvailable] = useState(componentLoader.isPreLoaded(componentName));
+    const debug = context.isDebugActive();
     useEffect(() => {
         let isCancelled = false;
         if (!componentLoader.isPreLoaded(componentName)) {
             setComponentAvailable(false);
             componentLoader.LoadType(componentName).then(component => {
+                if (debug)
+                    console.debug('IContentRenderer.loadType => Loaded component: ', componentName, component ? 'success' : 'failed', (component === null || component === void 0 ? void 0 : component.displayName) || "Unnamed / no component");
                 if (!isCancelled)
                     setComponentAvailable(component ? true : false);
             });
         }
+        else
+            setComponentAvailable(true);
         return () => { isCancelled = true; };
-    }, [componentName, componentLoader]);
+    }, [componentName, componentLoader, props.data, debug]);
     if (!componentAvailable)
         return React.createElement(Spinner, null);
     const IContentComponent = componentLoader.getPreLoadedType(componentName, false);
     if (!IContentComponent)
         return React.createElement(Spinner, null);
+    if (debug)
+        console.debug('IContentRenderer.render => Component & IContent: ', componentName, props.data);
     return React.createElement(EpiComponentErrorBoundary, { componentName: componentName || "Error resolving component" },
-        React.createElement(IContentComponent, Object.assign({}, Object.assign(Object.assign({}, props), { context, contentLink: props.data.contentLink, path: props.path || path }))));
+        React.createElement(IContentComponent, { data: props.data, contentLink: props.data.contentLink, path: path || '', context: context, actionName: props.actionName, actionData: props.actionData }));
 };
 IContentRenderer.displayName = "Optimizely CMS: IContent renderer";
 export default EpiComponent;
