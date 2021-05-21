@@ -38,10 +38,24 @@ export const RoutedComponent = (props) => {
                 setIContent(newValue);
             }
         };
+        const afterUpdate = (item) => {
+            if (!item)
+                return;
+            const itemApiId = ContentLinkService.createLanguageId(item, lang, true);
+            if (debug)
+                console.debug('RoutedComponent.onContentPatched => Checking content ids (link, received)', linkId, itemApiId);
+            if (linkId === itemApiId) {
+                if (debug)
+                    console.debug('RoutedComponent.onContentUpdated => Updating iContent', itemApiId, item);
+                setIContent(item);
+            }
+        };
         repo.addListener("afterPatch", afterPatch);
+        repo.addListener("afterUpdate", afterUpdate);
         return () => {
             isCancelled = true;
             repo.removeListener("afterPatch", afterPatch);
+            repo.removeListener("afterUpdate", afterUpdate);
         };
     }, [repo, debug, lang, iContent]);
     if (iContent === null)
