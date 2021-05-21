@@ -6,11 +6,11 @@ export declare type TComponentTypePromise<T extends unknown = ComponentProps<ICo
 /**
  * Type defintiion to allow access to the pre-loaded modules
  */
-export declare type LoadedModuleList<T = ComponentProps<IContent>> = {
-    [key: string]: TComponentType<T>;
+export declare type LoadedModuleList = {
+    [key: string]: ComponentType;
 };
-export declare type LoadingModuleList<T = ComponentProps<IContent>> = {
-    [key: string]: TComponentTypePromise<T>;
+export declare type LoadingModuleList = {
+    [key: string]: Promise<ComponentType>;
 };
 export declare type IComponentLoaderList = IComponentLoader[];
 export declare type IComponentLoaderConfig = (IComponentLoader | IComponentLoaderType)[] & {
@@ -36,12 +36,12 @@ export declare class ComponentLoader {
     /**
      * The cache of components already pre-loaded by this loader
      */
-    protected cache: LoadedModuleList<any>;
+    protected cache: LoadedModuleList;
     /**
      * The list of promises currenlty being awaited by this loader, prior
      * to adding them to the cache.
      */
-    protected loading: LoadingModuleList<any>;
+    protected loading: LoadingModuleList;
     /**
      * The list of IComponent Loaders
      */
@@ -74,7 +74,7 @@ export declare class ComponentLoader {
     getPreLoadedType<P = ComponentProps<IContent>>(component: string, throwOnUnknown?: boolean): ComponentType<P> | null;
     getPreLoadedComponent(component: string, props: ComponentProps<IContent>): ReactNode;
     LoadType<P = ComponentProps<IContent>>(component: string): Promise<ComponentType<P>>;
-    protected doLoadComponentType(component: string): Promise<TComponentType>;
-    LoadComponent<P = ComponentProps<IContent>>(component: string, props: P): Promise<React.ReactElement<P, any>>;
+    protected doLoadComponentType(component: string): Promise<ComponentType>;
+    LoadComponent<P = ComponentProps<IContent>>(component: string, props: P): Promise<React.ReactElement<P>>;
 }
 export default ComponentLoader;

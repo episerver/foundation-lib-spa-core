@@ -1,6 +1,5 @@
 import IContent from './Models/IContent';
 import ContentLink from './Models/ContentLink';
-import { ContentAreaPropertyValue } from './Components/ContentArea';
 /**
  * Default untyped property definition
  */
@@ -9,9 +8,8 @@ export declare type Property<ValueType = any, ExpandedType = any> = {
     value: ValueType;
     expandedValue?: ExpandedType;
 };
-export default Property;
 /**
- * String typed property definition
+ * Strong typed property definition
  */
 export declare type StringProperty = Property<string>;
 export declare type NumberProperty = Property<number>;
@@ -27,3 +25,16 @@ export declare type LinkProperty = {
     text: string;
     contentLink: ContentLink;
 };
+/**
+ * Definition of the ContentArea property value as used within the ContentDelivery API
+ */
+export declare type ContentAreaPropertyValue = ContentAreaPropertyItem[];
+/**
+ * A single item within an ContentArea, as returned by the ContentDelivery API
+ */
+export declare type ContentAreaPropertyItem = {
+    contentLink: ContentLink;
+    displayOption: string;
+    tag: string;
+};
+export default Property;

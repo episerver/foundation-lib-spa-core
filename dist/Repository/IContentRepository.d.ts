@@ -7,10 +7,10 @@ import IndexedDB from '../IndexedDB/IndexedDB';
 import SchemaUpgrade from '../IndexedDB/SchemaUpgrade';
 import Store from '../IndexedDB/Store';
 import { ContentReference } from '../Models/ContentLink';
-import IContent from '../Models/IContent';
+import IContent, { IContentData } from '../Models/IContent';
 import Website from '../Models/Website';
 import WebsiteList from '../Models/WebsiteList';
-import ServerContextAccessor from '../ServerSideRendering/ServerContextAccessor';
+import IServerContextAccessor from '../ServerSideRendering/IServerContextAccessor';
 /**
  * A wrapper for IndexedDB offering an Asynchronous API to load/fetch content items from the database
  * and underlying Episerver ContentDelivery API.
@@ -19,15 +19,16 @@ export declare class IContentRepository extends EventEmitter<IPatchableRepositor
     protected _api: IContentDeliveryAPI;
     protected _storage: IndexedDB;
     protected _loading: {
-        [key: string]: Promise<IContent | NetworkErrorData<any> | null>;
+        [key: string]: Promise<IContent | NetworkErrorData<unknown> | null>;
     };
+    protected _websitesLoading: Promise<WebsiteList> | undefined;
     protected _config: IRepositoryConfig;
     /**
      * Create a new instance
      *
      * @param { IContentDeliveryAPI } api The ContentDelivery API wrapper to use within this IContent Repository
      */
-    constructor(api: IContentDeliveryAPI, config?: Partial<IRepositoryConfig>, serverContext?: ServerContextAccessor);
+    constructor(api: IContentDeliveryAPI, config?: Partial<IRepositoryConfig>, serverContext?: IServerContextAccessor);
     /**
      * Load the IContent, first try IndexedDB, if not found in the IndexedDB load it from the
      * ContentDelivery API
@@ -36,7 +37,8 @@ export declare class IContentRepository extends EventEmitter<IPatchableRepositor
      * @param { boolean } recursive Whether or all referenced content must be loaded as well
      * @returns { Promise<IContent | null> }
      */
-    load(reference: ContentReference, recursive?: boolean): Promise<IContent | null>;
+    load<IContentType extends IContent = IContent>(reference: ContentReference, recursive?: boolean): Promise<IContentType | null>;
+    protected createStorageId(reference: ContentReference, preferGuid?: boolean, editModeId?: boolean): string;
     /**
      * Force reloading of the content and return the fresh content
      *
@@ -44,7 +46,7 @@ export declare class IContentRepository extends EventEmitter<IPatchableRepositor
      * @param { boolean } recursive Whether or all referenced content must be loaded as well
      * @returns { Promise<IContent | null> }
      */
-    update(reference: ContentReference, recursive?: boolean): Promise<IContent | null>;
+    update<IContentType extends IContent = IContent>(reference: ContentReference, recursive?: boolean): Promise<IContentType | null>;
     /**
      * Validate if the current item is still valid or must be refreshed from the server
      *
@@ -67,21 +69,21 @@ export declare class IContentRepository extends EventEmitter<IPatchableRepositor
      * @param { ContentReference } reference The reference to the content, e.g. something that can be resolved by the ContentDelivery API
      * @returns { Promise<IContent | null> }
      */
-    get(reference: ContentReference): Promise<IContent | null>;
-    getByContentId(contentId: string): Promise<IContent | null>;
+    get<IContentType extends IContent = IContent>(reference: ContentReference): Promise<IContentType | null>;
+    getByContentId<IContentType extends IContent = IContent>(contentId: string): Promise<IContentType | null>;
     /**
      * Resolve an IContent | null from a route via the index
      *
      * @param { string } route The route to resolve to an iContent item trough the index
      * @returns { Promise<Store<IContentRepositoryItem>> }
      */
-    getByRoute(route: string): Promise<IContent | null>;
-    getByReference(reference: string, website?: Website): Promise<IContent | null>;
+    getByRoute<IContentType extends IContent = IContent>(route: string): Promise<IContentType | null>;
+    getByReference<IContentType extends IContent = IContent>(reference: string, website?: Website): Promise<IContentType | null>;
     patch(reference: ContentReference, patch: (item: Readonly<IContent>) => IContent): Promise<IContent | null>;
     getWebsites(): Promise<WebsiteList>;
     getWebsite(hostname: string, language?: string, matchWildCard?: boolean): Promise<Readonly<Website> | null>;
     getCurrentWebsite(): Promise<Readonly<Website> | null>;
-    protected ingestIContent(iContent: IContent): Promise<IContent | null>;
+    protected ingestIContent(iContent: IContent, overwrite?: boolean): Promise<IContent | null>;
     protected ingestWebsite(website: Website): Promise<Website | null>;
     /**
      * Get the underlying table in IndexedDB
@@ -92,7 +94,13 @@ export declare class IContentRepository extends EventEmitter<IPatchableRepositor
     protected getWebsiteTable(): Promise<Store<WebsiteRepositoryItem>>;
     protected buildWebsiteRepositoryItem(website: Website): WebsiteRepositoryItem;
     protected buildRepositoryItem(iContent: IContent): IContentRepositoryItem;
-    protected recursiveLoad(iContent: IContent, recurseDown?: boolean): Promise<void>;
+    protected recursiveLoad(iContent: IContentData, recurseDown?: boolean): Promise<void>;
     protected schemaUpgrade: SchemaUpgrade;
+    /**
+     * Write a debug message
+     *
+     * @param message The message to write to the debugging system
+     */
+    protected debugMessage(...message: unknown[]): void;
 }
 export default IContentRepository;

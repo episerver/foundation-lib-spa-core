@@ -8,6 +8,20 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 /**
+ * Check if the browser cache for Fetch Requests/Responses is available
+ *
+ * @returns Whether the caches are available
+ */
+export function cachesAvailable() {
+    try {
+        return caches ? true : false;
+    }
+    catch (e) {
+        return false;
+    }
+}
+const isCachesAvailable = cachesAvailable();
+/**
  * A basic implementation of an AxiosAdapter to let Axios use the Fetch API to
  * retrieve content.
  *
@@ -33,32 +47,36 @@ export const FetchAdapter = (config) => __awaiter(void 0, void 0, void 0, functi
         headers['User-Agent'] = userAgent;
     }
     const requestConfig = {
-        headers,
+        headers: new Headers(headers),
+        mode: 'cors',
+        referrerPolicy: 'no-referrer',
         credentials: config.withCredentials ? "include" : "omit",
         method: config.method,
         redirect: config.maxRedirects ? "follow" : "error",
-        body: config.data
+        body: config.data,
+        cache: 'no-store',
     };
     const request = new Request(requestUrl.href, requestConfig);
     let r;
     try {
-        if (FetchAdapter.isCachable && caches && FetchAdapter.isCachable.some(test => test(requestUrl))) {
+        if (isCachesAvailable && FetchAdapter.isCachable && FetchAdapter.isCachable.some(test => test(request))) {
             const cache = yield caches.open(userAgent);
-            const cacheResponse = yield cache.match(request);
-            if (!cacheResponse) {
-                r = yield fetch(request);
-                cache.put(request, r.clone());
-            }
-            else {
-                r = cacheResponse;
-            }
+            r = yield cache.match(request).then(cr => cr || fetch(request).then(fr => { cache.put(request, fr.clone()); return fr; }));
         }
         else {
             r = yield fetch(request);
         }
     }
     catch (e) {
-        r = yield fetch(request);
+        const errorResponse = {
+            config,
+            request,
+            status: 500,
+            statusText: 'Error fetching data',
+            headers: {},
+            data: undefined
+        };
+        return errorResponse;
     }
     const responseHeaders = {};
     r.headers.forEach((value, name) => responseHeaders[name] = value);
@@ -72,14 +90,17 @@ export const FetchAdapter = (config) => __awaiter(void 0, void 0, void 0, functi
     };
     switch (config.responseType) {
         case 'json':
-            response.data = yield r.json();
+            response.data = yield r.json().catch(_ => undefined);
             break;
         case 'text':
-            response.data = yield r.text();
+            response.data = yield r.text().catch(_ => undefined);
             break;
         case undefined:
         case 'stream':
             response.data = r.body;
+            break;
+        case 'arraybuffer':
+            response.data = yield r.arrayBuffer().catch(_ => undefined);
             break;
         default:
             throw new Error(`Unsupported response type: ${config.responseType}`);
@@ -88,3 +109,4 @@ export const FetchAdapter = (config) => __awaiter(void 0, void 0, void 0, functi
 });
 FetchAdapter.isCachable = [];
 export default FetchAdapter;
+//# sourceMappingURL=FetchAdapter.js.map

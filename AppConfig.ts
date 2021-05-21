@@ -10,7 +10,7 @@ import { IComponentLoaderConfig } from './Loaders/ComponentLoader'
 import IContentDeliveryConfig from './ContentDelivery/Config';
 import { TypeMapperType } from './Loaders/BaseTypeMapper';
 
-export default interface AppConfig {
+export type AppConfig = {
   /**
    * Enable debug logging to the console
    */
@@ -28,9 +28,14 @@ export default interface AppConfig {
   noAjax?: boolean;
 
   /**
-   * The base URL where the SPA is running
+   * The base path, relative to the domain where the SPA is running
    */
   basePath: string;
+
+  /**
+   * The base URL where the spa is running, if different then the epiBaseUrl;
+   */
+  spaBaseUrl?: string
 
   /**
    * The URL where Episerver is running, may or may not be the same as the basePath
@@ -65,9 +70,10 @@ export default interface AppConfig {
   spinner?: SpinnerComponent;
 
   /**
-   * Layout
+   * The layout to apply to the website, this is the "frame" around the routed
+   * content.
    */
-  layout: LayoutComponent;
+  layout?: LayoutComponent;
 
   /**
    * Content Area configuration
@@ -116,3 +122,5 @@ export default interface AppConfig {
    */
   typeMapper ?: TypeMapperType
 }
+
+export default AppConfig;

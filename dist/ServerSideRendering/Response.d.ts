@@ -1,4 +1,4 @@
-export default interface Response {
+export declare type Response = {
     Body: string;
     HtmlAttributes?: string;
     Title?: string;
@@ -7,4 +7,5 @@ export default interface Response {
     Script?: string;
     Style?: string;
     BodyAttributes?: string;
-}
+};
+export default Response;

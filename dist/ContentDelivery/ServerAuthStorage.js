@@ -4,17 +4,12 @@
  * token.
  */
 export class ServerAuthStorage {
-    clearToken() {
-        return true;
-    }
-    storeToken(token) {
-        return false;
-    }
-    hasToken() {
-        return false;
-    }
-    getToken() {
-        return null;
+    constructor() {
+        this.clearToken = () => true;
+        this.storeToken = () => false;
+        this.hasToken = () => false;
+        this.getToken = () => null;
     }
 }
 export default ServerAuthStorage;
+//# sourceMappingURL=ServerAuthStorage.js.map

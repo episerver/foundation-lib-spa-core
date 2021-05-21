@@ -1,7 +1,10 @@
-import DefaultAbstractComponent, { ComponentProps as _ComponentProps } from '../EpiComponent';
-import IContent from '../Models/IContent';
-import { SpinnerInstance, SpinnerProps } from '../Components/Spinner';
+/* eslint-disable @typescript-eslint/no-unused-vars */
+import * as EpiComponentNS from '../EpiComponent';
+export import AbstractComponent = EpiComponentNS.EpiComponent;
+export import AbstractComponentProps = EpiComponentNS.ComponentProps;
 
-export const AbstractComponent = DefaultAbstractComponent;
-export type AbstractComponentProps<T extends IContent = IContent> = _ComponentProps<T>;
-export type Spinner<P extends SpinnerProps = SpinnerProps> = SpinnerInstance<P>;
+import * as SpinnerNS from '../Components/Spinner';
+export import SpinnerProps = SpinnerNS.SpinnerProps; 
+export import Spinner = SpinnerNS.SpinnerComponent;
+export import SpinnerComponent = SpinnerNS.SpinnerComponent;
+export import SpinnerInstance = SpinnerNS.SpinnerInstance;

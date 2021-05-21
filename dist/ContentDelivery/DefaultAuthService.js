@@ -9,8 +9,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 import { IOAuthResponseIsSuccess } from './IAuthService';
 import BrowserAuthStorage from './BrowserAuthStorage';
-export class DefaultAuthService {
+import EventEmitter from 'eventemitter3';
+class DefaultAuthServiceCls extends EventEmitter {
     constructor(api, storage) {
+        super();
         this._storage = storage || new BrowserAuthStorage();
         this._api = api;
         api.TokenProvider = this;
@@ -63,4 +65,7 @@ export class DefaultAuthService {
         });
     }
 }
+// Export fully type-checked for both static and instance type
+export const DefaultAuthService = DefaultAuthServiceCls;
 export default DefaultAuthService;
+//# sourceMappingURL=DefaultAuthService.js.map

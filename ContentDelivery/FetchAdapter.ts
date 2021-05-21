@@ -1,8 +1,24 @@
 import { AxiosResponse, AxiosAdapter, AxiosRequestConfig } from 'axios';
 
 export type CachingFetchAdapter = AxiosAdapter & {
-    isCachable ?: ((url: URL) => boolean)[]
+    isCachable ?: ((request: Readonly<Request>) => boolean)[]
 }
+
+/**
+ * Check if the browser cache for Fetch Requests/Responses is available
+ * 
+ * @returns Whether the caches are available
+ */
+export function cachesAvailable() : boolean
+{
+    try {
+        return caches ? true : false;
+    } catch (e) {
+        return false;
+    }
+}
+
+const isCachesAvailable = cachesAvailable();
 
 /**
  * A basic implementation of an AxiosAdapter to let Axios use the Fetch API to 
@@ -13,7 +29,7 @@ export type CachingFetchAdapter = AxiosAdapter & {
  */
 export const FetchAdapter : CachingFetchAdapter = async (config: AxiosRequestConfig) : Promise<AxiosResponse> => 
 {
-    const userAgent : string = 'Axios-Fetch-Adapter/0.0.1';
+    const userAgent = 'Axios-Fetch-Adapter/0.0.1';
     const requestUrl : URL = new URL(config.url || '', config.baseURL);
     if (config.auth) {
         requestUrl.username = config.auth.username
@@ -35,30 +51,35 @@ export const FetchAdapter : CachingFetchAdapter = async (config: AxiosRequestCon
     }
 
     const requestConfig : RequestInit = {
-        headers,
+        headers: new Headers(headers),
+        mode: 'cors',
+        referrerPolicy: 'no-referrer',
         credentials: config.withCredentials ? "include" : "omit",
         method: config.method,
         redirect: config.maxRedirects ? "follow" : "error", // @ToDo: Implement the actual maximum number of redirects
-        body: config.data
+        body: config.data,
+        cache: 'no-store',
     }
 
     const request = new Request(requestUrl.href, requestConfig);
     let r : Response;
     try {
-        if (FetchAdapter.isCachable && caches && FetchAdapter.isCachable.some(test => test(requestUrl))) {
+        if (isCachesAvailable && FetchAdapter.isCachable && FetchAdapter.isCachable.some(test => test(request))) {
             const cache = await caches.open(userAgent);
-            const cacheResponse = await cache.match(request);
-            if (!cacheResponse) {
-                r = await fetch(request);
-                cache.put(request, r.clone());
-            } else {
-                r = cacheResponse;
-            }
+            r = await cache.match(request).then(cr => cr || fetch(request).then(fr => { cache.put(request, fr.clone()); return fr; }))
         } else {
             r = await fetch(request);
         }
     } catch (e) {
-        r = await fetch(request);
+        const errorResponse: AxiosResponse = {
+            config,
+            request,
+            status: 500,
+            statusText: 'Error fetching data',
+            headers: {},
+            data: undefined
+        }
+        return errorResponse;
     }
     const responseHeaders: { [key: string]: string; } = {};
     r.headers.forEach((value, name) => responseHeaders[name] = value);
@@ -72,14 +93,17 @@ export const FetchAdapter : CachingFetchAdapter = async (config: AxiosRequestCon
     };
     switch (config.responseType) {
         case 'json':
-            response.data = await r.json();
+            response.data = await r.json().catch(_ => undefined);
             break;
         case 'text':
-            response.data = await r.text();
+            response.data = await r.text().catch(_ => undefined);
             break;
         case undefined:
         case 'stream':
             response.data = r.body;
+            break;
+        case 'arraybuffer':
+            response.data = await r.arrayBuffer().catch(_ => undefined);
             break;
         default:
             throw new Error(`Unsupported response type: ${config.responseType}`);

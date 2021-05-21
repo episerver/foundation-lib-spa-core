@@ -1,4 +1,4 @@
-export default interface Response {
+export type Response = {
   Body: string;
   HtmlAttributes?: string;
   Title?: string;
@@ -8,3 +8,4 @@ export default interface Response {
   Style?: string;
   BodyAttributes?: string;
 }
+export default Response;

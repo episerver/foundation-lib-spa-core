@@ -4,3 +4,4 @@ import * as RoutingNS from '../Routing/EpiSpaRouter';
  */
 export const Router = RoutingNS.Router;
 export const Content = RoutingNS.RoutedContent;
+//# sourceMappingURL=Routing.js.map

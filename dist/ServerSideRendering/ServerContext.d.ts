@@ -7,34 +7,76 @@ declare type WebsiteOrSerialzed = Website | string;
 export declare function isSerializedIContent(data: IContentOrSerialized): data is string;
 export declare function isSerializedContentLink(data: ContentLinkOrSerialzed): data is string;
 export declare function isSerializedWebsite(data: WebsiteOrSerialzed): data is string;
+declare type LikeALocation = {
+    host: string;
+    hostname: string;
+    href: string;
+    origin: string;
+    pathname: string;
+    protocol: string;
+    search: string;
+};
 /**
  * The TypeScript definition of the ServerContext being passed from .Net to the
  * React Application.
  */
-export declare type ServerContext = {
+export declare type DefaultServerContext = {
     /**
      * Window.location compatible location object.
      */
-    Location: any;
+    location: LikeALocation;
     /**
      * The current Path of the request being handled
      */
-    Path: string;
+    path: string;
     /**
      * The IContent passed from the execution (JSON Encoded)
      */
-    IContent: IContentOrSerialized;
+    iContent: IContent;
     /**
      * The ContentLink passed from the execution (JSON Encoded)
      */
-    ContentLink: ContentLinkOrSerialzed;
+    contentLink: ContentLink;
     /**
      * The Current Website (JSON encoded)
      */
-    Website: WebsiteOrSerialzed;
+    website: Website;
     /**
-     * The content of the the current start page (JSON Encoded)
+     * All content items used during server side rendering
      */
-    StartPageData: IContentOrSerialized;
+    contents: IContent[];
+    /**
+     * Status marker for the current context
+     */
+    status?: "available" | "loading";
+    /**
+     * Ready handler
+     */
+    onReady?: () => void;
+};
+export declare type SerializedServerContext = DefaultServerContext & {
+    /**
+     * The IContent passed from the execution (JSON Encoded)
+     */
+    iContent: IContentOrSerialized;
+    /**
+     * The ContentLink passed from the execution (JSON Encoded)
+     */
+    contentLink: ContentLinkOrSerialzed;
+    /**
+     * The Current Website (JSON encoded)
+     */
+    website: WebsiteOrSerialzed;
+    /**
+     * All content items used during server side rendering
+     */
+    contents: IContentOrSerialized[];
+};
+export declare type ServerContext<T extends DefaultServerContext = DefaultServerContext> = T & {
+    /**
+     * Allow custom properties to be written/read from the
+     * context.
+     */
+    [property: string]: unknown | undefined;
 };
 export default ServerContext;

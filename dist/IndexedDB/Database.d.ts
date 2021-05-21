@@ -6,6 +6,8 @@ export declare class Database {
     get Raw(): IDBDatabase;
     get Stores(): string[];
     constructor(idb: IDBDatabase);
+    replaceStore(name: string, keyPath?: string, autoIncrement?: boolean, indices?: TableIndex[]): Promise<boolean>;
+    dropStore(name: string): Promise<boolean>;
     createStore(name: string, keyPath?: string, autoIncrement?: boolean, indices?: TableIndex[]): Promise<boolean>;
     startTransaction(storeNames: string | string[], mode?: "readwrite" | "readonly"): Transaction;
     getStore<T = any>(name: string): Store<T>;

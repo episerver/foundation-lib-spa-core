@@ -12,7 +12,8 @@ export const CmsComponent = (props) => {
     if (ctx.isDebugActive()) {
         console.warn('The CmsComponent has been depricated, use the EpiComponent instead.');
     }
-    const DynamicComponent = EpiComponent.CreateComponent(ctx);
-    return React.createElement(DynamicComponent, Object.assign({}, props));
+    return React.createElement(EpiComponent, Object.assign({}, props));
 };
+CmsComponent.displayName = "Optimizely CMS: Component (DEPRECATED)";
 export default CmsComponent;
+//# sourceMappingURL=CmsComponent.js.map

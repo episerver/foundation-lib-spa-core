@@ -7,3 +7,4 @@ export function isSerializedContentLink(data) {
 export function isSerializedWebsite(data) {
     return typeof data === 'string';
 }
+//# sourceMappingURL=ServerContext.js.map

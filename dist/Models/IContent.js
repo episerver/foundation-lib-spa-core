@@ -4,6 +4,10 @@ export function namePropertyIsString(prop) {
     }
     return false;
 }
+export function genericPropertyIsProperty(prop) {
+    var _a;
+    return ((_a = prop) === null || _a === void 0 ? void 0 : _a.propertyDataType) && typeof (prop.propertyDataType) == 'string' ? true : false;
+}
 export class BaseIContent {
     constructor(baseData) {
         this._serverData = baseData;
@@ -36,3 +40,4 @@ export class BaseIContent {
         return this._propertyMap[prop.toString()];
     }
 }
+//# sourceMappingURL=IContent.js.map

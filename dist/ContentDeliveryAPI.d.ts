@@ -13,13 +13,13 @@ export declare type NetworkErrorData<T = any> = IContent & {
 };
 export declare function PathResponseIsIContent(iContent: PathResponse): iContent is IContent;
 export declare function PathResponseIsActionResponse<P extends any = any>(actionResponse: PathResponse): actionResponse is ActionResponse<P>;
-export declare function getIContentFromPathResponse(response: PathResponse): IContent | null;
+export declare function getIContentFromPathResponse<IContentType extends IContent = IContent>(response: PathResponse<any, IContentType>): IContentType | null;
 /**
  * ContentDelivery API Wrapper
  *
  * @deprecated
  */
-export default class ContentDeliveryAPI {
+export declare class ContentDeliveryAPI {
     protected config: AppConfig;
     protected componentService: string;
     protected websiteService: string;
@@ -106,3 +106,4 @@ export default class ContentDeliveryAPI {
     private counter;
     protected buildNetworkError(reason: any, path?: string): NetworkErrorData;
 }
+export default ContentDeliveryAPI;

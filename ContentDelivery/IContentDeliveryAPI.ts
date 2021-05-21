@@ -8,6 +8,19 @@ import { PathResponse, NetworkErrorData } from '../ContentDeliveryAPI';
 import { IOAuthResponse } from './IAuthService';
 import IAuthTokenProvider from './IAuthTokenProvider';
 
+export function isNetworkError(content: any) : content is NetworkErrorData
+{
+    try {
+        if (typeof(content) !== 'object') return false;
+        const typeString = content?.contentType?.join('/') || '';
+        const providerName = content?.contentLink?.providerName || '';
+        return typeString === 'Errors/NetworkError' && providerName === 'EpiserverSPA';
+    } catch (e) {
+        return false;
+    }
+}
+
+export type IContentDeliverySearchResults<T extends IContent = IContent> = { TotalMatching: number, Results: T[] }
 export type IContentDeliveryResponse<T> = [ T, IContentDeliveryResponseContext ];
 export type IContentDeliveryResponseContext = {
     etag?: string
@@ -121,6 +134,34 @@ export type IContentDeliveryAPI = {
     resolveRoute<T = any, C extends IContent = IContent>(path : string, select ?: string[], expand ?: string[]) : Promise<PathResponse<T, C | NetworkErrorData>>
 
     /**
+     * Perform a basic search by either a single keyword/phrase or a query string encoded set of constraints. 
+     * 
+     * @param { string }    query         Keyword/Phrase or query string
+     * @param { string }    orderBy
+     * @param { number }    skip
+     * @param { number }    top
+     * @param { boolean }   personalized  Wether or not personalized results must be returned
+     * @param { string }    select
+     * @param { string }    expand
+     * @returns The search results
+     */
+    basicSearch<T extends IContent = IContent>(query: string, orderBy?: string, skip ?: number, top ?: number, personalized?: boolean, select?: string[], expand?: string[]) : Promise<IContentDeliverySearchResults<T>>
+
+    /**
+     * Perform an advanced search by an OData Query 
+     * 
+     * @param { string }    query         Keyword/Phrase or query string
+     * @param { string }    orderBy
+     * @param { number }    skip
+     * @param { number }    top
+     * @param { boolean }   personalized  Wether or not personalized results must be returned
+     * @param { string }    select
+     * @param { string }    expand
+     * @returns The search results
+     */
+    search<T extends IContent = IContent>(query: string, orderBy: string, skip ?: number, top ?: number, personalized?: boolean, select?: string[], expand?: string[]) : Promise<IContentDeliverySearchResults<T>>
+
+    /**
      * Retrieve a single piece of content from Episerver
      * 
      * @param { ContentReference } id The content to fetch from Episerver
@@ -193,6 +234,6 @@ export type IContentDeliveryAPI = {
      * @param { boolean }                       [addDefaultQueryParams] Episerver supports a number of query string parameters that allow it to understand which content to load, if set to false, these will not be added
      * @returns { Promise<IContentDeliveryResponse<TypeOut>> }          Both the returned data as well as part of the response headers
      */
-    raw<TypeOut>(url: string | URL, options?: Partial<AxiosRequestConfig>, addDefaultQueryParams?: boolean) : Promise<IContentDeliveryResponse<TypeOut>>
+    raw<TypeOut>(url: string | URL, options?: Partial<AxiosRequestConfig>, addDefaultQueryParams?: boolean) : Promise<IContentDeliveryResponse<TypeOut | NetworkErrorData>>
 }
 export default IContentDeliveryAPI;

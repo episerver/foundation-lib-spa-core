@@ -32,6 +32,7 @@ export declare class EpiserverSpaContext implements IEpiserverContext, PathProvi
      * @deprecated    Use the ContentRepository_V2 service to fetch content and interact with controllers
      */
     get contentStorage(): ContentDeliveryAPI;
+    get Language(): string;
     init(config: AppConfig, serviceContainer: IServiceContainer, isServerSideRendering?: boolean): void;
     private _initRedux;
     private _initEditMode;
@@ -46,15 +47,15 @@ export declare class EpiserverSpaContext implements IEpiserverContext, PathProvi
     config(): Readonly<AppConfig>;
     componentLoader(): ComponentLoader;
     contentDeliveryApi<API extends ContentDeliveryAPI = ContentDeliveryAPI>(): API;
-    getContentByGuid(guid: string): IContent | null;
+    getContentByGuid(): IContent | null;
     loadContentByGuid(id: string): Promise<IContent>;
-    getContentById(id: ContentApiId): IContent | null;
+    getContentById(): IContent | null;
     loadContentById(id: ContentApiId): Promise<IContent>;
-    getContentByRef(ref: string): IContent | null;
+    getContentByRef(): IContent | null;
     loadContentByRef(ref: string): Promise<IContent>;
-    getContentByPath(path: string): IContent | null;
+    getContentByPath(): IContent | null;
     loadContentByPath(path: string): Promise<IContent>;
-    injectContent(iContent: IContent): void;
+    injectContent(): void;
     /**
      * Check whether or not we're in edit mode by looking at the URL. This
      * yields the correct result prior to the onEpiReady event has fired
@@ -72,14 +73,14 @@ export declare class EpiserverSpaContext implements IEpiserverContext, PathProvi
      * @param action    The action to invoke on the content controller
      */
     buildPath(content: ContentReference, action?: string): string;
-    navigateTo(path: ContentReference, noHistory?: boolean): void;
+    navigateTo(path: ContentReference): void;
     getCurrentWebsite(): Website;
     loadCurrentWebsite(): Promise<Website>;
     getCurrentPath(): string;
     getRoutedContent(): IContent;
     setRoutedContent(iContent?: IContent): IEpiserverContext;
     hasRoutedContent(): boolean;
-    getContentByContentRef(ref: ContentReference): IContent | null;
+    getContentByContentRef(): IContent | null;
     /**
      * Get the base path where the SPA is running. If it's configured to be
      * running at https://example.com/spa/, this method returns /spa. If it's

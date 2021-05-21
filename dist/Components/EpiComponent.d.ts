@@ -1,13 +1,7 @@
-import { FunctionComponent } from 'react';
+import React from 'react';
 import IContent from '../Models/IContent';
 import IEpiserverContext from '../Core/IEpiserverContext';
 import { ComponentProps } from '../EpiComponent';
-/**
- * The base type for the Episerver CMS Component
- */
-export declare type EpiComponentType<T extends IContent = IContent> = FunctionComponent<EpiComponentProps<T>> & {
-    CreateComponent<C extends IContent = IContent>(context: IEpiserverContext): EpiComponentType<C>;
-};
 /**
  * The properties for the Episerver CMS Component
  */
@@ -15,7 +9,7 @@ export declare type EpiComponentProps<T extends IContent = IContent> = Omit<Comp
     /**
      * The data for the component, if it has been fetched before.
      */
-    expandedValue?: IContent;
+    expandedValue: T | undefined;
     /**
      * Legacy context, kept as argument for now, but ignored by the implementation
      *
@@ -23,8 +17,21 @@ export declare type EpiComponentProps<T extends IContent = IContent> = Omit<Comp
      */
     context?: IEpiserverContext;
 };
-/**
- * The Episerver CMS Component wrapper
- */
-export declare const EpiComponent: EpiComponentType;
+declare function EpiComponent<T extends IContent = IContent>(props: EpiComponentProps<T>): React.ReactElement<unknown> | null;
+declare namespace EpiComponent {
+    var displayName: string;
+}
+export declare const IContentRenderer: React.FunctionComponent<{
+    data: IContent;
+    contentType?: string;
+    actionName?: string;
+    actionData?: unknown;
+    path?: string;
+}>;
 export default EpiComponent;
+/**
+ * Create the name of the React Component to load for this EpiComponent
+ *
+ * @param item The IContent to be presented by this EpiComponent
+ */
+export declare const buildComponentName: (item: IContent | null, contentType?: string) => string;

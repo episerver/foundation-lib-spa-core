@@ -17,7 +17,8 @@ import AppConfig from './AppConfig';
 // Episerver SPA/PWA Server Side Rendering libs
 import SSRResponse from './ServerSideRendering/Response';
 
-export default function RenderServerSide(config: AppConfig, serviceContainer?: IServiceContainer): SSRResponse {
+export default function RenderServerSide(config: AppConfig, serviceContainer?: IServiceContainer): SSRResponse
+{
     // Update context
     const ctx = getGlobal();
     ctx.epi = ctx.epi || {};
@@ -30,8 +31,7 @@ export default function RenderServerSide(config: AppConfig, serviceContainer?: I
     config.enableDebug = true;
     EpiSpaContext.init(config, serviceContainer, true);
 
-    let staticContext : StaticRouterContext = {};
-
+    const staticContext : StaticRouterContext = {};
     const body = ReactDOMServer.renderToString(<CmsSite context={ EpiSpaContext } staticContext={ staticContext } />);
     const meta = Helmet.renderStatic();
 

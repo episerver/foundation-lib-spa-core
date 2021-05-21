@@ -31,3 +31,4 @@ export class BrowserAuthStorage {
     }
 }
 export default BrowserAuthStorage;
+//# sourceMappingURL=BrowserAuthStorage.js.map

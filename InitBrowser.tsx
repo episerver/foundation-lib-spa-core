@@ -6,13 +6,26 @@ import EpiContext from './Spa';
 import ComponentPreLoader, { IComponentPreloadList } from "./Loaders/ComponentPreLoader";
 import IServiceContainer from './Core/IServiceContainer';
 import DefaultServiceContainer from './Core/DefaultServiceContainer';
+import ServerContextType from './ServerSideRendering/ServerContext';
 
-export default function InitBrowser(config: AppConfig, containerId?: string, serviceContainer?: IServiceContainer)
+declare let __INITIAL_DATA__ : ServerContextType;
+
+export function InitBrowser(config: AppConfig, containerId?: string, serviceContainer?: IServiceContainer) : void
 {
-    if (!serviceContainer) {
-        serviceContainer = new DefaultServiceContainer();
+    try {
+        if (__INITIAL_DATA__?.status === 'loading') {
+            __INITIAL_DATA__.onReady = () => _doInitBrowser(config, containerId, serviceContainer);
+            return;
+        }
+    } catch (e) {
+        // Ignore on purpose
     }
-    EpiContext.init(config, serviceContainer);
+    return _doInitBrowser(config, containerId, serviceContainer);
+}
+
+function _doInitBrowser(config: AppConfig, containerId?: string, serviceContainer?: IServiceContainer) : void
+{
+    EpiContext.init(config, serviceContainer || new DefaultServiceContainer());
     
     const container = document.getElementById(containerId ? containerId : "epi-page-container");
     if (container && container.childElementCount > 0) {
@@ -28,3 +41,5 @@ export default function InitBrowser(config: AppConfig, containerId?: string, ser
         ReactDOM.render(<CmsSite context={ EpiContext } />, container);
     }
 }
+
+export default InitBrowser;

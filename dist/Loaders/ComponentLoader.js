@@ -59,8 +59,7 @@ export class ComponentLoader {
         return loader;
     }
     addLoaders(loaders) {
-        const me = this;
-        loaders.forEach(x => { x.setDebug(me.debug); me.loaders.push(x); });
+        loaders.forEach(x => { x.setDebug(this.debug); this.loaders.push(x); });
         this.loaders.sort((a, b) => a.order - b.order);
     }
     createLoader(loaderType, add = true) {
@@ -113,9 +112,8 @@ export class ComponentLoader {
         throw new Error(`The component ${component} has not been pre-loaded!`);
     }
     LoadType(component) {
-        if (this.isPreLoaded(component)) {
+        if (this.isPreLoaded(component))
             return Promise.resolve(this.getPreLoadedType(component));
-        }
         try {
             if (this.loading[component]) {
                 return this.loading[component];
@@ -137,9 +135,8 @@ export class ComponentLoader {
     }
     doLoadComponentType(component) {
         const options = this.loaders.filter(x => x.canLoad(component));
-        if (!options || options.length === 0) {
+        if (!options || options.length === 0)
             return Promise.resolve(ComponentNotFound);
-        }
         const tryOption = (idx) => new Promise((resolve, reject) => {
             options[idx].load(component).then(c => {
                 c.displayName = component;
@@ -157,31 +154,6 @@ export class ComponentLoader {
         });
         return tryOption(0);
     }
-    /* protected async doLoadComponent(component: string) : Promise<TComponentType>
-    {
-        if (EpiserverSpaContext.isDebugActive()) console.debug('Loading component: '+component);
-        const type = await (import(
-            /* webpackInclude: /\.tsx$/ */
-    /* webpackExclude: /\.noimport\.tsx$/ */
-    /* webpackChunkName: "components" */
-    /* webpackMode: "lazy" */
-    /* webpackPrefetch: false */
-    /* webpackPreload: false */ /*
-    "app/Components/" + component)
-    .then(exports => {
-        const c = exports.default;
-        c.displayName = component;
-        return c;
-    }).catch(reason => {
-        if (EpiserverSpaContext.isDebugActive()) {
-            console.error(`Error while importing ${component} due to:`, reason);
-        }
-        return ComponentNotFound;
-    }));
-this.cache[component] = type || ComponentNotFound;
-if (EpiserverSpaContext.isDebugActive()) console.debug('Loaded component: '+component);
-return type;
-}*/
     LoadComponent(component, props) {
         return __awaiter(this, void 0, void 0, function* () {
             const type = yield this.LoadType(component);
@@ -189,5 +161,5 @@ return type;
         });
     }
 }
-;
 export default ComponentLoader;
+//# sourceMappingURL=ComponentLoader.js.map

@@ -1,0 +1,1 @@
+{"version":3,"file":"ServerContext.js","sourceRoot":"","sources":["../../ServerSideRendering/ServerContext.ts"],"names":[],"mappings":"AAQA,MAAM,UAAU,oBAAoB,CAAC,IAA0B;IAC7D,OAAO,OAAO,IAAI,KAAK,QAAQ,CAAC;AAClC,CAAC;AACD,MAAM,UAAU,uBAAuB,CAAC,IAA4B;IAClE,OAAO,OAAO,IAAI,KAAK,QAAQ,CAAC;AAClC,CAAC;AACD,MAAM,UAAU,mBAAmB,CAAC,IAAwB;IAC1D,OAAO,OAAO,IAAI,KAAK,QAAQ,CAAC;AAClC,CAAC"}

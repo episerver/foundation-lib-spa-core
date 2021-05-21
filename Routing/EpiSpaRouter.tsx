@@ -5,7 +5,7 @@ import IRouteConfig, { IRouteConfigItem } from './IRouteConfig';
 import IEpiserverContext from '../Core/IEpiserverContext';
 import { useEpiserver } from '../Hooks/Context';
 
-export interface RouterProps extends StaticRouterProps, BrowserRouterProps {}
+export type RouterProps = StaticRouterProps & BrowserRouterProps;
 export const Router : React.FunctionComponent<RouterProps> = (props) =>
 {
     const epi = useEpiserver();
@@ -25,11 +25,16 @@ export const Router : React.FunctionComponent<RouterProps> = (props) =>
         getUserConfirmation: props.getUserConfirmation,
         keyLength: props.keyLength
     };
+
+    if (epi.isInEditMode() || epi.isEditable())
+        return <BrowserRouter {...browserRouterProps}>{ props.children }</BrowserRouter>
+
     return <BrowserRouter {...browserRouterProps}><ElementNavigation>{ props.children }</ElementNavigation></BrowserRouter>
 }
+Router.displayName = "Optimizely CMS: Router";
 export default Router;
 
-const ElementNavigation : React.FunctionComponent<{}> = (props) : React.ReactElement => {
+const ElementNavigation : React.FunctionComponent = (props) : React.ReactElement => {
     const history = useHistory();
     const location = useLocation();
     const epi = useEpiserver();
@@ -45,7 +50,7 @@ const ElementNavigation : React.FunctionComponent<{}> = (props) : React.ReactEle
         const onWindowClick = (event: MouseEvent) => {
             const target: HTMLElement = (event.target as any) as HTMLElement;
             const currentUrl: URL = new URL(window.location.href);
-            let newPath: string = '';
+            let newPath = '';
 
             // Loop parents till we find the link
             let link = target;
@@ -76,18 +81,26 @@ const ElementNavigation : React.FunctionComponent<{}> = (props) : React.ReactEle
                 }
                 history.push(newPath);
                 event.preventDefault();
+
                 return false;
             }
         }
 
+        try {
+            window.scrollTo(0,0);
+        } catch (e) {
+            if (epi.isDebugActive()) console.warn('ElementNavigation: Failed to scroll to top');
+        }
         document.addEventListener('click', onWindowClick);
         return () => {
+            if (epi.isDebugActive()) console.info('ElementNavigation: Removing catch-all click handling for navigation');
             document.removeEventListener('click', onWindowClick);
         }
     });
 
     return props.children as React.ReactElement;
 }
+ElementNavigation.displayName = "Optimizely CMS: Generic click event handler";
 
 export type RoutedContentProps = SwitchProps & {
     keyPrefix ?:    string,
@@ -103,8 +116,9 @@ export const RoutedContent : React.FunctionComponent<RoutedContentProps> = (prop
         { (props.config || []).map( (item, idx) => createRouteNode(item, props.basePath, `${props.keyPrefix}-route-${idx}`, ctx) ) }
     </Switch>
 }
+RoutedContent.displayName = "Optimizely CMS: Route container";
 
-function createRouteNode(route: IRouteConfigItem, basePath : string = "", key ?: string, ctx ?: IEpiserverContext) : React.ReactElement<RouteProps> {
+function createRouteNode(route: IRouteConfigItem, basePath = "", key ?: string, ctx ?: IEpiserverContext) : React.ReactElement<RouteProps> {
     
     let createdRoute : string = basePath ? (basePath.substr(-1) === "/" ? basePath.substr(0, -1) : basePath) : "";
     createdRoute = createdRoute + "/" + (route.path ? (route.path.substr(0,1) === "/" ? route.path.substr(1) : route.path) : "")

@@ -1,23 +1,17 @@
-// Components
-import DefaultProperty, { PropertyProps} from '../Components/Property';
-import DefaultLink from '../Components/Link';
-import DefaultLazyComponent from '../Components/LazyComponent';
-import DefaultContentArea from '../Components/ContentArea';
-import DefaultEpiComponent from '../Components/EpiComponent';
-import DefaultCmsSite from '../Components/CmsSite';
-import DefaultSpinner from '../Components/Spinner';
-import DefaultPage from '../Page';
-
 // Library
-import IContent from '../Models/IContent'
-import { PropsWithChildren, ReactElement } from 'react';
+import React from 'react';
+import IContent from '../Models/IContent';
+import { PropertyProps } from '../Components/Property';
 
-export function Property<T extends IContent>(props: PropsWithChildren<PropertyProps<T>>) : ReactElement<any, any> | null { return DefaultProperty(props); }
-export const Link = DefaultLink;
-export const LazyComponent = DefaultLazyComponent;
-export const ContentArea = DefaultContentArea;
-export const EpiserverContent = DefaultEpiComponent;
-export const Site = DefaultCmsSite;
-export const Spinner = DefaultSpinner;
-export const Page = DefaultPage;
-export type PropertyComponent<T extends IContent> = React.FunctionComponent<PropertyProps<T>>;
+// Descriptors
+export type PropertyComponent<T extends IContent> = React.ComponentType<PropertyProps<T>>;
+
+// Components
+export { default as Property} from '../Components/Property';
+export { default as Link } from '../Components/Link';
+export { default as LazyComponent } from '../Components/LazyComponent';
+export { default as ContentArea } from '../Components/ContentArea';
+export { default as EpiserverContent } from '../Components/EpiComponent';
+export { default as Site } from '../Components/CmsSite';
+export { default as Spinner } from '../Components/Spinner';
+export { default as Page } from '../Page';

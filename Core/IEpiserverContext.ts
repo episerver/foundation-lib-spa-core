@@ -27,6 +27,11 @@ export default interface IEpiserverContext {
     readonly contentStorage : ContentDeliveryAPI;
 
     /**
+     * The current language code
+     */
+    readonly Language : string;
+
+    /**
      * Perform the initialization of the context from the configuration of the application
      *
      * @param config
@@ -238,6 +243,7 @@ export default interface IEpiserverContext {
     /**
      * Get the cached content by ContentReference object
      *
+     * @deprecated Use the repository / server side rendering instead
      * @param ref The content reference to load
      */
     getContentByContentRef(ref: ContentReference): IContent | null;

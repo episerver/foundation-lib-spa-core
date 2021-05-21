@@ -8,3 +8,4 @@ export const Layout = (props) => {
     return React.createElement("div", { className: "site-layout" }, props.children);
 };
 export default Layout;
+//# sourceMappingURL=Layout.js.map

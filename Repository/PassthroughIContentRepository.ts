@@ -1,8 +1,9 @@
 // Import libraries
 import EventEmitter from 'eventemitter3';
+import cloneDeep from 'lodash/cloneDeep';
 
 // Import framework
-import IContentDeliveryAPI from '../ContentDelivery/IContentDeliveryAPI';
+import IContentDeliveryAPI, { isNetworkError } from '../ContentDelivery/IContentDeliveryAPI';
 import { IRepositoryConfig, IRepositoryPolicy } from './IRepository';
 import IIContentRepository, { IPatchableRepositoryEvents } from './IIContentRepository';
 
@@ -37,13 +38,13 @@ export class PassthroughIContentRepository extends EventEmitter<IPatchableReposi
     {
         return Promise.resolve(false);
     }
-    public load(itemId: ContentReference, recursive?: boolean): Promise<IContent | null>
+    public load<IContentType extends IContent = IContent>(itemId: ContentReference, recursive?: boolean): Promise<IContentType | null>
     {
-        return this._api.getContent(itemId);
+        return this._api.getContent<IContentType>(itemId) as Promise<IContentType | null>
     }
-    public update(reference: ContentReference, recursive?: boolean): Promise<IContent | null>
+    public update<IContentType extends IContent = IContent>(reference: ContentReference, recursive?: boolean): Promise<IContentType | null>
     {
-        return this._api.getContent(reference);
+        return this._api.getContent<IContentType>(reference) as Promise<IContentType | null>
     }
 
     public async patch(reference: ContentReference, patch: (item: Readonly<IContent>) => IContent) : Promise<IContent | null>
@@ -52,41 +53,41 @@ export class PassthroughIContentRepository extends EventEmitter<IPatchableReposi
             const item = await this.load(reference);
             if (!item) return null;
             if (item.contentLink?.workId && item.contentLink?.workId > 0) {
-                if (this._config.debug) console.log('PassthroughIContentRepository: Skipping patch to content item', reference, item);
+                if (this._config.debug) console.debug('PassthroughIContentRepository: Skipping patch to content item', reference, item);
                 this.emit('beforePatch', item.contentLink, item);
                 this.emit('afterPatch', item.contentLink, item, item);
                 return item;
             }
-            if (this._config.debug) console.log('PassthroughIContentRepository: Will apply patch to content item', reference, item, patch);
+            if (this._config.debug) console.debug('PassthroughIContentRepository: Will apply patch to content item', reference, item, patch);
             this.emit('beforePatch', item.contentLink, item);
-            const patchedItem = patch(item);
+            const patchedItem = patch(cloneDeep(item));
             this.emit('afterPatch', patchedItem.contentLink, item, patchedItem)
-            if (this._config.debug) console.log('PassthroughIContentRepository: Applied patch to content item', reference, item, patchedItem);
+            if (this._config.debug) console.debug('PassthroughIContentRepository: Applied patch to content item', reference, item, patchedItem);
             return patchedItem;
         } catch (e) {
             return null;
         }
     }
-    public getByContentId(contentId: string): Promise<IContent | null>
+    public getByContentId<IContentType extends IContent = IContent>(contentId: string): Promise<IContentType | null>
     {
-        return this._api.getContent(contentId);
+        return this._api.getContent<IContentType>(contentId) as Promise<IContentType | null>
     }
-    public getByRoute(route: string) : Promise<IContent | null>
+    public getByRoute<IContentType extends IContent = IContent>(route: string) : Promise<IContentType | null>
     {
-        return this._api.resolveRoute(route).then(r => PathResponseIsIContent(r) ? r : r.currentContent);
+        return this._api.resolveRoute<any, IContentType>(route).then(r => (PathResponseIsIContent(r) ? r : r.currentContent) as IContentType);
     }
-    public getByReference(reference: string, website?: Website) : Promise<IContent | null>
+    public getByReference<IContentType extends IContent = IContent>(reference: string, website?: Website) : Promise<IContentType | null>
     {
         let hostname = '*';
         try { hostname = window.location.hostname } catch (e) { /* Ignored on purpose */ }
-        if (this._config.debug) console.log(`Passthrough IContent Repository: Resolving ${ reference } for ${ website ? website.name : hostname }`);
+        if (this._config.debug) console.debug(`Passthrough IContent Repository: Resolving ${ reference } for ${ website ? website.name : hostname }`);
         const websitePromise = website ? Promise.resolve(website) : this.getWebsite(hostname);
         return websitePromise.then(w => {
             if (w && w.contentRoots[reference]) {
-                if (this._config.debug) console.log(`Passthrough IContent Repository: Loading ${ reference } (${ w.contentRoots[reference].guidValue }) for ${ website ? website.name : hostname }`);
-                return this._api.getContent(w.contentRoots[reference]).then(c => {
-                    if (this._config.debug) console.log(`Passthrough IContent Repository: Laoded ${ reference } (${ w.contentRoots[reference].guidValue }) for ${ website ? website.name : hostname }`);
-                    return c;
+                if (this._config.debug) console.debug(`Passthrough IContent Repository: Loading ${ reference } (${ w.contentRoots[reference].guidValue }) for ${ website ? website.name : hostname }`);
+                return this._api.getContent<IContentType>(w.contentRoots[reference]).then(c => {
+                    if (this._config.debug) console.debug(`Passthrough IContent Repository: Laoded ${ reference } (${ w.contentRoots[reference].guidValue }) for ${ website ? website.name : hostname }`);
+                    return c as IContentType | null;
                 });
             }
             return null;
@@ -102,7 +103,7 @@ export class PassthroughIContentRepository extends EventEmitter<IPatchableReposi
     }
     public getCurrentWebsite() : Promise<Readonly<Website> | null>
     {
-        let hostname : string = '*';
+        let hostname = '*';
         try {
             hostname = window.location.hostname;
         } catch (e) { /* Ignored on purpose */ }

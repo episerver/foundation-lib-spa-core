@@ -25,7 +25,7 @@ export class StringUtils {
    * @param {string} subject  The string to manipulate
    * @returns {string}        The manipulated string
    */
-  static TrimRight: (char: string, subject: string) => string = (char, subject) => {
+  static TrimRight: (char: string, subject?: string) => string = (char, subject) => {
     if (typeof char !== 'string' || char.length < 1) {
       throw new Error('Char must be a string of minimal one char');
     }
@@ -76,7 +76,7 @@ export class StringUtils {
     }
     return out;
   }
-};
+}
 
 // Create exported functions
 export const SafeModelName = StringUtils.SafeModelName;

@@ -10,7 +10,8 @@
     "moduleResolution": "node",
     "esModuleInterop": true,
     "lib": ["ES6", "DOM", "DOM.Iterable"],
-    "removeComments": false
+    "removeComments": false,
+    "sourceMap": true
   },
   "exclude": ["node_modules", "tests", "dist"]
 }

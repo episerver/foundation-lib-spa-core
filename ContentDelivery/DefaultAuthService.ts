@@ -1,14 +1,16 @@
 import IContentDeliveryAPI from './IContentDeliveryAPI';
 import IAuthStorage from './IAuthStorage';
-import IAuthService, { IOAuthResponseIsSuccess } from './IAuthService';
+import IAuthService, { IAuthEvents, IAuthServiceStatic, IOAuthResponseIsSuccess } from './IAuthService';
 import IAuthTokenProvider, { IAuthToken } from './IAuthTokenProvider';
 import BrowserAuthStorage from './BrowserAuthStorage';
+import EventEmitter from 'eventemitter3';
 
-export class DefaultAuthService implements IAuthService, IAuthTokenProvider {
+class DefaultAuthServiceCls extends EventEmitter<IAuthEvents> implements IAuthService, IAuthTokenProvider {
     private _storage : IAuthStorage
     private _api : IContentDeliveryAPI
 
     constructor (api: IContentDeliveryAPI, storage ?: IAuthStorage) {
+        super();
         this._storage = storage || new BrowserAuthStorage();
         this._api = api;
         api.TokenProvider = this;
@@ -64,4 +66,7 @@ export class DefaultAuthService implements IAuthService, IAuthTokenProvider {
         });
     }
 }
+
+// Export fully type-checked for both static and instance type
+export const DefaultAuthService : IAuthServiceStatic = DefaultAuthServiceCls;
 export default DefaultAuthService;

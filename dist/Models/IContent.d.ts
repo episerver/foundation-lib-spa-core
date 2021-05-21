@@ -5,8 +5,9 @@ import Language from './Language';
 import LanguageList from './LanguageList';
 import { IContentDeliveryResponseContext } from '../ContentDelivery/IContentDeliveryAPI';
 export declare type NameProperty = string | StringProperty;
-export declare type GenericProperty = string | null | undefined | Language | LanguageList | ContentTypePath | ContentLink | Property<any>;
+export declare type GenericProperty = string | null | undefined | Language | LanguageList | ContentTypePath | ContentLink | Property<unknown>;
 export declare function namePropertyIsString(prop: NameProperty): prop is string;
+export declare function genericPropertyIsProperty<TData>(prop: GenericProperty): prop is Property<TData>;
 export declare type IContent = {
     contentLink: ContentLink;
     name: NameProperty;

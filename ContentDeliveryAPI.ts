@@ -27,7 +27,7 @@ export function PathResponseIsActionResponse<P extends any = any>(actionResponse
   }
   return false;
 }
-export function getIContentFromPathResponse(response: PathResponse) : IContent | null
+export function getIContentFromPathResponse<IContentType extends IContent = IContent>(response: PathResponse<any, IContentType>) : IContentType | null
 {
   if (PathResponseIsActionResponse(response)) {
     return response.currentContent;
@@ -43,7 +43,7 @@ export function getIContentFromPathResponse(response: PathResponse) : IContent |
  * 
  * @deprecated
  */
-export default class ContentDeliveryAPI {
+export class ContentDeliveryAPI {
   protected config: AppConfig;
   protected componentService: string = '/api/episerver/v2.0/content/';
   protected websiteService: string = '/api/episerver/v3/site/';
@@ -366,3 +366,5 @@ export default class ContentDeliveryAPI {
     };
   }
 }
+
+export default ContentDeliveryAPI;

@@ -13,8 +13,7 @@ export const CmsComponent : FunctionComponent<EpiComponentProps> = (props) => {
     if (ctx.isDebugActive()) {
         console.warn('The CmsComponent has been depricated, use the EpiComponent instead.');
     }
-    const DynamicComponent = EpiComponent.CreateComponent(ctx);
-    return <DynamicComponent {...props} />
+    return <EpiComponent {...props} />
 }
-
+CmsComponent.displayName = "Optimizely CMS: Component (DEPRECATED)";
 export default CmsComponent;

@@ -9,18 +9,20 @@ import Layout from './Layout';
 import EpiRouter, { RoutedContent } from '../Routing/EpiSpaRouter';
 import { DefaultServices } from '../Core/IServiceContainer';
 export const EpiserverWebsite = (props) => {
-    const SiteLayout = getLayout(props.context.config());
+    const SiteLayout = getLayout(props.context);
     const ssr = props.context.serviceContainer.getService(DefaultServices.ServerContext);
     const location = (props.context.isServerSideRendering() ? ssr.Path : window.location.pathname) || undefined;
-    const mainSite = React.createElement(EpiserverContext.Provider, { value: props.context },
-        React.createElement(EpiRouter, { location: location, context: props.staticContext },
+    return React.createElement(ReduxProvider, { store: props.context.getStore() },
+        React.createElement(EpiserverContext.Provider, { value: props.context },
             React.createElement(Helmet, null),
-            React.createElement(SiteLayout, { context: props.context },
-                React.createElement(RoutedContent, { config: props.context.config().routes || [], keyPrefix: "CmsSite-RoutedContent" }),
-                props.children)));
-    return props.context.isServerSideRendering() ? mainSite : React.createElement(ReduxProvider, { store: props.context.getStore() }, mainSite);
+            React.createElement(EpiRouter, { location: location, context: props.staticContext },
+                React.createElement(SiteLayout, { context: props.context },
+                    React.createElement(RoutedContent, { config: props.context.config().routes || [], keyPrefix: "CmsSite-RoutedContent" }),
+                    props.children))));
 };
-function getLayout(config) {
-    return config.layout || Layout;
+function getLayout(context) {
+    return context.config().layout || Layout;
 }
+EpiserverWebsite.displayName = "Optimizely CMS: Website";
 export default EpiserverWebsite;
+//# sourceMappingURL=CmsSite.js.map

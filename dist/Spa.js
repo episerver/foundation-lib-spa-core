@@ -13,11 +13,12 @@ import { DefaultServices } from './Core/IServiceContainer';
 import DefaultEventEngine from './Core/DefaultEventEngine';
 import { ContentLinkService } from './Models/ContentLink';
 import getGlobal from './AppGlobal';
-import ServerContextAccessor from './ServerSideRendering/ServerContextAccessor';
+import { Factory as ServerContextFactory } from './ServerSideRendering/IServerContextAccessor';
 // Core Modules
 import RoutingModule from './Routing/RoutingModule';
 import RepositoryModule from './Repository/RepositoryModule';
 import LoadersModule from './Loaders/LoadersModule';
+import StateModule from './State/StateModule';
 import StringUtils from './Util/StringUtils';
 // Create context
 const ctx = getGlobal();
@@ -48,6 +49,11 @@ export class EpiserverSpaContext {
     get contentStorage() {
         return this.serviceContainer.getService(DefaultServices.ContentDeliveryApi);
     }
+    get Language() {
+        var _a;
+        return ((_a = this.serviceContainer.getService(DefaultServices.ContentDeliveryAPI_V2)) === null || _a === void 0 ? void 0 : _a.Language) ||
+            this.config().defaultLanguage;
+    }
     init(config, serviceContainer, isServerSideRendering = false) {
         // Generic init
         this._initialized = InitStatus.Initializing;
@@ -73,17 +79,17 @@ export class EpiserverSpaContext {
         if (process.env.NODE_ENV === 'production' && executionContext.isDebugActive)
             console.warn('Running Episerver SPA with a production build and debug enabled');
         // Create module list
-        this._modules.push(new RepositoryModule(), new RoutingModule(), new LoadersModule());
+        this._modules.push(new RepositoryModule(), new RoutingModule(), new LoadersModule(), new StateModule());
         if (config.modules)
             this._modules = this._modules.concat(config.modules);
         this._modules.sort((a, b) => a.SortOrder - b.SortOrder);
         if (config.enableDebug)
-            console.info(`Episerver SPA modules: ${this._modules.map((m) => m.GetName()).join(', ')}`);
+            console.info(`Episerver SPA modules: ${this._modules.map((m) => `${m.GetName()} (${m.SortOrder})`).join(', ')}`);
         // Register core services
         this._serviceContainer.addService(DefaultServices.Context, this);
         this._serviceContainer.addService(DefaultServices.Config, config);
         this._serviceContainer.addService(DefaultServices.ExecutionContext, executionContext);
-        this._serviceContainer.addService(DefaultServices.ServerContext, new ServerContextAccessor());
+        this._serviceContainer.addService(DefaultServices.ServerContext, ServerContextFactory.create(executionContext, config));
         this._serviceContainer.addService(DefaultServices.EventEngine, eventEngine);
         this._initialized = InitStatus.CoreServicesReady;
         // Have modules add services of their own
@@ -162,7 +168,7 @@ export class EpiserverSpaContext {
         this.enforceInitialized();
         return this._serviceContainer.getService(DefaultServices.ContentDeliveryApi);
     }
-    getContentByGuid(guid) {
+    getContentByGuid() {
         throw new Error('Synchronous content loading is no longer supported');
     }
     loadContentByGuid(id) {
@@ -171,7 +177,7 @@ export class EpiserverSpaContext {
         return repo.load(id).then(iContent => { if (!iContent)
             throw new Error('Content not resolved!'); return iContent; });
     }
-    getContentById(id) {
+    getContentById() {
         throw new Error('Synchronous content loading is no longer supported');
     }
     loadContentById(id) {
@@ -180,7 +186,7 @@ export class EpiserverSpaContext {
         return repo.load(id).then(iContent => { if (!iContent)
             throw new Error('Content not resolved!'); return iContent; });
     }
-    getContentByRef(ref) {
+    getContentByRef() {
         throw new Error('Synchronous content loading is no longer supported');
     }
     loadContentByRef(ref) {
@@ -189,7 +195,7 @@ export class EpiserverSpaContext {
         return repo.getByReference(ref).then(iContent => { if (!iContent)
             throw new Error('Content not resolved!'); return iContent; });
     }
-    getContentByPath(path) {
+    getContentByPath() {
         throw new Error('Synchronous content loading is no longer supported');
     }
     loadContentByPath(path) {
@@ -198,7 +204,7 @@ export class EpiserverSpaContext {
         return repo.getByRoute(path).then(iContent => { if (!iContent)
             throw new Error('Content not resolved!'); return iContent; });
     }
-    injectContent(iContent) {
+    injectContent() {
         // Ignore on purpose, will be removed
     }
     /**
@@ -232,6 +238,12 @@ export class EpiserverSpaContext {
         catch (e) {
             // Ignore error on purpose to go to next test
         }
+        try {
+            return window !== (window === null || window === void 0 ? void 0 : window.top) && (window === null || window === void 0 ? void 0 : window.name) === 'sitePreview';
+        }
+        catch (e) {
+            // Ignore error on purpose to go to next test
+        }
         return false;
     }
     isInEditMode() {
@@ -255,7 +267,8 @@ export class EpiserverSpaContext {
         if (action) {
             itemPath += itemPath.length ? '/' + action : action;
         }
-        return StringUtils.TrimRight('/', ((_a = this.config()) === null || _a === void 0 ? void 0 : _a.epiBaseUrl) + itemPath);
+        const itemUrl = new URL(itemPath, (_a = this.config()) === null || _a === void 0 ? void 0 : _a.epiBaseUrl);
+        return StringUtils.TrimRight('/', itemUrl.href);
     }
     getSpaRoute(path) {
         let newPath = '';
@@ -296,7 +309,7 @@ export class EpiserverSpaContext {
         }
         return newPath;
     }
-    navigateTo(path, noHistory = false) {
+    navigateTo(path) {
         let newPath = '';
         if (ContentLinkService.referenceIsString(path)) {
             newPath = path;
@@ -330,7 +343,6 @@ export class EpiserverSpaContext {
             catch (e) {
                 // Ignored on purpose
             }
-            ;
             const website = yield repo.getWebsite(domain);
             if (!website)
                 throw new Error('Current website not loadable');
@@ -355,9 +367,8 @@ export class EpiserverSpaContext {
     hasRoutedContent() {
         return this._routedContent ? true : false;
     }
-    getContentByContentRef(ref) {
-        const id = ContentLinkService.createApiId(ref);
-        return id ? this.getContentById(id) : null;
+    getContentByContentRef() {
+        throw new Error('No longer supported');
     }
     /**
      * Get the base path where the SPA is running. If it's configured to be
@@ -399,3 +410,4 @@ export class EpiserverSpaContext {
 }
 ctx.EpiserverSpa.Context = ctx.EpiserverSpa.Context || new EpiserverSpaContext();
 export default ctx.EpiserverSpa.Context;
+//# sourceMappingURL=Spa.js.map

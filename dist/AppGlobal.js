@@ -23,3 +23,4 @@ export const getGlobal = () => {
     return ctx;
 };
 export default getGlobal;
+//# sourceMappingURL=AppGlobal.js.map

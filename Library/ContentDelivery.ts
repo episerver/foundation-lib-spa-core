@@ -1,26 +1,15 @@
-
-import ContentDeliveryAPI, { PathResponse as BasePathResponse, NetworkErrorData as BaseNetworkErrorData, PathResponseIsIContent as BasePathResponseIsIContent } from '../ContentDeliveryAPI';
-import BaseActionResponse from '../Models/ActionResponse';
-import _Property, {
-    StringProperty as _StringProperty, 
-    NumberProperty as _NumberProperty, 
-    BooleanProperty as _BooleanProperty, 
-    ContentReferenceProperty as _ContentReferenceProperty, 
-    ContentReferenceListProperty as _ContentReferenceListProperty,
-    ContentAreaProperty as _ContentAreaProperty, 
-    LinkListProperty as _LinkListProperty, 
-    LinkProperty as _LinkProperty
-} from '../Property';
-import _FetchAdapter from '../ContentDelivery/FetchAdapter';
-import IContent, { namePropertyIsString as _namePropertyIsString } from '../Models/IContent';
+// V1 API Imports
+import * as ContentDeliveryApiNS from '../ContentDeliveryAPI';
+import * as ActionResponseNS from '../Models/ActionResponse';
+import * as IContentNS from '../Models/IContent';
+import * as FetchAdapterNS from '../ContentDelivery/FetchAdapter';
 
 // V2 API Imports
-export * from '../Repository/IRepository';
 import * as IContentRepositoryNS from '../Repository/IContentRepository';
 import * as IIContentRepositoryNS from '../Repository/IIContentRepository';
-import IContentDeliveryAPI from '../ContentDelivery/IContentDeliveryAPI';
-import ContentDeliveryAPI_V2 from '../ContentDelivery/ContentDeliveryAPI';
-import IContentDeliveryAPIConfig from '../ContentDelivery/Config';
+import * as IContentDeliveryApiNS from '../ContentDelivery/IContentDeliveryAPI';
+import * as ContentDeliveryApiV2NS from '../ContentDelivery/ContentDeliveryAPI';
+import * as IContentDeliveryApiConfigNS from '../ContentDelivery/Config';
 import * as DefaultAuthServiceNS from '../ContentDelivery/DefaultAuthService';
 import * as IAuthServiceNS from '../ContentDelivery/IAuthService';
 import * as IAuthStorageNS from '../ContentDelivery/IAuthStorage';
@@ -28,43 +17,48 @@ import * as IAuthTokenProviderNS from '../ContentDelivery/IAuthTokenProvider';
 import * as BrowserAuthStorageNS from '../ContentDelivery/BrowserAuthStorage';
 import * as ServerAuthStorageNS from '../ContentDelivery/ServerAuthStorage';
 
-export const PathResponseIsIContent = BasePathResponseIsIContent;
-export const FetchAdapter = _FetchAdapter;
-export const namePropertyIsString = _namePropertyIsString;
-export const DefaultAPI = ContentDeliveryAPI;
-export type API = ContentDeliveryAPI;
-export type NetworkErrorData = BaseNetworkErrorData;
-export type PathResponse<T = any, C extends IContent = IContent> = BasePathResponse<T, C>;
-export type ActionResponse<T = any, C extends IContent = IContent> = BaseActionResponse<T, C>
+// V1 API Exports
+export import PathResponseIsIContent = ContentDeliveryApiNS.PathResponseIsIContent;
+export import PathResponseIsActionResponse = ContentDeliveryApiNS.PathResponseIsActionResponse;
+export import namePropertyIsString = IContentNS.namePropertyIsString;
+/**
+ * @deprecated Please switch to the V2 API
+ */
+export import DefaultAPI = ContentDeliveryApiNS.ContentDeliveryAPI;
+/**
+ * @deprecated Please switch to the V2 API
+ */
+export import API = ContentDeliveryApiNS.ContentDeliveryAPI;
+export import NetworkErrorData = ContentDeliveryApiNS.NetworkErrorData;
+export import PathResponse = ContentDeliveryApiNS.PathResponse;
+export import ActionResponse = ActionResponseNS.ActionResponse;
 
 // Content delivery response modelling
-export type Property<T = any> = _Property<T>;
-export type StringProperty = _StringProperty; 
-export type NumberProperty = _NumberProperty; 
-export type BooleanProperty = _BooleanProperty;
-export type ContentReferenceProperty = _ContentReferenceProperty;
-export type ContentAreaProperty = _ContentAreaProperty;
-export type LinkListProperty = _LinkListProperty;
-export type LinkProperty = _LinkProperty;
-export type ContentReferenceListProperty = _ContentReferenceListProperty;
+export * from '../Property';
 
 // V2 API
-export type IContentDeliveryAPI_V2 = IContentDeliveryAPI;
-export type ConfigV2 = IContentDeliveryAPIConfig;
-export type IIContentRepositoryV2 = IIContentRepositoryNS.IIContentRepository;
-export const RepositoryV2 = IContentRepositoryNS.IContentRepository;
-export const API_V2 = ContentDeliveryAPI_V2;
+export import CachingFetchAdapter = FetchAdapterNS.CachingFetchAdapter;
+export import FetchAdapter = FetchAdapterNS.FetchAdapter;
+export import IContentDeliveryAPI_V2 = IContentDeliveryApiNS.IContentDeliveryAPI;
+export import ConfigV2 = IContentDeliveryApiConfigNS.Config;
+export import IIContentRepositoryV2 = IIContentRepositoryNS.IIContentRepository;
+export import RepositoryV2 = IContentRepositoryNS.IContentRepository;
+export import DefaultAPI_V2 = ContentDeliveryApiV2NS.ContentDeliveryAPI;
+export import API_V2 = ContentDeliveryApiV2NS.ContentDeliveryAPI;
+export import isNetworkError = IContentDeliveryApiNS.isNetworkError;
+
+export * from '../Repository/IRepository';
 
 // V2 Auth API
-export type IAuthService = IAuthServiceNS.IAuthService
-export type IAuthServiceStatic = IAuthServiceNS.IAuthServiceStatic
-export type IOAuthRequest = IAuthServiceNS.IOAuthRequest
-export type IOAuthResponse = IAuthServiceNS.IOAuthResponse
-export type IOAuthErrorResponse = IAuthServiceNS.IOAuthErrorResponse
-export type IOAuthSuccessResponse = IAuthServiceNS.IOAuthSuccessResponse
-export type IAuthStorage = IAuthStorageNS.IAuthStorage
-export type IAuthToken = IAuthTokenProviderNS.IAuthToken
-export type IAuthTokenProvider = IAuthTokenProviderNS.IAuthTokenProvider
-export const DefaultAuthService = DefaultAuthServiceNS.DefaultAuthService
-export const BrowserAuthStorage = BrowserAuthStorageNS.BrowserAuthStorage
-export const ServerAuthStorage = ServerAuthStorageNS.ServerAuthStorage
+export import IAuthService = IAuthServiceNS.IAuthService
+export import IAuthServiceStatic = IAuthServiceNS.IAuthServiceStatic
+export import IOAuthRequest = IAuthServiceNS.IOAuthRequest
+export import IOAuthResponse = IAuthServiceNS.IOAuthResponse
+export import IOAuthErrorResponse = IAuthServiceNS.IOAuthErrorResponse
+export import IOAuthSuccessResponse = IAuthServiceNS.IOAuthSuccessResponse
+export import IAuthStorage = IAuthStorageNS.IAuthStorage
+export import IAuthToken = IAuthTokenProviderNS.IAuthToken
+export import IAuthTokenProvider = IAuthTokenProviderNS.IAuthTokenProvider
+export import DefaultAuthService = DefaultAuthServiceNS.DefaultAuthService
+export import BrowserAuthStorage = BrowserAuthStorageNS.BrowserAuthStorage
+export import ServerAuthStorage = ServerAuthStorageNS.ServerAuthStorage

@@ -17,3 +17,4 @@ export default class ErrorPage {
         return new ErrorPage(500, 'Unkown server error');
     }
 }
+//# sourceMappingURL=ErrorPage.js.map

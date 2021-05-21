@@ -9,3 +9,4 @@ export default class Link extends Component {
         return this.props.children;
     }
 }
+//# sourceMappingURL=Link.js.map
