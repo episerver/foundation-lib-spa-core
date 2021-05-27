@@ -8,6 +8,7 @@ import Layout from './Layout';
 // Import Episerver Components
 import EpiRouter, { RoutedContent } from '../Routing/EpiSpaRouter';
 import { DefaultServices } from '../Core/IServiceContainer';
+import CmsCommunicator from './CmsCommunicator';
 export const EpiserverWebsite = (props) => {
     const SiteLayout = getLayout(props.context);
     const ssr = props.context.serviceContainer.getService(DefaultServices.ServerContext);
@@ -15,6 +16,7 @@ export const EpiserverWebsite = (props) => {
     return React.createElement(ReduxProvider, { store: props.context.getStore() },
         React.createElement(EpiserverContext.Provider, { value: props.context },
             React.createElement(Helmet, null),
+            React.createElement(CmsCommunicator, null),
             React.createElement(EpiRouter, { location: location, context: props.staticContext },
                 React.createElement(SiteLayout, { context: props.context },
                     React.createElement(RoutedContent, { config: props.context.config().routes || [], keyPrefix: "CmsSite-RoutedContent" }),
