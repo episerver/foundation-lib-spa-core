@@ -15,6 +15,7 @@ import Layout, { LayoutComponent } from './Layout';
 import EpiRouter, {  RoutedContent } from '../Routing/EpiSpaRouter';
 import IServerContextAccessor from '../ServerSideRendering/IServerContextAccessor';
 import { DefaultServices } from '../Core/IServiceContainer';
+import CmsCommunicator from './CmsCommunicator';
 
 /**
  * Define the property structure for the CmsSite component
@@ -30,7 +31,8 @@ export const EpiserverWebsite : React.FunctionComponent<CmsSiteProps> = (props) 
     const location = (props.context.isServerSideRendering() ? ssr.Path : window.location.pathname) || undefined;
     return <ReduxProvider store={ props.context.getStore() }>
         <EpiserverContext.Provider value={ props.context }>
-            <Helmet />
+            <Helmet/>
+            <CmsCommunicator />
             <EpiRouter location={ location } context={ props.staticContext }>
                 <SiteLayout context={ props.context } >
                     <RoutedContent config={ props.context.config().routes || [] } keyPrefix="CmsSite-RoutedContent" />
