@@ -18,7 +18,7 @@ const WebsiteList_1 = require("../Models/WebsiteList");
  * A wrapper for IndexedDB offering an Asynchronous API to load/fetch content items from the database
  * and underlying Episerver ContentDelivery API.
  */
-class IContentRepository extends eventemitter3_1.default {
+class IContentRepository extends eventemitter3_1.EventEmitter {
     /**
      * Create a new instance
      *

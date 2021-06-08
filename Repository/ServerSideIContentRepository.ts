@@ -1,5 +1,5 @@
 // Import libraries
-import EventEmitter from 'eventemitter3';
+import { EventEmitter } from 'eventemitter3';
 
 // Import framework
 import IContentDeliveryAPI from '../ContentDelivery/IContentDeliveryAPI';

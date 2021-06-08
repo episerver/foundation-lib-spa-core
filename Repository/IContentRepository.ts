@@ -1,5 +1,5 @@
 // Import libraries
-import EventEmitter from 'eventemitter3';
+import { EventEmitter } from 'eventemitter3';
 import clone from 'lodash/cloneDeep';
 import deepEqual from 'deep-equal';
 

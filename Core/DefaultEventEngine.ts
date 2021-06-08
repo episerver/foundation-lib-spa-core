@@ -1,12 +1,12 @@
 import IEventEngine from './IEventEngine';
 import AppGlobal from '../AppGlobal';
-import EventEmitter from 'eventemitter3';
+import EventEmitterStatic, { EventEmitter } from 'eventemitter3';
 
 /**
  * The default event engine for the SPA
  */
 export class DefaultEventEngine implements IEventEngine {
-    protected _eventEmitter : EventEmitter<string, unknown>;
+    protected _eventEmitter : EventEmitterStatic<string, unknown>;
     protected _listeners : { [key: string] : (...args: unknown[]) => void } = {};
     protected _events : string[] = [];
     protected _debug = false;

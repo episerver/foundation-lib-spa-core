@@ -3,7 +3,7 @@ import IAuthStorage from './IAuthStorage';
 import IAuthService, { IAuthEvents, IAuthServiceStatic, IOAuthResponseIsSuccess } from './IAuthService';
 import IAuthTokenProvider, { IAuthToken } from './IAuthTokenProvider';
 import BrowserAuthStorage from './BrowserAuthStorage';
-import EventEmitter from 'eventemitter3';
+import { EventEmitter } from 'eventemitter3';
 
 class DefaultAuthServiceCls extends EventEmitter<IAuthEvents> implements IAuthService, IAuthTokenProvider {
     private _storage : IAuthStorage
