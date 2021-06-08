@@ -1,4 +1,4 @@
-import React from 'react';
+import { FunctionComponent } from 'react';
 import { SpinnerProps } from './Spinner';
 export declare type LazyComponentProps<T = any> = {
     /**
@@ -17,5 +17,5 @@ export declare type LazyComponentProps<T = any> = {
      */
     noSpinner?: boolean;
 } & SpinnerProps & T;
-export declare const LazyComponent: React.FunctionComponent<LazyComponentProps>;
+export declare const LazyComponent: FunctionComponent<LazyComponentProps>;
 export default LazyComponent;

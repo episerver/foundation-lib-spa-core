@@ -35,7 +35,7 @@ function Property(props) {
                 if (isEditable(props.iContent, ctx)) {
                     propUrlprops['data-epi-edit'] = props.field;
                 }
-                return react_1.default.createElement('a', propUrlprops);
+                return react_1.createElement('a', propUrlprops);
             }
         case 'PropertyDecimal':
         case 'PropertyNumber':

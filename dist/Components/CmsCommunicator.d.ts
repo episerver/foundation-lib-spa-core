@@ -1,4 +1,4 @@
-import React from 'react';
+import { FunctionComponent } from 'react';
 export declare type CmsCommunicatorProps = {
     /**
      * Override the script path for the communicator script
@@ -13,5 +13,5 @@ export declare type CmsCommunicatorProps = {
      */
     scriptFile?: string;
 };
-export declare const CmsCommunicator: React.FunctionComponent<CmsCommunicatorProps>;
+export declare const CmsCommunicator: FunctionComponent<CmsCommunicatorProps>;
 export default CmsCommunicator;

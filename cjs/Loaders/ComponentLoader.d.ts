@@ -1,4 +1,4 @@
-import React, { ReactNode, ComponentType } from 'react';
+import { ReactNode, ComponentType, ReactElement } from 'react';
 import IContent from '../Models/IContent';
 import { ComponentProps } from '../EpiComponent';
 export declare type TComponentType<T extends unknown = ComponentProps<IContent>> = ComponentType<T>;
@@ -75,6 +75,6 @@ export declare class ComponentLoader {
     getPreLoadedComponent(component: string, props: ComponentProps<IContent>): ReactNode;
     LoadType<P = ComponentProps<IContent>>(component: string): Promise<ComponentType<P>>;
     protected doLoadComponentType(component: string): Promise<ComponentType>;
-    LoadComponent<P = ComponentProps<IContent>>(component: string, props: P): Promise<React.ReactElement<P>>;
+    LoadComponent<P = ComponentProps<IContent>>(component: string, props: P): Promise<ReactElement<P>>;
 }
 export default ComponentLoader;

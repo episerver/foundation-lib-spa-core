@@ -1,6 +1,6 @@
-import React, { ComponentType, FunctionComponent } from 'react';
+import { ComponentType, FunctionComponent, PropsWithChildren } from 'react';
 import IEpiserverContext from '../Core/IEpiserverContext';
-export declare type LayoutProps = React.PropsWithChildren<{
+export declare type LayoutProps = PropsWithChildren<{
     context?: IEpiserverContext;
 }>;
 export declare type LayoutComponent<P extends LayoutProps = LayoutProps> = ComponentType<P>;

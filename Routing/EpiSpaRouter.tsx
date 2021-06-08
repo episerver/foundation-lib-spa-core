@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, FunctionComponent, ReactElement } from 'react';
 import { StaticRouter, StaticRouterProps, useHistory, useLocation, Switch, SwitchProps, Route, RouteProps, RouteComponentProps } from 'react-router';
 import { BrowserRouter, BrowserRouterProps } from 'react-router-dom';
 import IRouteConfig, { IRouteConfigItem } from './IRouteConfig';
@@ -6,7 +6,7 @@ import IEpiserverContext from '../Core/IEpiserverContext';
 import { useEpiserver } from '../Hooks/Context';
 
 export type RouterProps = StaticRouterProps & BrowserRouterProps;
-export const Router : React.FunctionComponent<RouterProps> = (props) =>
+export const Router : FunctionComponent<RouterProps> = (props) =>
 {
     const epi = useEpiserver();
 
@@ -34,7 +34,7 @@ export const Router : React.FunctionComponent<RouterProps> = (props) =>
 Router.displayName = "Optimizely CMS: Router";
 export default Router;
 
-const ElementNavigation : React.FunctionComponent = (props) : React.ReactElement => {
+const ElementNavigation : FunctionComponent = (props) : ReactElement => {
     const history = useHistory();
     const location = useLocation();
     const epi = useEpiserver();
@@ -98,7 +98,7 @@ const ElementNavigation : React.FunctionComponent = (props) : React.ReactElement
         }
     });
 
-    return props.children as React.ReactElement;
+    return props.children as ReactElement;
 }
 ElementNavigation.displayName = "Optimizely CMS: Generic click event handler";
 
@@ -108,7 +108,7 @@ export type RoutedContentProps = SwitchProps & {
     basePath ?:     string
 }
 
-export const RoutedContent : React.FunctionComponent<RoutedContentProps> = (props) => {
+export const RoutedContent : FunctionComponent<RoutedContentProps> = (props) => {
     const ctx = useEpiserver();
     const switchProps : SwitchProps = { location: props.location }
     return <Switch {...switchProps}>
@@ -118,7 +118,7 @@ export const RoutedContent : React.FunctionComponent<RoutedContentProps> = (prop
 }
 RoutedContent.displayName = "Optimizely CMS: Route container";
 
-function createRouteNode(route: IRouteConfigItem, basePath = "", key ?: string, ctx ?: IEpiserverContext) : React.ReactElement<RouteProps> {
+function createRouteNode(route: IRouteConfigItem, basePath = "", key ?: string, ctx ?: IEpiserverContext) : ReactElement<RouteProps> {
     
     let createdRoute : string = basePath ? (basePath.substr(-1) === "/" ? basePath.substr(0, -1) : basePath) : "";
     createdRoute = createdRoute + "/" + (route.path ? (route.path.substr(0,1) === "/" ? route.path.substr(1) : route.path) : "")

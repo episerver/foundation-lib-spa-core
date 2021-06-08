@@ -1,4 +1,4 @@
-import React from 'react';
+import { FunctionComponent } from 'react';
 
 import { useEpiserver } from '../Hooks/Context';
 
@@ -21,7 +21,7 @@ export type CmsCommunicatorProps = {
     scriptFile?: string
 };
 
-export const CmsCommunicator : React.FunctionComponent<CmsCommunicatorProps> = (props) => {
+export const CmsCommunicator : FunctionComponent<CmsCommunicatorProps> = (props) => {
     const context = useEpiserver();
     const myScriptFile = props.scriptFile || ScriptFile;
     const myScriptPath = props.scriptPath || ScriptPath;

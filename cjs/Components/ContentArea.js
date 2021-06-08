@@ -25,7 +25,7 @@ const ContentArea = (props) => {
     });
     // Return if no wrapping
     if (getConfigValue(config, "noWrap", false) === true)
-        return ctx.isEditable() ? react_1.default.createElement("div", { className: wrapperClass, "data-epi-block-id": props.propertyName }, items) : react_1.default.createElement(react_1.default.Fragment, null, items);
+        return ctx.isEditable() ? react_1.default.createElement("div", { className: wrapperClass, "data-epi-block-id": props.propertyName }, items) : react_1.default.createElement(react_1.Fragment, null, items);
     // If there's no container, just output the row
     const rowClass = getConfigValue(config, 'defaultRowClass', 'row');
     if (!getConfigValue(config, 'addContainer', false))

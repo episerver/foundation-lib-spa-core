@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Component } from 'react';
 import Spinner from './Spinner';
 import { useEpiserver } from '../index';
 export const LazyComponent = (props) => {
@@ -10,7 +10,7 @@ export const LazyComponent = (props) => {
     }
     return React.createElement(LazyComponentErrorBoundary, null, loadedComponent);
 };
-class LazyComponentErrorBoundary extends React.Component {
+class LazyComponentErrorBoundary extends Component {
     constructor(props) {
         super(props);
         this.state = { hasError: false };

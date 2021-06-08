@@ -103,7 +103,7 @@ class ComponentLoader {
     getPreLoadedComponent(component, props) {
         if (this.isPreLoaded(component)) {
             const type = this.getPreLoadedType(component);
-            return react_1.default.createElement(type, props);
+            return react_1.createElement(type, props);
         }
         throw new Error(`The component ${component} has not been pre-loaded!`);
     }
@@ -153,7 +153,7 @@ class ComponentLoader {
     LoadComponent(component, props) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             const type = yield this.LoadType(component);
-            return react_1.default.createElement(type, props);
+            return react_1.createElement(type, props);
         });
     }
 }

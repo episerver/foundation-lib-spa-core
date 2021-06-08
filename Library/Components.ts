@@ -1,10 +1,10 @@
 // Library
-import React from 'react';
+import { ComponentType } from 'react';
 import IContent from '../Models/IContent';
 import { PropertyProps } from '../Components/Property';
 
 // Descriptors
-export type PropertyComponent<T extends IContent> = React.ComponentType<PropertyProps<T>>;
+export type PropertyComponent<T extends IContent> = ComponentType<PropertyProps<T>>;
 
 // Components
 export { default as Property} from '../Components/Property';

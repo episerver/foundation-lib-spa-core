@@ -1,4 +1,4 @@
-import React from 'react';
+import { ReactElement, FunctionComponent } from 'react';
 import IContent from '../Models/IContent';
 import IEpiserverContext from '../Core/IEpiserverContext';
 import { ComponentProps } from '../EpiComponent';
@@ -17,11 +17,11 @@ export declare type EpiComponentProps<T extends IContent = IContent> = Omit<Comp
      */
     context?: IEpiserverContext;
 };
-declare function EpiComponent<T extends IContent = IContent>(props: EpiComponentProps<T>): React.ReactElement<unknown> | null;
+declare function EpiComponent<T extends IContent = IContent>(props: EpiComponentProps<T>): ReactElement<unknown> | null;
 declare namespace EpiComponent {
     var displayName: string;
 }
-export declare const IContentRenderer: React.FunctionComponent<{
+export declare const IContentRenderer: FunctionComponent<{
     data: IContent;
     contentType?: string;
     actionName?: string;

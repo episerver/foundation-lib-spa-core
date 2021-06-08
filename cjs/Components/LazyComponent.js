@@ -14,7 +14,7 @@ const LazyComponent = (props) => {
     return react_1.default.createElement(LazyComponentErrorBoundary, null, loadedComponent);
 };
 exports.LazyComponent = LazyComponent;
-class LazyComponentErrorBoundary extends react_1.default.Component {
+class LazyComponentErrorBoundary extends react_1.Component {
     constructor(props) {
         super(props);
         this.state = { hasError: false };

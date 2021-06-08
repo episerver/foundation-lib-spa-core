@@ -1,4 +1,4 @@
-import React, { HTMLAttributes, AnchorHTMLAttributes, ReactElement } from 'react';
+import React, { HTMLAttributes, AnchorHTMLAttributes, ReactElement, PropsWithChildren, createElement } from 'react';
 import IContentProperty, { ContentReferenceProperty, ContentAreaProperty } from '../Property';
 import IContent from '../Models/IContent';
 import IEpiserverContext from '../Core/IEpiserverContext';
@@ -39,7 +39,7 @@ export type PropertyProps<T extends IContent> = HTMLAttributes<HTMLElement> &
     className?: string
 }
 
-export function Property<T extends IContent>(props: React.PropsWithChildren<PropertyProps<T>>) : ReactElement<unknown> | null
+export function Property<T extends IContent>(props: PropsWithChildren<PropertyProps<T>>) : ReactElement<unknown> | null
 {
     const ctx = useEpiserver();
     if (!hasProperty(props.iContent, props.field.toString())) {
@@ -66,7 +66,7 @@ export function Property<T extends IContent>(props: React.PropsWithChildren<Prop
                 if (isEditable(props.iContent, ctx)) {
                     propUrlprops['data-epi-edit'] = props.field as string;
                 }
-                return React.createElement('a', propUrlprops);
+                return createElement('a', propUrlprops);
             }
         case 'PropertyDecimal':
         case 'PropertyNumber':
@@ -82,7 +82,7 @@ export function Property<T extends IContent>(props: React.PropsWithChildren<Prop
         case 'PropertyContentReference':
         case 'PropertyPageReference':
             {
-                let item : React.ReactElement | null = null;
+                let item : ReactElement | null = null;
                 if (isIContentProperty(prop)) {
                     const link = (prop as ContentReferenceProperty).value;
                     const expValue = (prop as ContentReferenceProperty).expandedValue;

@@ -1,4 +1,4 @@
-import React, { HTMLAttributes, ReactElement } from 'react';
+import { HTMLAttributes, ReactElement, PropsWithChildren } from 'react';
 import IContent from '../Models/IContent';
 import IEpiserverContext from '../Core/IEpiserverContext';
 export declare type PropertyProps<T extends IContent> = HTMLAttributes<HTMLElement> & {
@@ -28,7 +28,7 @@ export declare type PropertyProps<T extends IContent> = HTMLAttributes<HTMLEleme
      */
     className?: string;
 };
-export declare function Property<T extends IContent>(props: React.PropsWithChildren<PropertyProps<T>>): ReactElement<unknown> | null;
+export declare function Property<T extends IContent>(props: PropsWithChildren<PropertyProps<T>>): ReactElement<unknown> | null;
 export declare namespace Property {
     var displayName: string;
 }

@@ -123,7 +123,7 @@ const buildComponentName = (item, contentType) => {
     return `app/Components/${baseName}`;
 };
 exports.buildComponentName = buildComponentName;
-class EpiComponentErrorBoundary extends react_1.default.Component {
+class EpiComponentErrorBoundary extends react_1.Component {
     constructor(props) {
         super(props);
         this.state = { hasError: false };

@@ -1,4 +1,4 @@
-import React from 'react';
+import { createElement } from 'react';
 import ComponentNotFound from '../Components/Errors/ComponentNotFound';
 import CoreIComponentLoader from './CoreIComponentLoader';
 export const isIComponentLoader = (toTest) => {
@@ -98,7 +98,7 @@ export class ComponentLoader {
     getPreLoadedComponent(component, props) {
         if (this.isPreLoaded(component)) {
             const type = this.getPreLoadedType(component);
-            return React.createElement(type, props);
+            return createElement(type, props);
         }
         throw new Error(`The component ${component} has not been pre-loaded!`);
     }
@@ -147,7 +147,7 @@ export class ComponentLoader {
     }
     async LoadComponent(component, props) {
         const type = await this.LoadType(component);
-        return React.createElement(type, props);
+        return createElement(type, props);
     }
 }
 export default ComponentLoader;

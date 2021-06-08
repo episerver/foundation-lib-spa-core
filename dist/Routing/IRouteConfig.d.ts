@@ -1,4 +1,4 @@
-import React from 'react';
+import { ComponentType, ReactNode } from 'react';
 import { RouteProps, RouteComponentProps } from 'react-router';
 export interface IRouteConfigComponentProps<ParamsType = any> extends RouteComponentProps<ParamsType> {
     routes?: IRouteConfig;
@@ -6,9 +6,9 @@ export interface IRouteConfigComponentProps<ParamsType = any> extends RouteCompo
 }
 export interface IRouteConfigItem extends RouteProps {
     path: string;
-    component?: React.ComponentType<IRouteConfigComponentProps<any>> | React.ComponentType<any>;
-    render?: (props: IRouteConfigComponentProps<any>) => React.ReactNode;
-    children?: ((props: IRouteConfigComponentProps<any>) => React.ReactNode) | React.ReactNode;
+    component?: ComponentType<IRouteConfigComponentProps<any>> | ComponentType<any>;
+    render?: (props: IRouteConfigComponentProps<any>) => ReactNode;
+    children?: ((props: IRouteConfigComponentProps<any>) => ReactNode) | ReactNode;
     routes?: IRouteConfigItem[];
 }
 declare type IRouteConfig = IRouteConfigItem[];

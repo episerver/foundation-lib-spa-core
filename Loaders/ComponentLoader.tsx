@@ -1,4 +1,4 @@
-import React, { ReactNode, ComponentType } from 'react';
+import { ReactNode, ComponentType, createElement, ReactElement } from 'react';
 import IContent from '../Models/IContent';
 import { ComponentProps } from '../EpiComponent';
 import ComponentNotFound from '../Components/Errors/ComponentNotFound';
@@ -146,7 +146,7 @@ export class ComponentLoader
     {
         if (this.isPreLoaded(component)) {
             const type = this.getPreLoadedType(component);
-            return React.createElement(type as TComponentType, props);
+            return createElement(type as TComponentType, props);
         }
         throw new Error(`The component ${component} has not been pre-loaded!`);
     }
@@ -198,10 +198,10 @@ export class ComponentLoader
         return tryOption(0);
     }
 
-    public async LoadComponent<P = ComponentProps<IContent>>(component: string, props: P): Promise<React.ReactElement<P>>
+    public async LoadComponent<P = ComponentProps<IContent>>(component: string, props: P): Promise<ReactElement<P>>
     {
         const type = await this.LoadType<P>(component);
-        return React.createElement(type, props);
+        return createElement(type, props);
     }
 }
 

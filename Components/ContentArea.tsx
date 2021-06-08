@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { FunctionComponent, ReactElement, Fragment } from 'react';
 import IEpiserverContext from '../Core/IEpiserverContext';
 import { useEpiserver } from '../Hooks/Context';
 import { ContentLinkService } from '../Models/ContentLink';
@@ -102,7 +102,7 @@ export type ContentAreaProps = ContentAreaSiteConfig & {
     propertyName?: string
 }
 
-export const ContentArea : React.FunctionComponent<ContentAreaProps> = (props) => {
+export const ContentArea : FunctionComponent<ContentAreaProps> = (props) => {
     const ctx = useEpiserver();
 
     // Check if the areay is empty
@@ -114,7 +114,7 @@ export const ContentArea : React.FunctionComponent<ContentAreaProps> = (props) =
     const wrapperClass = getConfigValue(config, 'wrapperClass', 'content-area');
 
     // Render the items
-    const items : React.ReactElement<ContentAreaItemProps>[] = [];
+    const items : ReactElement<ContentAreaItemProps>[] = [];
     (props.data?.value || []).forEach((x,i) => {
         const className = getBlockClasses(x.displayOption, config).join(' ');
         const blockKey = `ContentAreaItem-${ ContentLinkService.createApiId(x.contentLink, true, false) }-${ i }`;
@@ -123,7 +123,7 @@ export const ContentArea : React.FunctionComponent<ContentAreaProps> = (props) =
 
     // Return if no wrapping
     if (getConfigValue(config, "noWrap", false) === true)
-        return ctx.isEditable() ? <div className={ wrapperClass} data-epi-block-id={ props.propertyName }>{ items }</div> : <React.Fragment>{ items }</React.Fragment>;
+        return ctx.isEditable() ? <div className={ wrapperClass} data-epi-block-id={ props.propertyName }>{ items }</div> : <Fragment>{ items }</Fragment>;
 
     // If there's no container, just output the row
     const rowClass = getConfigValue(config, 'defaultRowClass', 'row');
@@ -139,7 +139,7 @@ export const ContentArea : React.FunctionComponent<ContentAreaProps> = (props) =
         return <div className={`${ wrapperClass } ${ containerClass }`}><div className={rowClass} data-epi-edit={ ctx.isEditable() ? props.propertyName : undefined}>{ items }</div></div>
 
     // Split the items into containers
-    const containers : {items: React.ReactElement[], shouldWrap: boolean}[] = [];
+    const containers : {items: ReactElement[], shouldWrap: boolean}[] = [];
     let currentContainerId = 0;
     items.forEach(item => {
         const cssClasses = (item.props.className || "").split(' ').filter(s => s.length > 0);
@@ -200,7 +200,7 @@ function getBlockClasses(displayOption: string, config: ContentAreaSiteConfig) :
 
 // Helper component for ContentAreaItem
 type ContentAreaItemProps = {item: ContentAreaPropertyItem, config: ContentAreaSiteConfig, expandedValue?: IContent, className?: string, idx?: number}
-const ContentAreaItem : React.FunctionComponent<ContentAreaItemProps> = (props) => 
+const ContentAreaItem : FunctionComponent<ContentAreaItemProps> = (props) => 
 {
     // Context
     const ctx = useEpiserver();
@@ -232,7 +232,7 @@ ContentAreaItem.displayName = "Optimizely CMS: Content Area Item";
  * 
  * @param props The properties for the empty ContentArea renderer
  */
-const DefaultEmptyContentArea : React.FunctionComponent<{ propertyName?: string }> = (props) => {
+const DefaultEmptyContentArea : FunctionComponent<{ propertyName?: string }> = (props) => {
     const ctx = useEpiserver();
     if (ctx.isEditable())
         return <div data-epi-edit={ props.propertyName }><div className="alert alert-info m-5">There're no blocks in <i>{ props.propertyName || 'this area' }</i></div></div>

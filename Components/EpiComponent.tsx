@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, ReactElement, Component, FunctionComponent, PropsWithChildren } from 'react';
 import StringUtils from '../Util/StringUtils';
 import { useEpiserver, useIContentRepository, useServiceContainer, useServerSideRendering } from '../Hooks/Context';
 import { ContentReference, ContentLinkService } from '../Models/ContentLink';
@@ -35,7 +35,7 @@ const safeLanguageId = (ref: ContentReference | null | undefined, branch = '##',
     }
 }
 
-function EpiComponent<T extends IContent = IContent>(props: EpiComponentProps<T>) : React.ReactElement<unknown> |null {
+function EpiComponent<T extends IContent = IContent>(props: EpiComponentProps<T>) : ReactElement<unknown> |null {
     // Get Hooks & Services
     const ctx = useEpiserver();
     const ssr = useServerSideRendering();
@@ -96,7 +96,7 @@ function EpiComponent<T extends IContent = IContent>(props: EpiComponentProps<T>
 }
 EpiComponent.displayName = "Optimizely CMS: ContentLink IContent resolver";
 
-export const IContentRenderer : React.FunctionComponent<{ data: IContent, contentType?: string, actionName?: string, actionData?: unknown, path?: string }> = (props) =>
+export const IContentRenderer : FunctionComponent<{ data: IContent, contentType?: string, actionName?: string, actionData?: unknown, path?: string }> = (props) =>
 {
     const context = useEpiserver();
     const path = useLocation().pathname;
@@ -153,10 +153,10 @@ export const buildComponentName : (item : IContent | null, contentType?: string)
 //#endregion
 
 //#region Error boundary
-type EpiComponentErrorBoundaryProps = React.PropsWithChildren<{
+type EpiComponentErrorBoundaryProps = PropsWithChildren<{
     componentName: string
 }>
-class EpiComponentErrorBoundary extends React.Component<EpiComponentErrorBoundaryProps, { hasError: boolean }>
+class EpiComponentErrorBoundary extends Component<EpiComponentErrorBoundaryProps, { hasError: boolean }>
 {
     static displayName = "Optimizely CMS: IContent Error Boundary";
     

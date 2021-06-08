@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { FunctionComponent } from 'react';
 import IContent from '../../Models/IContent';
 import StringUtils from '../../Util/StringUtils';
 
@@ -7,7 +7,7 @@ export type ComponentNotFoundProps = {
     contentType ?: string
 }
 
-export const ComponentNotFound : React.FunctionComponent<ComponentNotFoundProps> = (props) =>
+export const ComponentNotFound : FunctionComponent<ComponentNotFoundProps> = (props) =>
 {
     let baseName : string = props.data?.contentType?.map((s) => {return StringUtils.SafeModelName(s); })?.join("/") || '';
     const name : string = props.contentType || "";

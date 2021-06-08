@@ -1,4 +1,4 @@
-import React from 'react';
+import { FunctionComponent } from 'react';
 import IEpiserverContext from '../Core/IEpiserverContext';
 import { ContentAreaProperty } from '../Property';
 export declare type ContentAreaSiteConfig = {
@@ -85,5 +85,5 @@ export declare type ContentAreaProps = ContentAreaSiteConfig & {
      */
     propertyName?: string;
 };
-export declare const ContentArea: React.FunctionComponent<ContentAreaProps>;
+export declare const ContentArea: FunctionComponent<ContentAreaProps>;
 export default ContentArea;

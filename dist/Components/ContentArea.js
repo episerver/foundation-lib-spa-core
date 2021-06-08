@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Fragment } from 'react';
 import { useEpiserver } from '../Hooks/Context';
 import { ContentLinkService } from '../Models/ContentLink';
 import EpiComponent from './EpiComponent';
@@ -20,7 +20,7 @@ export const ContentArea = (props) => {
     });
     // Return if no wrapping
     if (getConfigValue(config, "noWrap", false) === true)
-        return ctx.isEditable() ? React.createElement("div", { className: wrapperClass, "data-epi-block-id": props.propertyName }, items) : React.createElement(React.Fragment, null, items);
+        return ctx.isEditable() ? React.createElement("div", { className: wrapperClass, "data-epi-block-id": props.propertyName }, items) : React.createElement(Fragment, null, items);
     // If there's no container, just output the row
     const rowClass = getConfigValue(config, 'defaultRowClass', 'row');
     if (!getConfigValue(config, 'addContainer', false))

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { createElement } from 'react';
 import { ContentLinkService } from '../Models/ContentLink';
 import EpiComponent from './EpiComponent';
 import ContentArea from './ContentArea';
@@ -32,7 +32,7 @@ export function Property(props) {
                 if (isEditable(props.iContent, ctx)) {
                     propUrlprops['data-epi-edit'] = props.field;
                 }
-                return React.createElement('a', propUrlprops);
+                return createElement('a', propUrlprops);
             }
         case 'PropertyDecimal':
         case 'PropertyNumber':

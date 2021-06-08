@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Component, FunctionComponent, ReactElement, PropsWithChildren } from 'react';
 import Spinner, { SpinnerProps } from './Spinner';
 import { useEpiserver } from '../index';
 
@@ -21,10 +21,10 @@ export type LazyComponentProps<T = any> = {
     noSpinner?: boolean
 } & SpinnerProps & T;
 
-export const LazyComponent : React.FunctionComponent<LazyComponentProps> = (props) =>
+export const LazyComponent : FunctionComponent<LazyComponentProps> = (props) =>
 {
     const epi = useEpiserver();
-    const [ loadedComponent, setLoadedComponent ] = useState<React.ReactElement | undefined>(undefined);
+    const [ loadedComponent, setLoadedComponent ] = useState<ReactElement | undefined>(undefined);
     useEffect(() => { epi.componentLoader().LoadComponent(props.component, props).then(c => setLoadedComponent(c)); }, [props]);
     if (typeof(loadedComponent) === "undefined" ) {
         return props.noSpinner ? null : Spinner.CreateInstance(props);
@@ -32,9 +32,9 @@ export const LazyComponent : React.FunctionComponent<LazyComponentProps> = (prop
     return <LazyComponentErrorBoundary>{ loadedComponent }</LazyComponentErrorBoundary>
 }
 
-class LazyComponentErrorBoundary extends React.Component<React.PropsWithChildren<{}>, { hasError: boolean }>
+class LazyComponentErrorBoundary extends Component<PropsWithChildren<Record<string, unknown>>, { hasError: boolean }>
 {
-    constructor(props: React.PropsWithChildren<{}>) {
+    constructor(props: PropsWithChildren<Record<string, unknown>>) {
         super(props);
         this.state = { hasError: false };
     }

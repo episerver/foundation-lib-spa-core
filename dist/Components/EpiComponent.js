@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Component } from 'react';
 import StringUtils from '../Util/StringUtils';
 import { useEpiserver, useIContentRepository, useServiceContainer, useServerSideRendering } from '../Hooks/Context';
 import { ContentLinkService } from '../Models/ContentLink';
@@ -118,7 +118,7 @@ export const buildComponentName = (item, contentType) => {
     }
     return `app/Components/${baseName}`;
 };
-class EpiComponentErrorBoundary extends React.Component {
+class EpiComponentErrorBoundary extends Component {
     constructor(props) {
         super(props);
         this.state = { hasError: false };
