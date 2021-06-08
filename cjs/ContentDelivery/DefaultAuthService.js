@@ -5,7 +5,7 @@ const tslib_1 = require("tslib");
 const IAuthService_1 = require("./IAuthService");
 const BrowserAuthStorage_1 = require("./BrowserAuthStorage");
 const eventemitter3_1 = require("eventemitter3");
-class DefaultAuthServiceCls extends eventemitter3_1.default {
+class DefaultAuthServiceCls extends eventemitter3_1.EventEmitter {
     constructor(api, storage) {
         super();
         this._storage = storage || new BrowserAuthStorage_1.default();

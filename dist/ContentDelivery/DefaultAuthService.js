@@ -1,6 +1,6 @@
 import { IOAuthResponseIsSuccess } from './IAuthService';
 import BrowserAuthStorage from './BrowserAuthStorage';
-import EventEmitter from 'eventemitter3';
+import { EventEmitter } from 'eventemitter3';
 class DefaultAuthServiceCls extends EventEmitter {
     constructor(api, storage) {
         super();

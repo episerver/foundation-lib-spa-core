@@ -6,7 +6,7 @@ const tslib_1 = require("tslib");
 const eventemitter3_1 = require("eventemitter3");
 const StringUtils_1 = require("../Util/StringUtils");
 const WebsiteList_1 = require("../Models/WebsiteList");
-class ServerSideIContentRepository extends eventemitter3_1.default {
+class ServerSideIContentRepository extends eventemitter3_1.EventEmitter {
     constructor(api, config, serverContext) {
         super();
         this._api = api;

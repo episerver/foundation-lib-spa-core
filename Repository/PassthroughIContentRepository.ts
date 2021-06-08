@@ -3,7 +3,7 @@ import { EventEmitter } from 'eventemitter3';
 import cloneDeep from 'lodash/cloneDeep';
 
 // Import framework
-import IContentDeliveryAPI, { isNetworkError } from '../ContentDelivery/IContentDeliveryAPI';
+import IContentDeliveryAPI from '../ContentDelivery/IContentDeliveryAPI';
 import { IRepositoryConfig, IRepositoryPolicy } from './IRepository';
 import IIContentRepository, { IPatchableRepositoryEvents } from './IIContentRepository';
 

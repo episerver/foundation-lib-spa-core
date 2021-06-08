@@ -1,5 +1,5 @@
 import AppGlobal from '../AppGlobal';
-import EventEmitter from 'eventemitter3';
+import { EventEmitter } from 'eventemitter3';
 /**
  * The default event engine for the SPA
  */

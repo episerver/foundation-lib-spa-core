@@ -11,7 +11,7 @@ class DefaultEventEngine {
         this._listeners = {};
         this._events = [];
         this._debug = false;
-        this._eventEmitter = new eventemitter3_1.default();
+        this._eventEmitter = new eventemitter3_1.EventEmitter();
         const ctx = AppGlobal_1.default();
         if (ctx.addEventListener) {
             ctx.addEventListener('message', this.onPostMessageReceived.bind(this), false);

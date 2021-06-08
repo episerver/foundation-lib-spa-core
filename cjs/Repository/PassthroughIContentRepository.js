@@ -6,7 +6,7 @@ const tslib_1 = require("tslib");
 const eventemitter3_1 = require("eventemitter3");
 const cloneDeep_1 = require("lodash/cloneDeep");
 const ContentDeliveryAPI_1 = require("../ContentDeliveryAPI");
-class PassthroughIContentRepository extends eventemitter3_1.default {
+class PassthroughIContentRepository extends eventemitter3_1.EventEmitter {
     constructor(api, config) {
         super();
         this._config = {

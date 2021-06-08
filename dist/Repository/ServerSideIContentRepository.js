@@ -1,5 +1,5 @@
 // Import libraries
-import EventEmitter from 'eventemitter3';
+import { EventEmitter } from 'eventemitter3';
 import StringUtils from '../Util/StringUtils';
 import { languageFilter, hostnameFilter } from '../Models/WebsiteList';
 export class ServerSideIContentRepository extends EventEmitter {
