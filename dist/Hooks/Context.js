@@ -1,10 +1,10 @@
-import React, { useContext, useState } from 'react';
+import { useContext, useState, createContext } from 'react';
 /**
  * The React Context object for the Episerver context
  *
- * @constant { React.Context<IEpiserverContext | undefined> } Episerver
+ * @constant { Context<IEpiserverContext | undefined> } Episerver
  */
-export const Episerver = React.createContext(undefined);
+export const Episerver = createContext(undefined);
 export default Episerver;
 /**
  * React Hook (for functional components) to retrieve the Episerver Context from

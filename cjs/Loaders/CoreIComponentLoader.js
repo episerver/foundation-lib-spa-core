@@ -24,7 +24,7 @@ class CoreIComponentLoader {
             /* webpackExclude: /\.noimport\.tsx$/ */
             /* webpackChunkName: "components" */
             /* webpackPrefetch: true */
-            /* webpackMode: "lazy-once" */
+            /* webpackMode: "lazy" */
             "app/Components/" + component)).then(exports => {
                 if (!(exports && exports.default))
                     throw new Error(`The component ${componentName} does not have a default export`);

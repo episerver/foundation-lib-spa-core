@@ -1,5 +1,5 @@
 import { EnhancedStore } from '@reduxjs/toolkit';
-import React, { useContext, useState } from 'react';
+import { useContext, useState, createContext, Context } from 'react';
 import IContentDeliveryAPI from '../ContentDelivery/IContentDeliveryAPI';
 import IEpiserverContext from '../Core/IEpiserverContext';
 import IEventEngine from '../Core/IEventEngine';
@@ -12,9 +12,9 @@ import { ContentAppState } from '../State/Reducer';
 /**
  * The React Context object for the Episerver context
  * 
- * @constant { React.Context<IEpiserverContext | undefined> } Episerver
+ * @constant { Context<IEpiserverContext | undefined> } Episerver
  */
-export const Episerver = React.createContext<IEpiserverContext | undefined>(undefined);
+export const Episerver : Context<IEpiserverContext | undefined> = createContext<IEpiserverContext | undefined>(undefined);
 export default Episerver;
 
 /**

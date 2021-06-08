@@ -20,7 +20,7 @@ export default class CoreIComponentLoader {
         /* webpackExclude: /\.noimport\.tsx$/ */
         /* webpackChunkName: "components" */
         /* webpackPrefetch: true */
-        /* webpackMode: "lazy-once" */
+        /* webpackMode: "lazy" */
         "app/Components/" + component) // Can't use the constant here, as it will Prevent Webpack from properly loading the component
             .then(exports => {
             if (!(exports && exports.default))

@@ -27,7 +27,7 @@ export default class CoreIComponentLoader implements IComponentLoader
             /* webpackExclude: /\.noimport\.tsx$/ */
             /* webpackChunkName: "components" */
             /* webpackPrefetch: true */
-            /* webpackMode: "lazy-once" */
+            /* webpackMode: "lazy" */
             "app/Components/" + component) // Can't use the constant here, as it will Prevent Webpack from properly loading the component
             .then(exports => {
                 if (!(exports && exports.default)) throw new Error(`The component ${ componentName } does not have a default export`);

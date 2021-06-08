@@ -1,5 +1,5 @@
 import { EnhancedStore } from '@reduxjs/toolkit';
-import React from 'react';
+import { Context } from 'react';
 import IContentDeliveryAPI from '../ContentDelivery/IContentDeliveryAPI';
 import IEpiserverContext from '../Core/IEpiserverContext';
 import IEventEngine from '../Core/IEventEngine';
@@ -10,9 +10,9 @@ import CmsState from '../State/CmsState';
 /**
  * The React Context object for the Episerver context
  *
- * @constant { React.Context<IEpiserverContext | undefined> } Episerver
+ * @constant { Context<IEpiserverContext | undefined> } Episerver
  */
-export declare const Episerver: React.Context<IEpiserverContext | undefined>;
+export declare const Episerver: Context<IEpiserverContext | undefined>;
 export default Episerver;
 /**
  * React Hook (for functional components) to retrieve the Episerver Context from

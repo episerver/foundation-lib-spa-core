@@ -5,9 +5,9 @@ const react_1 = require("react");
 /**
  * The React Context object for the Episerver context
  *
- * @constant { React.Context<IEpiserverContext | undefined> } Episerver
+ * @constant { Context<IEpiserverContext | undefined> } Episerver
  */
-exports.Episerver = react_1.default.createContext(undefined);
+exports.Episerver = react_1.createContext(undefined);
 exports.default = exports.Episerver;
 /**
  * React Hook (for functional components) to retrieve the Episerver Context from
