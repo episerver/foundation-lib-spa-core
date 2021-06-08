@@ -1,6 +1,6 @@
 import IServiceContainer, { IContainerAwareService, IContextAwareService } from './IServiceContainer';
 
-export default class DefaultServiceContainer implements IServiceContainer
+export class DefaultServiceContainer implements IServiceContainer
 {
     protected services : { [key: string] : any } = {};
 
@@ -82,3 +82,4 @@ export default class DefaultServiceContainer implements IServiceContainer
         return Object.keys(this.services);
     }
 }
+export default DefaultServiceContainer;

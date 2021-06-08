@@ -1,15 +1,5 @@
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 import Axios from 'axios';
 import { ContentLinkService } from './Models/ContentLink';
-import { ResponseType } from './Models/ActionResponse';
 export function PathResponseIsIContent(iContent) {
     if (iContent.actionName) {
         return false;
@@ -81,12 +71,10 @@ export class ContentDeliveryAPI {
      * @param verb    The HTTP verb to use when invoking the controller
      * @param data    The data (if any) to send to the controller for the method
      */
-    invokeControllerMethod(content, method, verb, data) {
-        return __awaiter(this, void 0, void 0, function* () {
-            let options = this.getRequestSettings(verb);
-            options.data = data;
-            return yield this.doRequest(this.getMethodServiceUrl(content, method), options);
-        });
+    async invokeControllerMethod(content, method, verb, data) {
+        let options = this.getRequestSettings(verb);
+        options.data = data;
+        return await this.doRequest(this.getMethodServiceUrl(content, method), options);
     }
     /**
      * Strongly typed variant of invokeControllerMethod
@@ -97,124 +85,106 @@ export class ContentDeliveryAPI {
      * @param verb    The HTTP verb to use when invoking the controller
      * @param data    The data (if any) to send to the controller for the method
      */
-    invokeTypedControllerMethod(content, method, verb, data) {
-        return __awaiter(this, void 0, void 0, function* () {
-            let options = this.getRequestSettings(verb);
-            options.data = data;
-            return yield this.doRequest(this.getMethodServiceUrl(content, method), options);
-        });
+    async invokeTypedControllerMethod(content, method, verb, data) {
+        let options = this.getRequestSettings(verb);
+        options.data = data;
+        return await this.doRequest(this.getMethodServiceUrl(content, method), options);
     }
     /**
      * Retrieve a list of all websites registered within Episerver
      */
-    getWebsites() {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (!this.websites) {
-                this.websites = yield this.doRequest(this.config.epiBaseUrl + this.websiteService);
-            }
-            return this.websites;
-        });
+    async getWebsites() {
+        if (!this.websites) {
+            this.websites = await this.doRequest(this.config.epiBaseUrl + this.websiteService);
+        }
+        return this.websites;
     }
     /**
      * Retrieve the first website registered within Episerver
      */
-    getWebsite() {
-        return __awaiter(this, void 0, void 0, function* () {
-            const list = yield this.getWebsites();
-            return list[0];
+    async getWebsite() {
+        const list = await this.getWebsites();
+        return list[0];
+    }
+    async getContent(content, forceGuid = false) {
+        if (!(content && (content.guidValue || content.url))) {
+            if (this.config.enableDebug) {
+                console.warn('Loading content for an empty reference ', content);
+            }
+            return null;
+        }
+        let useGuid = content.guidValue ? this.config.preferGuid || forceGuid : false;
+        let serviceUrl;
+        if (useGuid) {
+            serviceUrl = new URL(this.config.epiBaseUrl + this.componentService + content.guidValue);
+        }
+        else {
+            try {
+                serviceUrl = new URL(this.config.epiBaseUrl +
+                    (content.url ? content.url : this.componentService + ContentLinkService.createApiId(content)));
+            }
+            catch (e) {
+                serviceUrl = new URL(this.config.epiBaseUrl + this.componentService + ContentLinkService.createApiId(content));
+            }
+        }
+        //serviceUrl.searchParams.append('currentPageUrl', this.pathProvider.getCurrentPath());
+        if (this.config.autoExpandRequests) {
+            serviceUrl.searchParams.append('expand', '*');
+        }
+        return this.doRequest(serviceUrl.href).catch((r) => {
+            return this.buildNetworkError(r);
+        }).then(r => getIContentFromPathResponse(r));
+    }
+    async getContentsByRefs(refs) {
+        if (!refs || refs.length == 0) {
+            return Promise.resolve([]);
+        }
+        let serviceUrl = new URL(this.config.epiBaseUrl + this.componentService);
+        serviceUrl.searchParams.append('references', refs.join(','));
+        if (this.config.autoExpandRequests) {
+            serviceUrl.searchParams.append('expand', '*');
+        }
+        return this.doRequest(serviceUrl.href).catch((r) => {
+            return [];
         });
     }
-    getContent(content, forceGuid = false) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (!(content && (content.guidValue || content.url))) {
-                if (this.config.enableDebug) {
-                    console.warn('Loading content for an empty reference ', content);
-                }
-                return null;
-            }
-            let useGuid = content.guidValue ? this.config.preferGuid || forceGuid : false;
-            let serviceUrl;
-            if (useGuid) {
-                serviceUrl = new URL(this.config.epiBaseUrl + this.componentService + content.guidValue);
-            }
-            else {
-                try {
-                    serviceUrl = new URL(this.config.epiBaseUrl +
-                        (content.url ? content.url : this.componentService + ContentLinkService.createApiId(content)));
-                }
-                catch (e) {
-                    serviceUrl = new URL(this.config.epiBaseUrl + this.componentService + ContentLinkService.createApiId(content));
-                }
-            }
-            //serviceUrl.searchParams.append('currentPageUrl', this.pathProvider.getCurrentPath());
-            if (this.config.autoExpandRequests) {
-                serviceUrl.searchParams.append('expand', '*');
-            }
-            return this.doRequest(serviceUrl.href).catch((r) => {
-                return this.buildNetworkError(r);
-            }).then(r => getIContentFromPathResponse(r));
+    async getContentByRef(ref) {
+        let serviceUrl = new URL(this.config.epiBaseUrl + this.componentService + ref);
+        if (this.config.autoExpandRequests) {
+            serviceUrl.searchParams.append('expand', '*');
+        }
+        return this.doRequest(serviceUrl.href).catch((r) => {
+            return this.buildNetworkError(r);
         });
     }
-    getContentsByRefs(refs) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (!refs || refs.length == 0) {
-                return Promise.resolve([]);
-            }
-            let serviceUrl = new URL(this.config.epiBaseUrl + this.componentService);
-            serviceUrl.searchParams.append('references', refs.join(','));
-            if (this.config.autoExpandRequests) {
-                serviceUrl.searchParams.append('expand', '*');
-            }
-            return this.doRequest(serviceUrl.href).catch((r) => {
-                return [];
-            });
+    async getContentByPath(path) {
+        let serviceUrl = new URL(this.config.epiBaseUrl + path);
+        if (this.config.autoExpandRequests) {
+            serviceUrl.searchParams.append('expand', '*');
+        }
+        //serviceUrl.searchParams.append('currentPageUrl', this.pathProvider.getCurrentPath());
+        return this.doRequest(serviceUrl.href).catch((r) => {
+            return this.buildNetworkError(r, path);
         });
     }
-    getContentByRef(ref) {
-        return __awaiter(this, void 0, void 0, function* () {
-            let serviceUrl = new URL(this.config.epiBaseUrl + this.componentService + ref);
-            if (this.config.autoExpandRequests) {
-                serviceUrl.searchParams.append('expand', '*');
-            }
-            return this.doRequest(serviceUrl.href).catch((r) => {
-                return this.buildNetworkError(r);
-            });
+    async getContentChildren(id) {
+        let itemId = ContentLinkService.createApiId(id);
+        let serviceUrl = new URL(this.config.epiBaseUrl + this.componentService + itemId + '/children');
+        if (this.config.autoExpandRequests) {
+            serviceUrl.searchParams.append('expand', '*');
+        }
+        return this.doRequest(serviceUrl.href).catch((r) => {
+            return [];
         });
     }
-    getContentByPath(path) {
-        return __awaiter(this, void 0, void 0, function* () {
-            let serviceUrl = new URL(this.config.epiBaseUrl + path);
-            if (this.config.autoExpandRequests) {
-                serviceUrl.searchParams.append('expand', '*');
-            }
-            //serviceUrl.searchParams.append('currentPageUrl', this.pathProvider.getCurrentPath());
-            return this.doRequest(serviceUrl.href).catch((r) => {
-                return this.buildNetworkError(r, path);
-            });
-        });
-    }
-    getContentChildren(id) {
-        return __awaiter(this, void 0, void 0, function* () {
-            let itemId = ContentLinkService.createApiId(id);
-            let serviceUrl = new URL(this.config.epiBaseUrl + this.componentService + itemId + '/children');
-            if (this.config.autoExpandRequests) {
-                serviceUrl.searchParams.append('expand', '*');
-            }
-            return this.doRequest(serviceUrl.href).catch((r) => {
-                return [];
-            });
-        });
-    }
-    getContentAncestors(link) {
-        return __awaiter(this, void 0, void 0, function* () {
-            let itemId = ContentLinkService.createApiId(link);
-            let serviceUrl = new URL(`${this.config.epiBaseUrl}${this.componentService}${itemId}/ancestors`);
-            if (this.config.autoExpandRequests) {
-                serviceUrl.searchParams.append('expand', '*');
-            }
-            return this.doRequest(serviceUrl.href).catch((r) => {
-                return [];
-            });
+    async getContentAncestors(link) {
+        let itemId = ContentLinkService.createApiId(link);
+        let serviceUrl = new URL(`${this.config.epiBaseUrl}${this.componentService}${itemId}/ancestors`);
+        if (this.config.autoExpandRequests) {
+            serviceUrl.searchParams.append('expand', '*');
+        }
+        return this.doRequest(serviceUrl.href).catch((r) => {
+            return [];
         });
     }
     /**
@@ -223,34 +193,32 @@ export class ContentDeliveryAPI {
      * @param url The URL to request the data from
      * @param options The Request options to use
      */
-    doRequest(url, options) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (this.isDisabled()) {
-                return Promise.reject('The Content Delivery API has been disabled');
-            }
-            if (this.isInEditMode()) {
-                let urlObj = new URL(url);
-                urlObj.searchParams.append('epieditmode', 'True');
-                //Add channel...
-                //Add project...
-                urlObj.searchParams.append('preventCache', Math.round(Math.random() * 100000000).toString());
-                url = urlObj.href;
-            }
-            options = options ? options : this.getRequestSettings();
+    async doRequest(url, options) {
+        if (this.isDisabled()) {
+            return Promise.reject('The Content Delivery API has been disabled');
+        }
+        if (this.isInEditMode()) {
+            let urlObj = new URL(url);
+            urlObj.searchParams.append('epieditmode', 'True');
+            //Add channel...
+            //Add project...
+            urlObj.searchParams.append('preventCache', Math.round(Math.random() * 100000000).toString());
+            url = urlObj.href;
+        }
+        options = options ? options : this.getRequestSettings();
+        if (this.debug)
+            console.debug('Requesting: ' + url);
+        options.url = url;
+        return Axios.request(options)
+            .then((response) => {
             if (this.debug)
-                console.debug('Requesting: ' + url);
-            options.url = url;
-            return Axios.request(options)
-                .then((response) => {
-                if (this.debug)
-                    console.debug(`Response from ${url}:`, response.data);
-                return response.data;
-            })
-                .catch((reason) => {
-                if (this.debug)
-                    console.error(`Response from ${url}: HTTP Fetch error `, reason);
-                throw reason;
-            });
+                console.debug(`Response from ${url}:`, response.data);
+            return response.data;
+        })
+            .catch((reason) => {
+            if (this.debug)
+                console.error(`Response from ${url}: HTTP Fetch error `, reason);
+            throw reason;
         });
     }
     getMethodServiceUrl(content, method) {
@@ -269,7 +237,7 @@ export class ContentDeliveryAPI {
             method: verb ? verb : 'get',
             baseURL: this.config.epiBaseUrl,
             withCredentials: true,
-            headers: Object.assign({}, this.getHeaders()),
+            headers: { ...this.getHeaders() },
             transformRequest: [
                 (data, headers) => {
                     if (data) {
@@ -293,12 +261,15 @@ export class ContentDeliveryAPI {
         };
         if (!customHeaders)
             return defaultHeaders;
-        return Object.assign(Object.assign({}, defaultHeaders), customHeaders);
+        return {
+            ...defaultHeaders,
+            ...customHeaders,
+        };
     }
     static IsActionResponse(response) {
         if (response &&
             response.responseType &&
-            response.responseType == ResponseType.ActionResult) {
+            response.responseType == "ActionResult" /* ActionResult */) {
             return true;
         }
         return false;

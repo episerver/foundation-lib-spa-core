@@ -1,7 +1,7 @@
 import EpiComponent from './EpiComponent';
 import IContent from './Models/IContent';
 
-export enum PageType {
+export const enum PageType {
     Home = "home",
     Product = "product",
     Category = "category",
@@ -9,7 +9,7 @@ export enum PageType {
     Other = "other"
 }
 
-export default abstract class Page<P extends IContent, S = {}> extends EpiComponent<P, S>
+export default abstract class Page<P extends IContent, S = Record<string, unknown>> extends EpiComponent<P, S>
 {
     /**
      * The page type of the current page being rendered

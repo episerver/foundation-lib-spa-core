@@ -8,11 +8,11 @@ export default class CoreIComponentLoader implements IComponentLoader
         return "app/Components/";
     }
 
-    public get order() {
+    public get order() : number {
         return 100;
     }
 
-    protected debug : boolean = false;
+    protected debug = false;
 
     public canLoad(componentName: string) : boolean {
         return componentName.startsWith(this.PREFIX);
@@ -21,18 +21,18 @@ export default class CoreIComponentLoader implements IComponentLoader
     public async load<T = ComponentProps<IContent>>(componentName: string) : Promise<TComponentType<T>>
     {
         if (this.debug) console.debug(`Loading component: ${ componentName }`);
-        const me = this;
         const component = componentName.substr(15);
         return import(
             /* webpackInclude: /\.tsx$/ */
             /* webpackExclude: /\.noimport\.tsx$/ */
             /* webpackChunkName: "components" */
-            /* webpackMode: "lazy" */
+            /* webpackPrefetch: true */
+            /* webpackMode: "lazy-once" */
             "app/Components/" + component) // Can't use the constant here, as it will Prevent Webpack from properly loading the component
             .then(exports => {
                 if (!(exports && exports.default)) throw new Error(`The component ${ componentName } does not have a default export`);
                 const c = exports.default;
-                if (me.debug) console.debug(`Finished loading component: ${ componentName }`, c);
+                if (this.debug) console.debug(`Finished loading component: ${ componentName }`, c);
                 return c;
             });
     }

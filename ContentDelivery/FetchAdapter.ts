@@ -82,7 +82,7 @@ export const FetchAdapter : CachingFetchAdapter = async (config: AxiosRequestCon
         return errorResponse;
     }
     const responseHeaders: { [key: string]: string; } = {};
-    r.headers.forEach((value, name) => responseHeaders[name] = value);
+    for (const rh of r.headers) responseHeaders[rh[0]] = rh[1];
     const response: AxiosResponse = {
         config,
         request,

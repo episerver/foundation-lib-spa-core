@@ -24,9 +24,8 @@ export class ContentLinkService {
      * @returns The Language Aware content reference
      */
     static createLanguageId(reference, languageCode, editModeId = false) {
-        var _a;
         const baseId = this.createApiId(reference, true, editModeId);
-        if (this.referenceIsIContent(reference) && ((_a = reference.language) === null || _a === void 0 ? void 0 : _a.name))
+        if (this.referenceIsIContent(reference) && reference.language?.name)
             return `${baseId}___${reference.language.name}`;
         if (!languageCode)
             throw new Error('Reference is not translatable iContent and no languageCode specified!');
@@ -83,7 +82,7 @@ export class ContentLinkService {
         else if (this.referenceIsContentLink(ref)) {
             link = ref;
         }
-        return (link === null || link === void 0 ? void 0 : link.url) || null;
+        return link?.url || null;
     }
     static createHref(ref) {
         if (this.referenceIsIContent(ref)) {

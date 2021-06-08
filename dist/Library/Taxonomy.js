@@ -6,7 +6,5 @@ export * from '../Models/Website';
 export * from '../Models/WebsiteList';
 export * from '../Models/ContentLink';
 // IContent
-import * as IContentNS from '../Models/IContent';
-export const AbstractIContent = IContentNS.BaseIContent;
-export const namePropertyIsString = IContentNS.namePropertyIsString;
+export { BaseIContent as AbstractIContent } from '../Models/IContent';
 //# sourceMappingURL=Taxonomy.js.map

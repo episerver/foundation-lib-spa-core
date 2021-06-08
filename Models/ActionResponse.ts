@@ -1,7 +1,7 @@
 import ContentLink from './ContentLink';
 import IContent from './IContent';
 
-export enum ResponseType {
+export const enum ResponseType {
   ActionResult = 'ActionResult',
 }
 

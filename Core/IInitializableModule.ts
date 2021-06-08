@@ -2,7 +2,7 @@ import IServiceContainer from './IServiceContainer';
 import IEpiserverContext from './IEpiserverContext';
 import IStateReducerInfo from './IStateReducerInfo';
 
-export default interface IInitializableModule
+export interface IInitializableModule
 {
     /**
      * The sort order of the modules when loaded using the initial bootstrapping
@@ -23,10 +23,10 @@ export default interface IInitializableModule
 
     GetStateReducer(): IStateReducerInfo<any> | null;
 }
-
+export default IInitializableModule;
 export abstract class BaseInitializableModule implements IInitializableModule
 {
-    protected name : string = "Unnamed module";
+    protected name = "Unnamed module";
 
     public readonly SortOrder: number = 100;
 

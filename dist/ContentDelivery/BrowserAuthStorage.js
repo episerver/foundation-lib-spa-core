@@ -24,7 +24,7 @@ export class BrowserAuthStorage {
         this._key = key;
     }
     get storage() {
-        if (!(window === null || window === void 0 ? void 0 : window.localStorage)) {
+        if (!window?.localStorage) {
             throw new Error('LocalAuthStorage must be used in a browser supporting LocalStorage');
         }
         return window.localStorage;

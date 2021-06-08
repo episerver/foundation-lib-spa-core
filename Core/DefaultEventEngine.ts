@@ -5,13 +5,13 @@ import EventEmitter from 'eventemitter3';
 /**
  * The default event engine for the SPA
  */
-export default class DefaultEventEngine implements IEventEngine {
-    protected _eventEmitter : EventEmitter<string, any>;
-    protected _listeners : { [key: string] : (...args: any[]) => void } = {};
+export class DefaultEventEngine implements IEventEngine {
+    protected _eventEmitter : EventEmitter<string, unknown>;
+    protected _listeners : { [key: string] : (...args: unknown[]) => void } = {};
     protected _events : string[] = [];
-    protected _debug : boolean = false;
+    protected _debug = false;
 
-    public get debug() {
+    public get debug() : boolean {
         return this._debug;
     }
     public set debug(val : boolean)
@@ -20,7 +20,7 @@ export default class DefaultEventEngine implements IEventEngine {
     }
 
     public constructor() {
-        this._eventEmitter = new EventEmitter<string, any>();
+        this._eventEmitter = new EventEmitter<string, unknown>();
 
         const ctx = AppGlobal();
         if (ctx.addEventListener) {
@@ -28,12 +28,13 @@ export default class DefaultEventEngine implements IEventEngine {
         }
     }
 
-    protected log(...args : any[])
+    protected log(...args : unknown[]) : void
     {
         if (this.debug) console.debug(...args);
     }
 
-    protected onPostMessageReceived(event: MessageEvent) {
+    protected onPostMessageReceived(event: MessageEvent) : void
+    {
         if (event.data.id) {
             if (this.registerEvent(event.data.id)) {
               this.dispatch(event.data.id, event.data.data);
@@ -53,7 +54,7 @@ export default class DefaultEventEngine implements IEventEngine {
         return this._events.indexOf(event) >= 0;
     }
 
-    public addListener(event: string, id: string, handler: (...args: any[]) => void, autoRegister: boolean = false): IEventEngine 
+    public addListener(event: string, id: string, handler: (...args: unknown[]) => void, autoRegister = false): IEventEngine 
     {
         if (this._listeners[id]) {
             throw new Error(`There's already a listener with id ${ id } registered`);
@@ -72,14 +73,16 @@ export default class DefaultEventEngine implements IEventEngine {
         return this;
     }
 
-    public dispatch(event: string, ...args: any[]): void {
+    public dispatch(event: string, ...args: unknown[]): void
+    {
         if (!this.hasEvent(event)) this.registerEvent(event);
         this.log('Dispatching event', event, args);
-        const emitArgs : [ event: string, ...args: any[] ] = [ event, ...args ];
+        const emitArgs : [ event: string, ...args: unknown[] ] = [ event, ...args ];
         this._eventEmitter.emit( ...emitArgs );
     }
 
-    public removeListener(event: string, id: string): IEventEngine {
+    public removeListener(event: string, id: string): IEventEngine 
+    {
         if (!this._listeners[id])
             throw new Error(`There's no listner with ${ id } present`);
         
@@ -89,3 +92,4 @@ export default class DefaultEventEngine implements IEventEngine {
         return this;
     }
 }
+export default DefaultEventEngine;

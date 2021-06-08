@@ -1,5 +1,5 @@
 // Import libraries
-import React from 'react';
+import React, { FunctionComponent } from 'react';
 import { Helmet } from 'react-helmet';
 import { Provider as ReduxProvider } from 'react-redux';
 import { StaticRouterContext } from 'react-router';
@@ -25,7 +25,7 @@ export interface CmsSiteProps {
     context: IEpiserverContext
 }
 
-export const EpiserverWebsite : React.FunctionComponent<CmsSiteProps> = (props) => {
+export const EpiserverWebsite : FunctionComponent<CmsSiteProps> = (props) => {
     const SiteLayout = getLayout(props.context);
     const ssr = props.context.serviceContainer.getService<IServerContextAccessor>(DefaultServices.ServerContext);
     const location = (props.context.isServerSideRendering() ? ssr.Path : window.location.pathname) || undefined;

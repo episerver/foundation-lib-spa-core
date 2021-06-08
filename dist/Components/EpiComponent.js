@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import StringUtils from '../Util/StringUtils';
 import { useEpiserver, useIContentRepository, useServiceContainer, useServerSideRendering } from '../Hooks/Context';
 import { ContentLinkService } from '../Models/ContentLink';
-import { DefaultServices } from '../Core/IServiceContainer';
 import { Spinner } from '../Components/Spinner';
 import { useLocation } from 'react-router';
 const safeLanguageId = (ref, branch = '##', def = '', inclWorkId = true) => {
@@ -73,7 +72,7 @@ EpiComponent.displayName = "Optimizely CMS: ContentLink IContent resolver";
 export const IContentRenderer = (props) => {
     const context = useEpiserver();
     const path = useLocation().pathname;
-    const componentLoader = useServiceContainer().getService(DefaultServices.ComponentLoader);
+    const componentLoader = useServiceContainer().getService("ComponentLoader" /* ComponentLoader */);
     const componentName = buildComponentName(props.data, props.contentType);
     const [componentAvailable, setComponentAvailable] = useState(componentLoader.isPreLoaded(componentName));
     const debug = context.isDebugActive();
@@ -83,7 +82,7 @@ export const IContentRenderer = (props) => {
             setComponentAvailable(false);
             componentLoader.LoadType(componentName).then(component => {
                 if (debug)
-                    console.debug('IContentRenderer.loadType => Loaded component: ', componentName, component ? 'success' : 'failed', (component === null || component === void 0 ? void 0 : component.displayName) || "Unnamed / no component");
+                    console.debug('IContentRenderer.loadType => Loaded component: ', componentName, component ? 'success' : 'failed', component?.displayName || "Unnamed / no component");
                 if (!isCancelled)
                     setComponentAvailable(component ? true : false);
             });
@@ -112,7 +111,7 @@ export default EpiComponent;
  */
 export const buildComponentName = (item, contentType) => {
     const context = contentType || '';
-    const iContentType = (item === null || item === void 0 ? void 0 : item.contentType) || ['Error', 'ContentNotPresent'];
+    const iContentType = item?.contentType || ['Error', 'ContentNotPresent'];
     let baseName = iContentType.map((s) => StringUtils.SafeModelName(s)).join('/');
     if (context && context !== iContentType[0]) {
         baseName = context + '/' + baseName;

@@ -7,11 +7,10 @@ import EpiserverContext from '../Hooks/Context';
 import Layout from './Layout';
 // Import Episerver Components
 import EpiRouter, { RoutedContent } from '../Routing/EpiSpaRouter';
-import { DefaultServices } from '../Core/IServiceContainer';
 import CmsCommunicator from './CmsCommunicator';
 export const EpiserverWebsite = (props) => {
     const SiteLayout = getLayout(props.context);
-    const ssr = props.context.serviceContainer.getService(DefaultServices.ServerContext);
+    const ssr = props.context.serviceContainer.getService("ServerContext" /* ServerContext */);
     const location = (props.context.isServerSideRendering() ? ssr.Path : window.location.pathname) || undefined;
     return React.createElement(ReduxProvider, { store: props.context.getStore() },
         React.createElement(EpiserverContext.Provider, { value: props.context },

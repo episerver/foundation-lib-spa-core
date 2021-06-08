@@ -10,7 +10,7 @@ export const Router = (props) => {
             context: props.context,
             location: props.location
         };
-        return React.createElement(StaticRouter, Object.assign({}, staticRouterProps), props.children);
+        return React.createElement(StaticRouter, { ...staticRouterProps }, props.children);
     }
     const browserRouterProps = {
         basename: props.basename,
@@ -19,8 +19,8 @@ export const Router = (props) => {
         keyLength: props.keyLength
     };
     if (epi.isInEditMode() || epi.isEditable())
-        return React.createElement(BrowserRouter, Object.assign({}, browserRouterProps), props.children);
-    return React.createElement(BrowserRouter, Object.assign({}, browserRouterProps),
+        return React.createElement(BrowserRouter, { ...browserRouterProps }, props.children);
+    return React.createElement(BrowserRouter, { ...browserRouterProps },
         React.createElement(ElementNavigation, null, props.children));
 };
 Router.displayName = "Optimizely CMS: Router";
@@ -33,12 +33,12 @@ const ElementNavigation = (props) => {
     useEffect(() => {
         if (epi.isInEditMode() || epi.isServerSideRendering()) {
             if (epi.isDebugActive())
-                console.info('ElementNavigation: Edit mode, or SSR, so not attaching events');
+                console.debug('ElementNavigation: Edit mode, or SSR, so not attaching events');
             return;
         }
         else {
             if (epi.isDebugActive())
-                console.info('ElementNavigation: Enabling catch-all click handling for navigation');
+                console.debug('ElementNavigation: Enabling catch-all click handling for navigation');
         }
         const onWindowClick = (event) => {
             const target = event.target;
@@ -59,7 +59,7 @@ const ElementNavigation = (props) => {
             // Do not navigate to the same page
             if (newPath === location.pathname) {
                 if (config.enableDebug)
-                    console.info('ElementNavigation: Ignoring navigation to same path');
+                    console.debug('ElementNavigation: Ignoring navigation to same path');
                 event.preventDefault();
                 return false;
             }
@@ -85,7 +85,7 @@ const ElementNavigation = (props) => {
         document.addEventListener('click', onWindowClick);
         return () => {
             if (epi.isDebugActive())
-                console.info('ElementNavigation: Removing catch-all click handling for navigation');
+                console.debug('ElementNavigation: Removing catch-all click handling for navigation');
             document.removeEventListener('click', onWindowClick);
         };
     });
@@ -95,7 +95,7 @@ ElementNavigation.displayName = "Optimizely CMS: Generic click event handler";
 export const RoutedContent = (props) => {
     const ctx = useEpiserver();
     const switchProps = { location: props.location };
-    return React.createElement(Switch, Object.assign({}, switchProps),
+    return React.createElement(Switch, { ...switchProps },
         props.children,
         (props.config || []).map((item, idx) => createRouteNode(item, props.basePath, `${props.keyPrefix}-route-${idx}`, ctx)));
 };
@@ -103,8 +103,8 @@ RoutedContent.displayName = "Optimizely CMS: Route container";
 function createRouteNode(route, basePath = "", key, ctx) {
     let createdRoute = basePath ? (basePath.substr(-1) === "/" ? basePath.substr(0, -1) : basePath) : "";
     createdRoute = createdRoute + "/" + (route.path ? (route.path.substr(0, 1) === "/" ? route.path.substr(1) : route.path) : "");
-    if (ctx === null || ctx === void 0 ? void 0 : ctx.isDebugActive())
-        console.log('Generating Route Virtual DOM Node', createdRoute, route, key);
+    if (ctx?.isDebugActive())
+        console.debug('Generating Route Virtual DOM Node', createdRoute, route, key);
     const newRouteProps = {
         children: route.children,
         exact: route.exact,
@@ -112,9 +112,9 @@ function createRouteNode(route, basePath = "", key, ctx) {
         path: createdRoute,
         sensitive: route.sensitive,
         strict: route.strict,
-        render: route.render ? (props) => { return route.render ? route.render(Object.assign(Object.assign({}, props), { routes: route.routes, path: route.path })) : React.createElement("div", null); } : undefined,
-        component: route.component ? (props) => { const RouteComponent = route.component || 'div'; return React.createElement(RouteComponent, Object.assign({}, props, { routes: route.routes, path: route.path })); } : undefined
+        render: route.render ? (props) => { return route.render ? route.render({ ...props, routes: route.routes, path: route.path }) : React.createElement("div", null); } : undefined,
+        component: route.component ? (props) => { const RouteComponent = route.component || 'div'; return React.createElement(RouteComponent, { ...props, routes: route.routes, path: route.path }); } : undefined
     };
-    return React.createElement(Route, Object.assign({}, newRouteProps, { key: key }));
+    return React.createElement(Route, { ...newRouteProps, key: key });
 }
 //# sourceMappingURL=EpiSpaRouter.js.map

@@ -1,5 +1,4 @@
- 
-export interface IEvent {
+ export interface IEvent {
     data?: object;
     args?: any[];
 }
@@ -8,7 +7,7 @@ export interface IEvent {
  * Main descriptor of the EventEngine, as provided by the Episerver SPA
  * framework
  */
-export default interface IEventEngine {
+export interface IEventEngine {
     /**
      * Field that indicates if the current engine implementation is in debug
      * mode.
@@ -41,3 +40,4 @@ export default interface IEventEngine {
   
     removeListener(event: string, id: string): IEventEngine;
 }
+export default IEventEngine;

@@ -72,7 +72,7 @@ export function useContentDeliveryAPI() : IContentDeliveryAPI {
 /**
  * create your forceUpdate hook
  */
-export function useForceUpdate(){
+export function useForceUpdate() : () => void {
     const [value, setValue] = useState<number>(0); // integer state
     return () => setValue(value + 1); // update the state to force render
 }

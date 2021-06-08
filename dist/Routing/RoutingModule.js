@@ -1,6 +1,5 @@
 // Core interfaces
 import { BaseInitializableModule } from '../Core/IInitializableModule';
-import { DefaultServices } from '../Core/IServiceContainer';
 import RoutedComponent from '../Components/RoutedComponent';
 export default class RoutingModule extends BaseInitializableModule {
     constructor() {
@@ -16,7 +15,7 @@ export default class RoutingModule extends BaseInitializableModule {
      * @param {IServiceContainer} container The Service Container to update
      */
     ConfigureContainer(container) {
-        const config = container.getService(DefaultServices.Config);
+        const config = container.getService("Config" /* Config */);
         let haveStar = false;
         config.routes = config.routes || [];
         config.routes.forEach(c => haveStar = haveStar || c.path === "*");

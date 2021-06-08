@@ -1,7 +1,7 @@
 /**
  * Configuration of the load method of an IRepository implementation
  */
-export enum IRepositoryPolicy {
+export const enum IRepositoryPolicy {
     /**
      * [Default Policy] With the local storage first policy, the load method will first try the
      * database to load the data and then - if there's connectivity fall back to network. After

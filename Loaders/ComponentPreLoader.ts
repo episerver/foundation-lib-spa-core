@@ -3,13 +3,13 @@ import ComponentLoader from './ComponentLoader';
 /**
  * Type definition to be used within the main Episerver SPA configuration
  */
-export interface IComponentPreloadList extends Array<string> {}
+export type IComponentPreloadList = string[];
 
 /**
  * Helper class to pre-load a list of components to either ensure hydration of a server-side
  * rendered page is going smoothly or it's pre-load components for quick rendering.
  */
-export default class ComponentPreLoader {
+export class ComponentPreLoader {
   /**
    * Perform the actual pre-loading of components, this is works by filling the cache of the
    * component loader.
@@ -37,7 +37,7 @@ export default class ComponentPreLoader {
    * @param   loader  The ComponentLoader to use
    */
   public static isPreLoaded(config: IComponentPreloadList, loader: ComponentLoader): boolean {
-    let allPreLoaded: boolean = true;
+    let allPreLoaded = true;
     if (config && config.length > 0) {
       config.forEach((c) => {
         allPreLoaded = allPreLoaded && loader.isPreLoaded(c);
@@ -46,3 +46,5 @@ export default class ComponentPreLoader {
     return allPreLoaded;
   }
 }
+
+export default ComponentPreLoader;

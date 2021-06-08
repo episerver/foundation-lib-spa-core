@@ -36,7 +36,7 @@ const ctx : any = getGlobal();
 ctx.EpiserverSpa = ctx.EpiserverSpa || {};
 ctx.epi = ctx.epi || {};
 
-export enum InitStatus
+export const enum InitStatus
 {
     NotInitialized,
     Initializing,
@@ -77,6 +77,7 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
     }
 
     public init(config: AppConfig, serviceContainer: IServiceContainer, isServerSideRendering = false): void {
+        if (config.enableDebug) console.time("SPA Initialization");
         // Generic init
         this._initialized = InitStatus.Initializing;
         this._serviceContainer = serviceContainer;
@@ -103,10 +104,14 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
             console.warn('Running Episerver SPA with a production build and debug enabled');    
 
         // Create module list
+        if (config.enableDebug) console.time('Creating modules');
         this._modules.push(new RepositoryModule(), new RoutingModule(), new LoadersModule(), new StateModule());
         if (config.modules) this._modules = this._modules.concat(config.modules);
         this._modules.sort((a, b) => a.SortOrder - b.SortOrder);
-        if (config.enableDebug) console.info(`Episerver SPA modules: ${this._modules.map((m) => `${m.GetName()} (${m.SortOrder})`).join(', ')}`);
+        if (config.enableDebug) {
+            console.info(`Episerver SPA modules: ${this._modules.map((m) => `${m.GetName()} (${m.SortOrder})`).join(', ')}`);
+            console.timeEnd('Creating modules');
+        }
 
         // Register core services
         this._serviceContainer.addService(DefaultServices.Context, this);
@@ -137,6 +142,7 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
             ctx.EpiserverSpa.modules = this._modules;
             ctx.EpiserverSpa.eventEngine = eventEngine;
         }
+        if (config.enableDebug) console.timeEnd("SPA Initialization");
     }
 
     private _initRedux() : void
@@ -464,4 +470,5 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
 }
 
 ctx.EpiserverSpa.Context = ctx.EpiserverSpa.Context || new EpiserverSpaContext();
-export default ctx.EpiserverSpa.Context as IEpiserverContext;
+export const DefaultContext = ctx.EpiserverSpa.Context as IEpiserverContext;
+export default DefaultContext;

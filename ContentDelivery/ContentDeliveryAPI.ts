@@ -131,7 +131,7 @@ export class ContentDeliveryAPI implements IContentDeliveryAPi
 
     public async getWebsite(hostname ?: string | URL) : Promise<Website | undefined>
     {
-        let processedHost : string = '';
+        let processedHost = '';
         switch (typeof(hostname)) {
             case 'undefined':
                 processedHost = '';
@@ -200,14 +200,7 @@ export class ContentDeliveryAPI implements IContentDeliveryAPi
         if (expand) url.searchParams.set('expand', expand.map(s => encodeURIComponent(s)).join(','));
 
         // Perform request
-        return this.doAdvancedRequest<C>(url).then(r => { 
-            const c = r[0];
-            c.serverContext = {
-                propertyDataType: 'IContentDeliveryResponseContext',
-                value: r[1]
-            };
-            return c; 
-        }).catch(e => this.createNetworkErrorResponse(e));
+        return this.doRequest<C>(url).catch(e => this.createNetworkErrorResponse(e));
     }
 
     /**
@@ -382,12 +375,12 @@ export class ContentDeliveryAPI implements IContentDeliveryAPi
             new URL(this.MethodService, this.BaseURL),
             new URL(this.SiteService, this.BaseURL)
         ];
-        let isServiceURL : boolean = false;
+        let isServiceURL  = false;
         serviceUrls?.forEach(u => isServiceURL = isServiceURL || reqUrl.href.startsWith(u.href));
         return isServiceURL;
     }
 
-    public raw<TypeOut>(url: string | URL, options: Partial<AxiosRequestConfig> = {}, addDefaultQueryParams: boolean = true): Promise<IContentDeliveryResponse<TypeOut | NetworkErrorData>> {
+    public raw<TypeOut>(url: string | URL, options: Partial<AxiosRequestConfig> = {}, addDefaultQueryParams = true): Promise<IContentDeliveryResponse<TypeOut | NetworkErrorData>> {
         return this.doAdvancedRequest<TypeOut>(url, options, addDefaultQueryParams, true);
     }
 
@@ -398,13 +391,13 @@ export class ContentDeliveryAPI implements IContentDeliveryAPi
     }
 
     
-    private async doRequest<T>(url: string | URL, options: Partial<AxiosRequestConfig> = {}, addDefaultQueryParams : boolean = true) : Promise<T | NetworkErrorData>
+    private async doRequest<T>(url: string | URL, options: Partial<AxiosRequestConfig> = {}, addDefaultQueryParams = true) : Promise<T | NetworkErrorData>
     {
         const [ responseData, responseInfo ] = await this.doAdvancedRequest<T>(url, options, addDefaultQueryParams);
         return responseData;
     }
 
-    protected async doAdvancedRequest<T>(url: string | URL, options: Partial<AxiosRequestConfig> = {}, addDefaultQueryParams : boolean = true, returnOnError : boolean = false) : Promise<IContentDeliveryResponse<T | NetworkErrorData>>
+    protected async doAdvancedRequest<T>(url: string | URL, options: Partial<AxiosRequestConfig> = {}, addDefaultQueryParams = true, returnOnError = false) : Promise<IContentDeliveryResponse<T | NetworkErrorData>>
     {
         // Pre-process URL
         const requestUrl : URL = typeof(url) === "string" ? new URL(url, this.BaseURL) : url;
@@ -515,7 +508,7 @@ export class ContentDeliveryAPI implements IContentDeliveryAPi
         };
     }
 
-    protected errorCounter : number = 0;
+    protected errorCounter  = 0;
 
     protected createNetworkErrorResponse<T extends unknown = any>(error : T, response ?: AxiosResponse) : NetworkErrorData<T>
     {

@@ -1,19 +1,11 @@
 import EpiComponent from './EpiComponent';
-export var PageType;
-(function (PageType) {
-    PageType["Home"] = "home";
-    PageType["Product"] = "product";
-    PageType["Category"] = "category";
-    PageType["Basket"] = "basket";
-    PageType["Other"] = "other";
-})(PageType || (PageType = {}));
 export default class Page extends EpiComponent {
     constructor() {
         super(...arguments);
         /**
          * The page type of the current page being rendered
          */
-        this.pageType = PageType.Other;
+        this.pageType = "other" /* Other */;
         /**
          * Make sure page tracking is done when a page is being rendered
          *

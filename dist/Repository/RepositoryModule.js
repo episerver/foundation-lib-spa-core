@@ -2,11 +2,8 @@
 import merge from 'lodash/merge';
 // Core libraries
 import { BaseInitializableModule } from '../Core/IInitializableModule';
-import { DefaultServices } from '../Core/IServiceContainer';
 // Legacy & depricated classes
 import ContentDeliveryAPI from '../ContentDeliveryAPI';
-// Module resources
-import { IRepositoryPolicy } from './IRepository';
 import ContentDeliveryApiV2 from '../ContentDelivery/ContentDeliveryAPI';
 import FetchAdapter from '../ContentDelivery/FetchAdapter';
 // Repository flavours
@@ -40,9 +37,9 @@ export default class RepositoryModule extends BaseInitializableModule {
      */
     ConfigureContainer(container) {
         // Get Application Config
-        const config = container.getService(DefaultServices.Config);
-        const epiContext = container.getService(DefaultServices.Context);
-        const context = container.getService(DefaultServices.ExecutionContext);
+        const config = container.getService("Config" /* Config */);
+        const epiContext = container.getService("Context" /* Context */);
+        const context = container.getService("ExecutionContext" /* ExecutionContext */);
         // Build New ContentDeliveryAPI Connector
         const newApiClassicConfig = {
             Adapter: config.networkAdapter || isFetchApiAvailable() ? FetchAdapter : undefined,
@@ -52,31 +49,31 @@ export default class RepositoryModule extends BaseInitializableModule {
             EnableExtensions: true,
             Language: config.defaultLanguage
         };
-        const newAPI = new ContentDeliveryApiV2(config.iContentDelivery ? Object.assign(Object.assign({}, newApiClassicConfig), config.iContentDelivery) : newApiClassicConfig);
+        const newAPI = new ContentDeliveryApiV2(config.iContentDelivery ? { ...newApiClassicConfig, ...config.iContentDelivery } : newApiClassicConfig);
         // Build Old ContentDeliveryAPI Connector
         const oldAPI = new ContentDeliveryAPI(epiContext, config);
         oldAPI.setInEditMode(newAPI.InEpiserverShell);
         // Build repository configuration
         const defaultRepositoryConfig = {
             debug: config.enableDebug,
-            policy: IRepositoryPolicy.LocalStorageFirst
+            policy: "LocalStorageFirst" /* LocalStorageFirst */
         };
-        const repositoryConfig = config.iContentRepository ? Object.assign(Object.assign({}, defaultRepositoryConfig), config.iContentRepository) : Object.assign({}, defaultRepositoryConfig);
+        const repositoryConfig = config.iContentRepository ? { ...defaultRepositoryConfig, ...config.iContentRepository } : { ...defaultRepositoryConfig };
         // Create repository
         const repository = this.IIContentRepositoryFactory(container, newAPI, repositoryConfig);
         if (config.enableDebug && newAPI.InEpiserverShell)
             this.log(`${this.name}: Detected Episerver Shell - Disabling IndexedDB`);
         // Configure Authentication
         const authStorage = context.isServerSideRendering ? new ServerAuthStorage() : new BrowserAuthStorage();
-        container.addService(DefaultServices.AuthService, new DefaultAuthService(newAPI, authStorage));
+        container.addService("AuthService" /* AuthService */, new DefaultAuthService(newAPI, authStorage));
         // Add Services to container
-        container.addService(DefaultServices.ContentDeliveryApi, oldAPI);
-        container.addService(DefaultServices.ContentDeliveryAPI_V2, newAPI);
-        container.addService(DefaultServices.IContentRepository_V2, repository);
+        container.addService("ContentDeliveryAPI" /* ContentDeliveryApi */, oldAPI);
+        container.addService("IContentDeliveryAPI" /* ContentDeliveryAPI_V2 */, newAPI);
+        container.addService("IContentRepository_V2" /* IContentRepository_V2 */, repository);
     }
     IIContentRepositoryFactory(container, api, config) {
-        const ssr = container.getService(DefaultServices.ServerContext);
-        const context = container.getService(DefaultServices.ExecutionContext);
+        const ssr = container.getService("ServerContext" /* ServerContext */);
+        const context = container.getService("ExecutionContext" /* ExecutionContext */);
         if (context.isServerSideRendering)
             return new SSRIContentRepository(api, config, ssr);
         if (context.isInEditMode)
@@ -94,16 +91,16 @@ export default class RepositoryModule extends BaseInitializableModule {
                 // Determine window name
                 let windowName = 'server';
                 try {
-                    windowName = (window === null || window === void 0 ? void 0 : window.name) || 'server';
+                    windowName = window?.name || 'server';
                 }
                 catch (e) {
                     windowName = 'server';
                 }
                 // Set editable / editmode values
-                context.serviceContainer.getService(DefaultServices.ExecutionContext).isEditable = windowName !== 'compareView';
-                context.serviceContainer.getService(DefaultServices.ExecutionContext).isInEditMode = true;
-                context.serviceContainer.getService(DefaultServices.ContentDeliveryAPI_V2).InEditMode = true;
-                context.serviceContainer.getService(DefaultServices.ContentDeliveryApi).setInEditMode(true);
+                context.serviceContainer.getService("ExecutionContext" /* ExecutionContext */).isEditable = windowName !== 'compareView';
+                context.serviceContainer.getService("ExecutionContext" /* ExecutionContext */).isInEditMode = true;
+                context.serviceContainer.getService("IContentDeliveryAPI" /* ContentDeliveryAPI_V2 */).InEditMode = true;
+                context.serviceContainer.getService("ContentDeliveryAPI" /* ContentDeliveryApi */).setInEditMode(true);
             }
         };
         const onEpiContentSaved = (event) => {
@@ -112,13 +109,13 @@ export default class RepositoryModule extends BaseInitializableModule {
             if (event.successful) {
                 if (debug)
                     this.log('EpiContentSaved: Epi reported success, starting patching process');
-                const repo = context.serviceContainer.getService(DefaultServices.IContentRepository_V2);
+                const repo = context.serviceContainer.getService("IContentRepository_V2" /* IContentRepository_V2 */);
                 const baseId = event.savedContentLink;
                 this.patchContentRepository(repo, baseId, event, debug);
             }
         };
         // Bind event listener
-        const eventEngine = context.serviceContainer.getService(DefaultServices.EventEngine);
+        const eventEngine = context.serviceContainer.getService("EventEngine" /* EventEngine */);
         eventEngine.addListener('beta/epiReady', 'onBetaEpiReady', onEpiReady.bind(this), true);
         eventEngine.addListener('epiReady', 'onEpiReady', onEpiReady.bind(this), true);
         eventEngine.addListener('beta/contentSaved', 'BetaEpiContentSaved', onEpiContentSaved.bind(this), true);

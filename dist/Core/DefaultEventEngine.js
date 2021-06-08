@@ -3,7 +3,7 @@ import EventEmitter from 'eventemitter3';
 /**
  * The default event engine for the SPA
  */
-export default class DefaultEventEngine {
+export class DefaultEventEngine {
     constructor() {
         this._listeners = {};
         this._events = [];
@@ -74,4 +74,5 @@ export default class DefaultEventEngine {
         return this;
     }
 }
+export default DefaultEventEngine;
 //# sourceMappingURL=DefaultEventEngine.js.map

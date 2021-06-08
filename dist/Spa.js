@@ -1,15 +1,5 @@
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 // Redux & Redux setup
 import { configureStore } from '@reduxjs/toolkit';
-import { DefaultServices } from './Core/IServiceContainer';
 import DefaultEventEngine from './Core/DefaultEventEngine';
 import { ContentLinkService } from './Models/ContentLink';
 import getGlobal from './AppGlobal';
@@ -24,17 +14,9 @@ import StringUtils from './Util/StringUtils';
 const ctx = getGlobal();
 ctx.EpiserverSpa = ctx.EpiserverSpa || {};
 ctx.epi = ctx.epi || {};
-export var InitStatus;
-(function (InitStatus) {
-    InitStatus[InitStatus["NotInitialized"] = 0] = "NotInitialized";
-    InitStatus[InitStatus["Initializing"] = 1] = "Initializing";
-    InitStatus[InitStatus["CoreServicesReady"] = 2] = "CoreServicesReady";
-    InitStatus[InitStatus["ContainerReady"] = 3] = "ContainerReady";
-    InitStatus[InitStatus["Initialized"] = 4] = "Initialized";
-})(InitStatus || (InitStatus = {}));
 export class EpiserverSpaContext {
     constructor() {
-        this._initialized = InitStatus.NotInitialized;
+        this._initialized = 0 /* NotInitialized */;
         this._modules = [];
         this._cachedEditModeUrl = undefined;
     }
@@ -47,16 +29,17 @@ export class EpiserverSpaContext {
      * @deprecated    Use the ContentRepository_V2 service to fetch content and interact with controllers
      */
     get contentStorage() {
-        return this.serviceContainer.getService(DefaultServices.ContentDeliveryApi);
+        return this.serviceContainer.getService("ContentDeliveryAPI" /* ContentDeliveryApi */);
     }
     get Language() {
-        var _a;
-        return ((_a = this.serviceContainer.getService(DefaultServices.ContentDeliveryAPI_V2)) === null || _a === void 0 ? void 0 : _a.Language) ||
+        return this.serviceContainer.getService("IContentDeliveryAPI" /* ContentDeliveryAPI_V2 */)?.Language ||
             this.config().defaultLanguage;
     }
     init(config, serviceContainer, isServerSideRendering = false) {
+        if (config.enableDebug)
+            console.time("SPA Initialization");
         // Generic init
-        this._initialized = InitStatus.Initializing;
+        this._initialized = 1 /* Initializing */;
         this._serviceContainer = serviceContainer;
         // Prepare services
         const executionContext = {
@@ -79,22 +62,26 @@ export class EpiserverSpaContext {
         if (process.env.NODE_ENV === 'production' && executionContext.isDebugActive)
             console.warn('Running Episerver SPA with a production build and debug enabled');
         // Create module list
+        if (config.enableDebug)
+            console.time('Creating modules');
         this._modules.push(new RepositoryModule(), new RoutingModule(), new LoadersModule(), new StateModule());
         if (config.modules)
             this._modules = this._modules.concat(config.modules);
         this._modules.sort((a, b) => a.SortOrder - b.SortOrder);
-        if (config.enableDebug)
+        if (config.enableDebug) {
             console.info(`Episerver SPA modules: ${this._modules.map((m) => `${m.GetName()} (${m.SortOrder})`).join(', ')}`);
+            console.timeEnd('Creating modules');
+        }
         // Register core services
-        this._serviceContainer.addService(DefaultServices.Context, this);
-        this._serviceContainer.addService(DefaultServices.Config, config);
-        this._serviceContainer.addService(DefaultServices.ExecutionContext, executionContext);
-        this._serviceContainer.addService(DefaultServices.ServerContext, ServerContextFactory.create(executionContext, config));
-        this._serviceContainer.addService(DefaultServices.EventEngine, eventEngine);
-        this._initialized = InitStatus.CoreServicesReady;
+        this._serviceContainer.addService("Context" /* Context */, this);
+        this._serviceContainer.addService("Config" /* Config */, config);
+        this._serviceContainer.addService("ExecutionContext" /* ExecutionContext */, executionContext);
+        this._serviceContainer.addService("ServerContext" /* ServerContext */, ServerContextFactory.create(executionContext, config));
+        this._serviceContainer.addService("EventEngine" /* EventEngine */, eventEngine);
+        this._initialized = 2 /* CoreServicesReady */;
         // Have modules add services of their own
         this._modules.forEach(x => x.ConfigureContainer(this._serviceContainer));
-        this._initialized = InitStatus.ContainerReady;
+        this._initialized = 3 /* ContainerReady */;
         // Redux init
         this._initRedux();
         // EpiEditMode init
@@ -102,12 +89,14 @@ export class EpiserverSpaContext {
         // Run module startup logic
         this._modules.forEach(x => x.StartModule(this));
         // Mark SPA as initialized & and make some info available in the global context
-        this._initialized = InitStatus.Initialized;
+        this._initialized = 4 /* Initialized */;
         if (executionContext.isDebugActive) {
             ctx.EpiserverSpa.serviceContainer = this._serviceContainer;
             ctx.EpiserverSpa.modules = this._modules;
             ctx.EpiserverSpa.eventEngine = eventEngine;
         }
+        if (config.enableDebug)
+            console.timeEnd("SPA Initialization");
     }
     _initRedux() {
         const reducers = {};
@@ -121,23 +110,23 @@ export class EpiserverSpaContext {
         if (this.isDebugActive())
             console.debug(`Initializing edit mode in ${this.initialEditMode() ? 'enabled' : 'disabled'} state`);
         if (!this.isServerSideRendering() && this.initialEditMode()) {
-            this.serviceContainer.getService(DefaultServices.ContentDeliveryAPI_V2).InEditMode = true;
-            this.serviceContainer.getService(DefaultServices.ContentDeliveryApi).setInEditMode(true);
+            this.serviceContainer.getService("IContentDeliveryAPI" /* ContentDeliveryAPI_V2 */).InEditMode = true;
+            this.serviceContainer.getService("ContentDeliveryAPI" /* ContentDeliveryApi */).setInEditMode(true);
         }
     }
     isInitialized() {
-        return this._initialized === InitStatus.Initialized;
+        return this._initialized === 4 /* Initialized */;
     }
     isDebugActive() {
         this.enforceInitialized();
-        return this.serviceContainer.getService(DefaultServices.ExecutionContext).isDebugActive;
+        return this.serviceContainer.getService("ExecutionContext" /* ExecutionContext */).isDebugActive;
     }
     isServerSideRendering() {
         this.enforceInitialized();
-        return this.serviceContainer.getService(DefaultServices.ExecutionContext).isServerSideRendering;
+        return this.serviceContainer.getService("ExecutionContext" /* ExecutionContext */).isServerSideRendering;
     }
     enforceInitialized() {
-        const initializedStatuses = [InitStatus.ContainerReady, InitStatus.Initialized];
+        const initializedStatuses = [3 /* ContainerReady */, 4 /* Initialized */];
         if (initializedStatuses.indexOf(this._initialized) < 0) {
             throw new Error('The Episerver SPA Context has not yet been initialized');
         }
@@ -155,25 +144,25 @@ export class EpiserverSpaContext {
         return this._state;
     }
     events() {
-        return this._serviceContainer.getService(DefaultServices.EventEngine);
+        return this._serviceContainer.getService("EventEngine" /* EventEngine */);
     }
     config() {
         this.enforceInitialized();
-        return this._serviceContainer.getService(DefaultServices.Config);
+        return this._serviceContainer.getService("Config" /* Config */);
     }
     componentLoader() {
-        return this._serviceContainer.getService(DefaultServices.ComponentLoader);
+        return this._serviceContainer.getService("ComponentLoader" /* ComponentLoader */);
     }
     contentDeliveryApi() {
         this.enforceInitialized();
-        return this._serviceContainer.getService(DefaultServices.ContentDeliveryApi);
+        return this._serviceContainer.getService("ContentDeliveryAPI" /* ContentDeliveryApi */);
     }
     getContentByGuid() {
         throw new Error('Synchronous content loading is no longer supported');
     }
     loadContentByGuid(id) {
         this.enforceInitialized();
-        const repo = this._serviceContainer.getService(DefaultServices.IContentRepository_V2);
+        const repo = this._serviceContainer.getService("IContentRepository_V2" /* IContentRepository_V2 */);
         return repo.load(id).then(iContent => { if (!iContent)
             throw new Error('Content not resolved!'); return iContent; });
     }
@@ -182,7 +171,7 @@ export class EpiserverSpaContext {
     }
     loadContentById(id) {
         this.enforceInitialized();
-        const repo = this._serviceContainer.getService(DefaultServices.IContentRepository_V2);
+        const repo = this._serviceContainer.getService("IContentRepository_V2" /* IContentRepository_V2 */);
         return repo.load(id).then(iContent => { if (!iContent)
             throw new Error('Content not resolved!'); return iContent; });
     }
@@ -191,7 +180,7 @@ export class EpiserverSpaContext {
     }
     loadContentByRef(ref) {
         this.enforceInitialized();
-        const repo = this._serviceContainer.getService(DefaultServices.IContentRepository_V2);
+        const repo = this._serviceContainer.getService("IContentRepository_V2" /* IContentRepository_V2 */);
         return repo.getByReference(ref).then(iContent => { if (!iContent)
             throw new Error('Content not resolved!'); return iContent; });
     }
@@ -200,7 +189,7 @@ export class EpiserverSpaContext {
     }
     loadContentByPath(path) {
         this.enforceInitialized();
-        const repo = this._serviceContainer.getService(DefaultServices.IContentRepository_V2);
+        const repo = this._serviceContainer.getService("IContentRepository_V2" /* IContentRepository_V2 */);
         return repo.getByRoute(path).then(iContent => { if (!iContent)
             throw new Error('Content not resolved!'); return iContent; });
     }
@@ -214,16 +203,15 @@ export class EpiserverSpaContext {
      * @return {boolean}
      */
     initialEditMode() {
-        var _a, _b, _c;
         try {
-            if (typeof ((_a = ctx === null || ctx === void 0 ? void 0 : ctx.epi) === null || _a === void 0 ? void 0 : _a.inEditMode) === 'boolean' && ctx.epi.inEditMode)
+            if (typeof (ctx?.epi?.inEditMode) === 'boolean' && ctx.epi.inEditMode)
                 return true;
         }
         catch (e) {
             // Ignore errors on purpose to go to next test
         }
         try {
-            if (typeof ((_c = (_b = ctx === null || ctx === void 0 ? void 0 : ctx.epi) === null || _b === void 0 ? void 0 : _b.beta) === null || _c === void 0 ? void 0 : _c.inEditMode) === 'boolean' && ctx.epi.beta.inEditMode)
+            if (typeof (ctx?.epi?.beta?.inEditMode) === 'boolean' && ctx.epi.beta.inEditMode)
                 return true;
         }
         catch (e) {
@@ -239,7 +227,7 @@ export class EpiserverSpaContext {
             // Ignore error on purpose to go to next test
         }
         try {
-            return window !== (window === null || window === void 0 ? void 0 : window.top) && (window === null || window === void 0 ? void 0 : window.name) === 'sitePreview';
+            return window !== window?.top && window?.name === 'sitePreview';
         }
         catch (e) {
             // Ignore error on purpose to go to next test
@@ -247,13 +235,12 @@ export class EpiserverSpaContext {
         return false;
     }
     isInEditMode() {
-        return this._serviceContainer.getService(DefaultServices.ExecutionContext).isInEditMode;
+        return this._serviceContainer.getService("ExecutionContext" /* ExecutionContext */).isInEditMode;
     }
     isEditable() {
-        return this._serviceContainer.getService(DefaultServices.ExecutionContext).isEditable;
+        return this._serviceContainer.getService("ExecutionContext" /* ExecutionContext */).isEditable;
     }
     getEpiserverUrl(path = '', action) {
-        var _a;
         let itemPath = '';
         if (ContentLinkService.referenceIsString(path)) {
             itemPath = path;
@@ -267,7 +254,7 @@ export class EpiserverSpaContext {
         if (action) {
             itemPath += itemPath.length ? '/' + action : action;
         }
-        const itemUrl = new URL(itemPath, (_a = this.config()) === null || _a === void 0 ? void 0 : _a.epiBaseUrl);
+        const itemUrl = new URL(itemPath, this.config()?.epiBaseUrl);
         return StringUtils.TrimRight('/', itemUrl.href);
     }
     getSpaRoute(path) {
@@ -328,27 +315,25 @@ export class EpiserverSpaContext {
         window.location.href = newPath;
     }
     getCurrentWebsite() {
-        const website = this.serviceContainer.getService(DefaultServices.ContentDeliveryAPI_V2).CurrentWebsite;
+        const website = this.serviceContainer.getService("IContentDeliveryAPI" /* ContentDeliveryAPI_V2 */).CurrentWebsite;
         if (!website)
             throw new Error('The Current website has not been set');
         return website;
     }
-    loadCurrentWebsite() {
-        return __awaiter(this, void 0, void 0, function* () {
-            let domain = '';
-            const repo = this.serviceContainer.getService(DefaultServices.IContentRepository_V2);
-            try {
-                domain = window.location.hostname;
-            }
-            catch (e) {
-                // Ignored on purpose
-            }
-            const website = yield repo.getWebsite(domain);
-            if (!website)
-                throw new Error('Current website not loadable');
-            this.serviceContainer.getService(DefaultServices.ContentDeliveryAPI_V2).CurrentWebsite = website;
-            return website;
-        });
+    async loadCurrentWebsite() {
+        let domain = '';
+        const repo = this.serviceContainer.getService("IContentRepository_V2" /* IContentRepository_V2 */);
+        try {
+            domain = window.location.hostname;
+        }
+        catch (e) {
+            // Ignored on purpose
+        }
+        const website = await repo.getWebsite(domain);
+        if (!website)
+            throw new Error('Current website not loadable');
+        this.serviceContainer.getService("IContentDeliveryAPI" /* ContentDeliveryAPI_V2 */).CurrentWebsite = website;
+        return website;
     }
     getCurrentPath() {
         const state = this._state.getState();
@@ -382,11 +367,10 @@ export class EpiserverSpaContext {
      * @returns {string}    The base path of the SPA
      */
     getSpaBasePath() {
-        var _a;
         if (typeof this._sanitizedSpaBasePath === 'string') {
             return this._sanitizedSpaBasePath;
         }
-        let configBasePath = ((_a = this.config()) === null || _a === void 0 ? void 0 : _a.basePath) || '';
+        let configBasePath = this.config()?.basePath || '';
         if (configBasePath.length > 0) {
             configBasePath = StringUtils.TrimRight('/', StringUtils.TrimLeft('/', configBasePath));
             configBasePath = configBasePath.length > 0 ? '/' + configBasePath : '';
@@ -409,5 +393,6 @@ export class EpiserverSpaContext {
     }
 }
 ctx.EpiserverSpa.Context = ctx.EpiserverSpa.Context || new EpiserverSpaContext();
-export default ctx.EpiserverSpa.Context;
+export const DefaultContext = ctx.EpiserverSpa.Context;
+export default DefaultContext;
 //# sourceMappingURL=Spa.js.map

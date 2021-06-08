@@ -1,17 +1,24 @@
 {
   "compilerOptions": {
-    "target": "ES6",
+    // Set build target
+    "target": "ES2020",
+    "module": "ES2020",
+    "lib": ["ES2020", "ES2020.Promise", "ES2020.String", "ES2020.BigInt", "DOM", "DOM.Iterable"],
     "jsx": "react",
-    "module": "ESNext",
-    "declaration": true,
-    "noImplicitAny": true,
+
+    // Set Output & Module resolution
     "outDir": "./dist",
-    "strict": true,
     "moduleResolution": "node",
-    "esModuleInterop": true,
-    "lib": ["ES6", "DOM", "DOM.Iterable"],
-    "removeComments": false,
-    "sourceMap": true
+    "declaration": true,
+    "sourceMap": true,
+
+    // Language checking
+    "strict": true,
+    "noImplicitAny": true,
+    "esModuleInterop": false,
+    "allowSyntheticDefaultImports": true,
+    "importHelpers": true,
+    "removeComments": false // Some Modules have Webpack specific comments to allow lazy loading
   },
-  "exclude": ["node_modules", "tests", "dist"]
+  "exclude": ["node_modules", "tests", "dist", "cjs"]
 }

@@ -1,16 +1,6 @@
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 // Import libraries
 import EventEmitter from 'eventemitter3';
 import cloneDeep from 'lodash/cloneDeep';
-import { IRepositoryPolicy } from './IRepository';
 import { PathResponseIsIContent } from '../ContentDeliveryAPI';
 export class PassthroughIContentRepository extends EventEmitter {
     constructor(api, config) {
@@ -18,10 +8,10 @@ export class PassthroughIContentRepository extends EventEmitter {
         this._config = {
             debug: false,
             maxAge: 0,
-            policy: IRepositoryPolicy.LocalStorageFirst
+            policy: "LocalStorageFirst" /* LocalStorageFirst */
         };
         this._api = api;
-        this._config = Object.assign(Object.assign({}, this._config), config);
+        this._config = { ...this._config, ...config };
     }
     get(reference) {
         return Promise.resolve(null);
@@ -35,33 +25,30 @@ export class PassthroughIContentRepository extends EventEmitter {
     update(reference, recursive) {
         return this._api.getContent(reference);
     }
-    patch(reference, patch) {
-        var _a, _b;
-        return __awaiter(this, void 0, void 0, function* () {
-            try {
-                const item = yield this.load(reference);
-                if (!item)
-                    return null;
-                if (((_a = item.contentLink) === null || _a === void 0 ? void 0 : _a.workId) && ((_b = item.contentLink) === null || _b === void 0 ? void 0 : _b.workId) > 0) {
-                    if (this._config.debug)
-                        console.debug('PassthroughIContentRepository: Skipping patch to content item', reference, item);
-                    this.emit('beforePatch', item.contentLink, item);
-                    this.emit('afterPatch', item.contentLink, item, item);
-                    return item;
-                }
-                if (this._config.debug)
-                    console.debug('PassthroughIContentRepository: Will apply patch to content item', reference, item, patch);
-                this.emit('beforePatch', item.contentLink, item);
-                const patchedItem = patch(cloneDeep(item));
-                this.emit('afterPatch', patchedItem.contentLink, item, patchedItem);
-                if (this._config.debug)
-                    console.debug('PassthroughIContentRepository: Applied patch to content item', reference, item, patchedItem);
-                return patchedItem;
-            }
-            catch (e) {
+    async patch(reference, patch) {
+        try {
+            const item = await this.load(reference);
+            if (!item)
                 return null;
+            if (item.contentLink?.workId && item.contentLink?.workId > 0) {
+                if (this._config.debug)
+                    console.debug('PassthroughIContentRepository: Skipping patch to content item', reference, item);
+                this.emit('beforePatch', item.contentLink, item);
+                this.emit('afterPatch', item.contentLink, item, item);
+                return item;
             }
-        });
+            if (this._config.debug)
+                console.debug('PassthroughIContentRepository: Will apply patch to content item', reference, item, patch);
+            this.emit('beforePatch', item.contentLink, item);
+            const patchedItem = patch(cloneDeep(item));
+            this.emit('afterPatch', patchedItem.contentLink, item, patchedItem);
+            if (this._config.debug)
+                console.debug('PassthroughIContentRepository: Applied patch to content item', reference, item, patchedItem);
+            return patchedItem;
+        }
+        catch (e) {
+            return null;
+        }
     }
     getByContentId(contentId) {
         return this._api.getContent(contentId);

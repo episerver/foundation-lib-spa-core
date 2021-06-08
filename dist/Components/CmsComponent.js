@@ -12,7 +12,7 @@ export const CmsComponent = (props) => {
     if (ctx.isDebugActive()) {
         console.warn('The CmsComponent has been depricated, use the EpiComponent instead.');
     }
-    return React.createElement(EpiComponent, Object.assign({}, props));
+    return React.createElement(EpiComponent, { ...props });
 };
 CmsComponent.displayName = "Optimizely CMS: Component (DEPRECATED)";
 export default CmsComponent;

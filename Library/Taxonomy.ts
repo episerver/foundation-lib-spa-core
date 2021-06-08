@@ -7,8 +7,4 @@ export * from '../Models/WebsiteList';
 export * from '../Models/ContentLink';
 
 // IContent
-import * as IContentNS from '../Models/IContent';
-export type IContent = IContentNS.default
-export type IContentType = IContentNS.IContentType;
-export const AbstractIContent = IContentNS.BaseIContent;
-export const namePropertyIsString = IContentNS.namePropertyIsString
+export { default as IContent, IContentType, IContentData, BaseIContent as AbstractIContent } from '../Models/IContent';

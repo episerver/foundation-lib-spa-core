@@ -1,19 +1,9 @@
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 import Axios from 'axios';
 import * as UUID from 'uuid';
 import { isNetworkError } from './IContentDeliveryAPI';
 import { DefaultConfig } from './Config';
 import { hostnameFilter } from '../Models/WebsiteList';
 import { ContentLinkService } from '../Models/ContentLink';
-import { ResponseType } from '../Models/ActionResponse';
 import { networkErrorToOAuthError } from './IAuthService';
 export class ContentDeliveryAPI {
     constructor(config) {
@@ -24,7 +14,7 @@ export class ContentDeliveryAPI {
         this.ModelService = 'api/episerver/v3/model/';
         this.SearchService = 'api/episerver/v2.0/search/content';
         this.errorCounter = 0;
-        this._config = Object.assign(Object.assign({}, DefaultConfig), config);
+        this._config = { ...DefaultConfig, ...config };
         this._axiosStatic = Axios;
         this._axios = Axios.create(this.getDefaultRequestConfig());
     }
@@ -59,7 +49,7 @@ export class ContentDeliveryAPI {
     }
     get InEpiserverShell() {
         try {
-            return window !== (window === null || window === void 0 ? void 0 : window.top) && (window === null || window === void 0 ? void 0 : window.name) === 'sitePreview';
+            return window !== window?.top && window?.name === 'sitePreview';
         }
         catch (e) {
             // Ignored on purpose
@@ -97,68 +87,62 @@ export class ContentDeliveryAPI {
     getWebsites() {
         return this.doRequest(this.SiteService).then(r => isNetworkError(r) ? [] : r).catch(() => []);
     }
-    getWebsite(hostname) {
-        return __awaiter(this, void 0, void 0, function* () {
-            let processedHost = '';
-            switch (typeof (hostname)) {
-                case 'undefined':
-                    processedHost = '';
-                    break;
-                case 'string':
-                    processedHost = hostname;
-                    break;
-                default:
-                    processedHost = hostname.host;
-                    break;
-            }
+    async getWebsite(hostname) {
+        let processedHost = '';
+        switch (typeof (hostname)) {
+            case 'undefined':
+                processedHost = '';
+                break;
+            case 'string':
+                processedHost = hostname;
+                break;
+            default:
+                processedHost = hostname.host;
+                break;
+        }
+        if (this._config.Debug)
+            console.log(`ContentDeliveryAPI: Resolving website for: ${processedHost}`);
+        return this.getWebsites().then(websites => {
+            const website = websites.filter(w => hostnameFilter(w, processedHost, undefined, false)).shift();
+            const starWebsite = websites.filter(w => hostnameFilter(w, '*', undefined, false)).shift();
+            const outValue = website || starWebsite;
             if (this._config.Debug)
-                console.log(`ContentDeliveryAPI: Resolving website for: ${processedHost}`);
-            return this.getWebsites().then(websites => {
-                const website = websites.filter(w => hostnameFilter(w, processedHost, undefined, false)).shift();
-                const starWebsite = websites.filter(w => hostnameFilter(w, '*', undefined, false)).shift();
-                const outValue = website || starWebsite;
-                if (this._config.Debug)
-                    console.log(`ContentDeliveryAPI: Resolved website for: ${processedHost} to ${outValue === null || outValue === void 0 ? void 0 : outValue.name}`);
-                return outValue;
-            });
+                console.log(`ContentDeliveryAPI: Resolved website for: ${processedHost} to ${outValue?.name}`);
+            return outValue;
         });
     }
-    getCurrentWebsite() {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (this.CurrentWebsite)
-                return this.CurrentWebsite;
-            let hostname;
-            try {
-                hostname = window.location.host;
-            }
-            catch (e) { /* Ignored on purpose */ }
-            const w = yield this.getWebsite(hostname);
-            this.CurrentWebsite = w;
-            return w;
-        });
+    async getCurrentWebsite() {
+        if (this.CurrentWebsite)
+            return this.CurrentWebsite;
+        let hostname;
+        try {
+            hostname = window.location.host;
+        }
+        catch (e) { /* Ignored on purpose */ }
+        const w = await this.getWebsite(hostname);
+        this.CurrentWebsite = w;
+        return w;
     }
-    resolveRoute(path, select, expand) {
-        return __awaiter(this, void 0, void 0, function* () {
-            // Try CD-API 2.17+ method first
-            const contentServiceUrl = new URL(this.ContentService, this.BaseURL);
-            contentServiceUrl.searchParams.set('contentUrl', path);
-            if (select)
-                contentServiceUrl.searchParams.set('select', select.join(','));
-            if (expand)
-                contentServiceUrl.searchParams.set('expand', expand.join(','));
-            const list = yield this.doRequest(contentServiceUrl);
-            if (isNetworkError(list))
-                return list;
-            if (list && list.length === 1)
-                return list[0];
-            // Fallback to resolving by accessing the URL itself
-            const url = new URL(path.startsWith('/') ? path.substr(1) : path, this.BaseURL);
-            if (select)
-                url.searchParams.set('select', select.map(s => encodeURIComponent(s)).join(','));
-            if (expand)
-                url.searchParams.set('expand', expand.map(s => encodeURIComponent(s)).join(','));
-            return this.doRequest(url); // .catch(e => this.createNetworkErrorResponse(e));
-        });
+    async resolveRoute(path, select, expand) {
+        // Try CD-API 2.17+ method first
+        const contentServiceUrl = new URL(this.ContentService, this.BaseURL);
+        contentServiceUrl.searchParams.set('contentUrl', path);
+        if (select)
+            contentServiceUrl.searchParams.set('select', select.join(','));
+        if (expand)
+            contentServiceUrl.searchParams.set('expand', expand.join(','));
+        const list = await this.doRequest(contentServiceUrl);
+        if (isNetworkError(list))
+            return list;
+        if (list && list.length === 1)
+            return list[0];
+        // Fallback to resolving by accessing the URL itself
+        const url = new URL(path.startsWith('/') ? path.substr(1) : path, this.BaseURL);
+        if (select)
+            url.searchParams.set('select', select.map(s => encodeURIComponent(s)).join(','));
+        if (expand)
+            url.searchParams.set('expand', expand.map(s => encodeURIComponent(s)).join(','));
+        return this.doRequest(url); // .catch(e => this.createNetworkErrorResponse(e));
     }
     /**
      * Retrieve a single piece of content from Episerver
@@ -177,14 +161,7 @@ export class ContentDeliveryAPI {
         if (expand)
             url.searchParams.set('expand', expand.map(s => encodeURIComponent(s)).join(','));
         // Perform request
-        return this.doAdvancedRequest(url).then(r => {
-            const c = r[0];
-            c.serverContext = {
-                propertyDataType: 'IContentDeliveryResponseContext',
-                value: r[1]
-            };
-            return c;
-        }).catch(e => this.createNetworkErrorResponse(e));
+        return this.doRequest(url).catch(e => this.createNetworkErrorResponse(e));
     }
     /**
      * Retrieve a list content-items from Episerver in one round-trip
@@ -196,7 +173,7 @@ export class ContentDeliveryAPI {
     getContents(ids, select, expand) {
         const refs = [];
         const guids = [];
-        ids === null || ids === void 0 ? void 0 : ids.forEach(id => {
+        ids?.forEach(id => {
             const apiId = ContentLinkService.createApiId(id, !this.InEditMode, this.InEditMode);
             if (this.apiIdIsGuid(apiId)) {
                 guids.push(apiId);
@@ -228,40 +205,38 @@ export class ContentDeliveryAPI {
      * @param { string }    expand
      * @returns The search results
      */
-    basicSearch(query, orderBy, skip, top, personalized, select, expand) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (!this.OnLine)
-                return Promise.resolve({ TotalMatching: 0, Results: [] });
-            const params = new URLSearchParams();
-            params.set('query', query);
-            if (orderBy)
-                params.set('orderBy', orderBy);
-            if (skip)
-                params.set('skip', skip.toString());
-            if (top)
-                params.set('top', top.toString());
-            if (select)
-                params.set('select', select.join(','));
-            if (expand)
-                params.set('expand', expand.join(','));
-            if (personalized)
-                params.set('personalize', 'true');
-            const url = this.SearchService + '?' + params.toString();
-            const data = yield this
-                .doAdvancedRequest(url, {}, true, false)
-                .then(r => {
-                if (isNetworkError(r[0])) {
-                    const errorResponse = {
-                        TotalMatching: 0,
-                        Results: []
-                    };
-                    return errorResponse;
-                }
-                else
-                    return r[0];
-            });
-            return data;
+    async basicSearch(query, orderBy, skip, top, personalized, select, expand) {
+        if (!this.OnLine)
+            return Promise.resolve({ TotalMatching: 0, Results: [] });
+        const params = new URLSearchParams();
+        params.set('query', query);
+        if (orderBy)
+            params.set('orderBy', orderBy);
+        if (skip)
+            params.set('skip', skip.toString());
+        if (top)
+            params.set('top', top.toString());
+        if (select)
+            params.set('select', select.join(','));
+        if (expand)
+            params.set('expand', expand.join(','));
+        if (personalized)
+            params.set('personalize', 'true');
+        const url = this.SearchService + '?' + params.toString();
+        const data = await this
+            .doAdvancedRequest(url, {}, true, false)
+            .then(r => {
+            if (isNetworkError(r[0])) {
+                const errorResponse = {
+                    TotalMatching: 0,
+                    Results: []
+                };
+                return errorResponse;
+            }
+            else
+                return r[0];
         });
+        return data;
     }
     /**
      * Perform an advanced search by an OData Query
@@ -302,47 +277,45 @@ export class ContentDeliveryAPI {
         // Perform request
         return this.doRequest(url).then(r => isNetworkError(r) ? [r] : r).catch(e => [this.createNetworkErrorResponse(e)]);
     }
-    invoke(content, method, verb, data, requestTransformer) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (!this._config.EnableExtensions)
-                return Promise.reject('Extensions must be enabled to use the invoke method');
-            // Base configuration
-            const apiId = ContentLinkService.createApiId(content, !this.InEditMode, this.InEditMode);
-            const url = new URL(this.MethodService + apiId + '/' + method, this.BaseURL);
-            // Default JSON Transformer for request data
-            const defaultTransformer = (reqData, reqHeaders) => {
-                if (reqData) {
-                    reqHeaders['Content-Type'] = 'application/json';
-                    return JSON.stringify(reqData);
-                }
-                return reqData;
+    async invoke(content, method, verb, data, requestTransformer) {
+        if (!this._config.EnableExtensions)
+            return Promise.reject('Extensions must be enabled to use the invoke method');
+        // Base configuration
+        const apiId = ContentLinkService.createApiId(content, !this.InEditMode, this.InEditMode);
+        const url = new URL(this.MethodService + apiId + '/' + method, this.BaseURL);
+        // Default JSON Transformer for request data
+        const defaultTransformer = (reqData, reqHeaders) => {
+            if (reqData) {
+                reqHeaders['Content-Type'] = 'application/json';
+                return JSON.stringify(reqData);
+            }
+            return reqData;
+        };
+        // Axios request config
+        const options = {
+            method: verb,
+            data,
+            transformRequest: requestTransformer || defaultTransformer
+        };
+        const createActionErrorResponse = (error) => {
+            const actionResponse = {
+                actionName: method,
+                contentLink: error.contentLink,
+                currentContent: error,
+                responseType: "ActionResult" /* ActionResult */,
+                data: error,
+                language: this.Language,
+                name: typeof (error.name) === "string" ? error.name : error.name.value,
+                url: error.contentLink.url
             };
-            // Axios request config
-            const options = {
-                method: verb,
-                data,
-                transformRequest: requestTransformer || defaultTransformer
-            };
-            const createActionErrorResponse = (error) => {
-                const actionResponse = {
-                    actionName: method,
-                    contentLink: error.contentLink,
-                    currentContent: error,
-                    responseType: ResponseType.ActionResult,
-                    data: error,
-                    language: this.Language,
-                    name: typeof (error.name) === "string" ? error.name : error.name.value,
-                    url: error.contentLink.url
-                };
-                return actionResponse;
-            };
-            // Run the actual request
-            return this.doRequest(url, options)
-                .then(r => isNetworkError(r) ? createActionErrorResponse(r) : r)
-                .catch((e) => {
-                const errorResponse = this.createNetworkErrorResponse(e);
-                return createActionErrorResponse(errorResponse);
-            });
+            return actionResponse;
+        };
+        // Run the actual request
+        return this.doRequest(url, options)
+            .then(r => isNetworkError(r) ? createActionErrorResponse(r) : r)
+            .catch((e) => {
+            const errorResponse = this.createNetworkErrorResponse(e);
+            return createActionErrorResponse(errorResponse);
         });
     }
     isServiceURL(url) {
@@ -354,7 +327,7 @@ export class ContentDeliveryAPI {
             new URL(this.SiteService, this.BaseURL)
         ];
         let isServiceURL = false;
-        serviceUrls === null || serviceUrls === void 0 ? void 0 : serviceUrls.forEach(u => isServiceURL = isServiceURL || reqUrl.href.startsWith(u.href));
+        serviceUrls?.forEach(u => isServiceURL = isServiceURL || reqUrl.href.startsWith(u.href));
         return isServiceURL;
     }
     raw(url, options = {}, addDefaultQueryParams = true) {
@@ -364,92 +337,87 @@ export class ContentDeliveryAPI {
         const guidRegex = /^[0-9a-z]{8}-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{12}$/;
         return apiId.match(guidRegex) ? true : false;
     }
-    doRequest(url, options = {}, addDefaultQueryParams = true) {
-        return __awaiter(this, void 0, void 0, function* () {
-            const [responseData, responseInfo] = yield this.doAdvancedRequest(url, options, addDefaultQueryParams);
-            return responseData;
-        });
+    async doRequest(url, options = {}, addDefaultQueryParams = true) {
+        const [responseData, responseInfo] = await this.doAdvancedRequest(url, options, addDefaultQueryParams);
+        return responseData;
     }
-    doAdvancedRequest(url, options = {}, addDefaultQueryParams = true, returnOnError = false) {
-        var _a, _b;
-        return __awaiter(this, void 0, void 0, function* () {
-            // Pre-process URL
-            const requestUrl = typeof (url) === "string" ? new URL(url, this.BaseURL) : url;
-            if (addDefaultQueryParams) {
-                if (this.InEditMode) {
-                    requestUrl.searchParams.set('epieditmode', 'True');
-                    requestUrl.searchParams.set('preventcache', Math.round(Math.random() * 100000000).toString());
-                    // Propagate the view configurations
-                    try {
-                        const windowSearchParams = new URLSearchParams((_a = window === null || window === void 0 ? void 0 : window.location) === null || _a === void 0 ? void 0 : _a.search);
-                        const toTransfer = ['visitorgroupsByID', 'epiprojects', 'commondrafts', 'epichannel'];
-                        toTransfer.forEach(param => {
-                            if (!requestUrl.searchParams.has(param) && windowSearchParams.has(param)) {
-                                requestUrl.searchParams.set(param, windowSearchParams.get(param));
-                            }
-                        });
-                    }
-                    catch (e) {
-                        // Ignore on purpose
-                    }
+    async doAdvancedRequest(url, options = {}, addDefaultQueryParams = true, returnOnError = false) {
+        // Pre-process URL
+        const requestUrl = typeof (url) === "string" ? new URL(url, this.BaseURL) : url;
+        if (addDefaultQueryParams) {
+            if (this.InEditMode) {
+                requestUrl.searchParams.set('epieditmode', 'True');
+                requestUrl.searchParams.set('preventcache', Math.round(Math.random() * 100000000).toString());
+                // Propagate the view configurations
+                try {
+                    const windowSearchParams = new URLSearchParams(window?.location?.search);
+                    const toTransfer = ['visitorgroupsByID', 'epiprojects', 'commondrafts', 'epichannel'];
+                    toTransfer.forEach(param => {
+                        if (!requestUrl.searchParams.has(param) && windowSearchParams.has(param)) {
+                            requestUrl.searchParams.set(param, windowSearchParams.get(param));
+                        }
+                    });
                 }
-                if (requestUrl.pathname.indexOf(this.ContentService) && this._config.AutoExpandAll && !requestUrl.searchParams.has('expand')) {
-                    requestUrl.searchParams.set('expand', '*');
+                catch (e) {
+                    // Ignore on purpose
                 }
             }
-            // Create request configuration
-            const requestConfig = Object.assign(Object.assign({}, this.getDefaultRequestConfig()), options);
-            requestConfig.url = requestUrl.href;
-            // Add the token if needed
-            if (requestUrl.href.indexOf(this.AuthService) < 0) { // Do not add for the auth service itself
-                const currentToken = this.TokenProvider ? yield this.TokenProvider.getCurrentToken() : undefined;
-                if (currentToken) { // Only if we have a current token
-                    requestConfig.headers = requestConfig.headers || {};
-                    requestConfig.headers.Authorization = `Bearer ${currentToken.access_token}`;
-                }
+            if (requestUrl.pathname.indexOf(this.ContentService) && this._config.AutoExpandAll && !requestUrl.searchParams.has('expand')) {
+                requestUrl.searchParams.set('expand', '*');
             }
-            // Execute request
-            try {
+        }
+        // Create request configuration
+        const requestConfig = { ...this.getDefaultRequestConfig(), ...options };
+        requestConfig.url = requestUrl.href;
+        // Add the token if needed
+        if (requestUrl.href.indexOf(this.AuthService) < 0) { // Do not add for the auth service itself
+            const currentToken = this.TokenProvider ? await this.TokenProvider.getCurrentToken() : undefined;
+            if (currentToken) { // Only if we have a current token
+                requestConfig.headers = requestConfig.headers || {};
+                requestConfig.headers.Authorization = `Bearer ${currentToken.access_token}`;
+            }
+        }
+        // Execute request
+        try {
+            if (this._config.Debug)
+                console.info('ContentDeliveryAPI Requesting', requestConfig.method + ' ' + requestConfig.url, requestConfig.data);
+            const response = await this.Axios.request(requestConfig);
+            if (response.status >= 400 && !returnOnError) {
                 if (this._config.Debug)
-                    console.info('ContentDeliveryAPI Requesting', requestConfig.method + ' ' + requestConfig.url, requestConfig.data);
-                const response = yield this.Axios.request(requestConfig);
-                if (response.status >= 400 && !returnOnError) {
-                    if (this._config.Debug)
-                        console.info(`ContentDeliveryAPI Error ${response.status}: ${response.statusText}`, requestConfig.method + ' ' + requestConfig.url);
-                    throw new Error(`${response.status}: ${response.statusText}`);
-                }
-                const data = response.data || this.createNetworkErrorResponse('Empty response', response);
-                const ctx = {
-                    status: response.status,
-                    statusText: response.statusText,
-                    method: ((_b = requestConfig.method) === null || _b === void 0 ? void 0 : _b.toLowerCase()) || 'default'
-                };
-                for (const key of Object.keys(response.headers)) {
-                    switch (key) {
-                        case 'etag':
-                            ctx.etag = response.headers[key];
-                            break;
-                        case 'date':
-                            ctx.date = response.headers[key];
-                            break;
-                        case 'cache-control':
-                            ctx.cacheControl = response.headers['cache-control'].split(',').map(s => s.trim());
-                            break;
-                        default:
-                            // Do Nothing
-                            break;
-                    }
-                }
-                if (this._config.Debug)
-                    console.info('ContentDeliveryAPI Response', requestConfig.method + ' ' + requestConfig.url, data, response.headers);
-                return [data, ctx];
+                    console.info(`ContentDeliveryAPI Error ${response.status}: ${response.statusText}`, requestConfig.method + ' ' + requestConfig.url);
+                throw new Error(`${response.status}: ${response.statusText}`);
             }
-            catch (e) {
-                if (this._config.Debug)
-                    console.info('ContentDeliveryAPI Error', requestConfig.method + ' ' + requestConfig.url, e);
-                throw e;
+            const data = response.data || this.createNetworkErrorResponse('Empty response', response);
+            const ctx = {
+                status: response.status,
+                statusText: response.statusText,
+                method: requestConfig.method?.toLowerCase() || 'default'
+            };
+            for (const key of Object.keys(response.headers)) {
+                switch (key) {
+                    case 'etag':
+                        ctx.etag = response.headers[key];
+                        break;
+                    case 'date':
+                        ctx.date = response.headers[key];
+                        break;
+                    case 'cache-control':
+                        ctx.cacheControl = response.headers['cache-control'].split(',').map(s => s.trim());
+                        break;
+                    default:
+                        // Do Nothing
+                        break;
+                }
             }
-        });
+            if (this._config.Debug)
+                console.info('ContentDeliveryAPI Response', requestConfig.method + ' ' + requestConfig.url, data, response.headers);
+            return [data, ctx];
+        }
+        catch (e) {
+            if (this._config.Debug)
+                console.info('ContentDeliveryAPI Error', requestConfig.method + ' ' + requestConfig.url, e);
+            throw e;
+        }
     }
     getDefaultRequestConfig() {
         const config = {
@@ -474,7 +442,10 @@ export class ContentDeliveryAPI {
         };
         if (!customHeaders)
             return defaultHeaders;
-        return Object.assign(Object.assign({}, defaultHeaders), customHeaders);
+        return {
+            ...defaultHeaders,
+            ...customHeaders,
+        };
     }
     createNetworkErrorResponse(error, response) {
         const errorId = ++this.errorCounter;

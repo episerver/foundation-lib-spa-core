@@ -6,7 +6,8 @@ export interface InitializationAction extends Action<string> {
     type: '@@EPI/INIT';
 }
 
-export default interface IStateReducerInfo<S, A extends Action = AnyAction> {
+export interface IStateReducerInfo<S, A extends Action = AnyAction> {
     stateKey : string;
     reducer: Reducer<S, A>
 }
+export default IStateReducerInfo;

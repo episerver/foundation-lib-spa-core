@@ -3,22 +3,20 @@ import { useEpiserver } from '../Hooks/Context';
 import { ContentLinkService } from '../Models/ContentLink';
 import EpiComponent from './EpiComponent';
 export const ContentArea = (props) => {
-    var _a, _b, _c;
     const ctx = useEpiserver();
     // Check if the areay is empty
-    if (!((_a = props.data) === null || _a === void 0 ? void 0 : _a.value))
+    if (!props.data?.value)
         return props.children ? React.createElement("div", null, props.children) : React.createElement(DefaultEmptyContentArea, { propertyName: props.propertyName });
     // Build the configuration
-    const globalConfig = ((_b = ctx.config()) === null || _b === void 0 ? void 0 : _b.contentArea) || {};
-    const config = Object.assign(Object.assign({}, globalConfig), props);
+    const globalConfig = ctx.config()?.contentArea || {};
+    const config = { ...globalConfig, ...props };
     const wrapperClass = getConfigValue(config, 'wrapperClass', 'content-area');
     // Render the items
     const items = [];
-    (((_c = props.data) === null || _c === void 0 ? void 0 : _c.value) || []).forEach((x, i) => {
-        var _a, _b;
+    (props.data?.value || []).forEach((x, i) => {
         const className = getBlockClasses(x.displayOption, config).join(' ');
         const blockKey = `ContentAreaItem-${ContentLinkService.createApiId(x.contentLink, true, false)}-${i}`;
-        items.push(React.createElement(ContentAreaItem, { key: blockKey, item: x, config: config, idx: i, className: className, expandedValue: ((_a = props.data) === null || _a === void 0 ? void 0 : _a.expandedValue) ? (_b = props.data) === null || _b === void 0 ? void 0 : _b.expandedValue[i] : undefined }));
+        items.push(React.createElement(ContentAreaItem, { key: blockKey, item: x, config: config, idx: i, className: className, expandedValue: props.data?.expandedValue ? props.data?.expandedValue[i] : undefined }));
     });
     // Return if no wrapping
     if (getConfigValue(config, "noWrap", false) === true)
@@ -107,7 +105,7 @@ const ContentAreaItem = (props) => {
     };
     if (ctx.isEditable())
         wrapperProps["data-epi-block-id"] = blockId;
-    return React.createElement("div", Object.assign({}, wrapperProps));
+    return React.createElement("div", { ...wrapperProps });
 };
 ContentAreaItem.displayName = "Optimizely CMS: Content Area Item";
 /**

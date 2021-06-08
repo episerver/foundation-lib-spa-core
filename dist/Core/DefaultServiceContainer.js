@@ -1,4 +1,4 @@
-export default class DefaultServiceContainer {
+export class DefaultServiceContainer {
     constructor() {
         this.services = {};
     }
@@ -64,4 +64,5 @@ export default class DefaultServiceContainer {
         return Object.keys(this.services);
     }
 }
+export default DefaultServiceContainer;
 //# sourceMappingURL=DefaultServiceContainer.js.map

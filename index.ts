@@ -18,6 +18,12 @@ export * as Tracking from './Library/Tracking';
 export * as Loaders from './Library/Loaders';
 export * as IndexedDB from './Library/IndexedDB';
 export * as State from './Library/State';
+export * as Interfaces from './Library/Interfaces';
+export * as Enums from './Library/Enums';
+export * as Guards from './Library/Guards';
+
+// Export default context
+export { default as GlobalContext } from './Spa';
 
 /**
  * Generic initialization function, usable for both Browser & Server side rendering

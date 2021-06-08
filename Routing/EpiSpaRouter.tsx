@@ -42,10 +42,10 @@ const ElementNavigation : React.FunctionComponent = (props) : React.ReactElement
 
     useEffect(() => {
         if (epi.isInEditMode() || epi.isServerSideRendering()) {
-            if (epi.isDebugActive()) console.info('ElementNavigation: Edit mode, or SSR, so not attaching events');
+            if (epi.isDebugActive()) console.debug('ElementNavigation: Edit mode, or SSR, so not attaching events');
             return;
         } else {
-            if (epi.isDebugActive()) console.info('ElementNavigation: Enabling catch-all click handling for navigation');
+            if (epi.isDebugActive()) console.debug('ElementNavigation: Enabling catch-all click handling for navigation');
         }
         const onWindowClick = (event: MouseEvent) => {
             const target: HTMLElement = (event.target as any) as HTMLElement;
@@ -68,7 +68,7 @@ const ElementNavigation : React.FunctionComponent = (props) : React.ReactElement
 
             // Do not navigate to the same page
             if (newPath === location.pathname) {
-                if (config.enableDebug) console.info('ElementNavigation: Ignoring navigation to same path');
+                if (config.enableDebug) console.debug('ElementNavigation: Ignoring navigation to same path');
                 event.preventDefault();
                 return false;
             }
@@ -93,7 +93,7 @@ const ElementNavigation : React.FunctionComponent = (props) : React.ReactElement
         }
         document.addEventListener('click', onWindowClick);
         return () => {
-            if (epi.isDebugActive()) console.info('ElementNavigation: Removing catch-all click handling for navigation');
+            if (epi.isDebugActive()) console.debug('ElementNavigation: Removing catch-all click handling for navigation');
             document.removeEventListener('click', onWindowClick);
         }
     });
@@ -123,7 +123,7 @@ function createRouteNode(route: IRouteConfigItem, basePath = "", key ?: string, 
     let createdRoute : string = basePath ? (basePath.substr(-1) === "/" ? basePath.substr(0, -1) : basePath) : "";
     createdRoute = createdRoute + "/" + (route.path ? (route.path.substr(0,1) === "/" ? route.path.substr(1) : route.path) : "")
 
-    if (ctx?.isDebugActive()) console.log('Generating Route Virtual DOM Node', createdRoute, route, key);
+    if (ctx?.isDebugActive()) console.debug('Generating Route Virtual DOM Node', createdRoute, route, key);
 
     const newRouteProps : RouteProps = {
         children: route.children,

@@ -51,10 +51,9 @@ export class BrowserServerContextAccessor {
         return this.get('path') || null;
     }
     get Contents() {
-        var _a;
         if (!this.IsAvailable)
             return [];
-        return ((_a = this.get('contents')) === null || _a === void 0 ? void 0 : _a.map(x => isSerializedIContent(x) ? JSON.parse(x) : x)) || [];
+        return this.get('contents')?.map(x => isSerializedIContent(x) ? JSON.parse(x) : x) || [];
     }
     /**
      * Get an IContent for a path on the current website, null if not found
@@ -62,7 +61,6 @@ export class BrowserServerContextAccessor {
      * @param path The path to resolve the IContent for
      */
     getIContentByPath(path) {
-        var _a;
         const baseUrl = new URL(this._config.basePath, this._config.spaBaseUrl || this._config.epiBaseUrl);
         const contentPath = this.IContent ? (new URL(this.IContent.url || '', baseUrl)).pathname : undefined;
         // First see if the given content matches the route
@@ -70,7 +68,7 @@ export class BrowserServerContextAccessor {
             return this.IContent;
         // Then, if no match, see if we're rendering the homepage
         if (path === '/') {
-            const startPageLink = ((_a = this.Website) === null || _a === void 0 ? void 0 : _a.contentRoots) ? this.Website.contentRoots["startPage"] : undefined;
+            const startPageLink = this.Website?.contentRoots ? this.Website.contentRoots["startPage"] : undefined;
             if (startPageLink && this.IContent) {
                 const iContentId = ContentLinkService.createApiId(this.IContent);
                 const startPageId = ContentLinkService.createApiId(startPageLink);

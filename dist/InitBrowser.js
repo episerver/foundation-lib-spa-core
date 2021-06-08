@@ -6,7 +6,7 @@ import ComponentPreLoader from "./Loaders/ComponentPreLoader";
 import DefaultServiceContainer from './Core/DefaultServiceContainer';
 export function InitBrowser(config, containerId, serviceContainer) {
     try {
-        if ((__INITIAL_DATA__ === null || __INITIAL_DATA__ === void 0 ? void 0 : __INITIAL_DATA__.status) === 'loading') {
+        if (__INITIAL_DATA__?.status === 'loading') {
             __INITIAL_DATA__.onReady = () => _doInitBrowser(config, containerId, serviceContainer);
             return;
         }

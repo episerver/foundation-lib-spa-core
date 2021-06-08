@@ -1,6 +1,7 @@
 // Import libraries
 import EventEmitter from 'eventemitter3';
 import clone from 'lodash/cloneDeep';
+import deepEqual from 'deep-equal';
 
 // Import framework
 import IContentDeliveryAPI, { isNetworkError } from '../ContentDelivery/IContentDeliveryAPI';
@@ -334,6 +335,10 @@ export class IContentRepository extends EventEmitter<IPatchableRepositoryEvents<
         const current = await table.get(this.createStorageId(iContent, true));
         const isUpdate = current?.data ? true : false;
         if (!overwrite && isUpdate) return current.data;
+        if (deepEqual(iContent, current?.data, { strict: true })) {
+            this.debugMessage('Ignoring ingestion as there\'s no change');
+            return current.data;
+        }
         if (isUpdate) {
             this.debugMessage('Before update', iContent, current.data);
             this.emit('beforeUpdate', iContent, current.data);

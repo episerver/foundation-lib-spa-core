@@ -1,5 +1,4 @@
 import React, { useContext, useState } from 'react';
-import { DefaultServices } from '../Core/IServiceContainer';
 /**
  * The React Context object for the Episerver context
  *
@@ -42,7 +41,7 @@ export function useIContentRepository() {
     if (!myContext) {
         throw new Error('There\'s no Episerver Context provider above this component.');
     }
-    return myContext.serviceContainer.getService(DefaultServices.IContentRepository_V2);
+    return myContext.serviceContainer.getService("IContentRepository_V2" /* IContentRepository_V2 */);
 }
 /**
  * React Hook (for functional components) to retrieve the Episerver Content Delivery API
@@ -53,7 +52,7 @@ export function useContentDeliveryAPI() {
     if (!myContext) {
         throw new Error('There\'s no Episerver Context provider above this component.');
     }
-    return myContext.serviceContainer.getService(DefaultServices.ContentDeliveryAPI_V2);
+    return myContext.serviceContainer.getService("IContentDeliveryAPI" /* ContentDeliveryAPI_V2 */);
 }
 /**
  * create your forceUpdate hook
@@ -64,17 +63,17 @@ export function useForceUpdate() {
 }
 export function useServerSideRendering() {
     const sc = useServiceContainer();
-    return sc.getService(DefaultServices.ServerContext);
+    return sc.getService("ServerContext" /* ServerContext */);
 }
 export function useEvents() {
     const sc = useServiceContainer();
-    return sc.getService(DefaultServices.EventEngine);
+    return sc.getService("EventEngine" /* EventEngine */);
 }
 export function useStore() {
     return useEpiserver().getStore();
 }
 export function useCmsState() {
     const state = useEpiserver().getStore().getState();
-    return state === null || state === void 0 ? void 0 : state.OptiContentCloud;
+    return state?.OptiContentCloud;
 }
 //# sourceMappingURL=Context.js.map

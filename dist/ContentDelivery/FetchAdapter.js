@@ -1,12 +1,3 @@
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 /**
  * Check if the browser cache for Fetch Requests/Responses is available
  *
@@ -28,14 +19,14 @@ const isCachesAvailable = cachesAvailable();
  * @param   { AxiosRequestConfig }  config  The request configuration given by the implementing code
  * @returns { Promise<AxiosResponse> }      The response of the Fetch API Call
  */
-export const FetchAdapter = (config) => __awaiter(void 0, void 0, void 0, function* () {
+export const FetchAdapter = async (config) => {
     const userAgent = 'Axios-Fetch-Adapter/0.0.1';
     const requestUrl = new URL(config.url || '', config.baseURL);
     if (config.auth) {
         requestUrl.username = config.auth.username;
         requestUrl.password = config.auth.password;
     }
-    const headers = Object.assign({}, config.headers);
+    const headers = { ...config.headers };
     // Remove Authorization header if username & password are provided
     if (config.auth && headers.Authorization) {
         delete headers.Authorization;
@@ -60,11 +51,11 @@ export const FetchAdapter = (config) => __awaiter(void 0, void 0, void 0, functi
     let r;
     try {
         if (isCachesAvailable && FetchAdapter.isCachable && FetchAdapter.isCachable.some(test => test(request))) {
-            const cache = yield caches.open(userAgent);
-            r = yield cache.match(request).then(cr => cr || fetch(request).then(fr => { cache.put(request, fr.clone()); return fr; }));
+            const cache = await caches.open(userAgent);
+            r = await cache.match(request).then(cr => cr || fetch(request).then(fr => { cache.put(request, fr.clone()); return fr; }));
         }
         else {
-            r = yield fetch(request);
+            r = await fetch(request);
         }
     }
     catch (e) {
@@ -79,7 +70,8 @@ export const FetchAdapter = (config) => __awaiter(void 0, void 0, void 0, functi
         return errorResponse;
     }
     const responseHeaders = {};
-    r.headers.forEach((value, name) => responseHeaders[name] = value);
+    for (const rh of r.headers)
+        responseHeaders[rh[0]] = rh[1];
     const response = {
         config,
         request,
@@ -90,23 +82,23 @@ export const FetchAdapter = (config) => __awaiter(void 0, void 0, void 0, functi
     };
     switch (config.responseType) {
         case 'json':
-            response.data = yield r.json().catch(_ => undefined);
+            response.data = await r.json().catch(_ => undefined);
             break;
         case 'text':
-            response.data = yield r.text().catch(_ => undefined);
+            response.data = await r.text().catch(_ => undefined);
             break;
         case undefined:
         case 'stream':
             response.data = r.body;
             break;
         case 'arraybuffer':
-            response.data = yield r.arrayBuffer().catch(_ => undefined);
+            response.data = await r.arrayBuffer().catch(_ => undefined);
             break;
         default:
             throw new Error(`Unsupported response type: ${config.responseType}`);
     }
     return response;
-});
+};
 FetchAdapter.isCachable = [];
 export default FetchAdapter;
 //# sourceMappingURL=FetchAdapter.js.map

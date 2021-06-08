@@ -1,6 +1,6 @@
 import IEpiserverContext from './IEpiserverContext';
 
-export enum DefaultServices
+export const enum DefaultServices
 {
     ExecutionContext = 'ExecutionContext',
     EventEngine = 'EventEngine',
@@ -60,7 +60,7 @@ export interface IContextAwareService {
     setContext(container: IEpiserverContext) : void;
 }
 
-export default interface IServiceContainer
+export interface IServiceContainer
 {
     /**
      * Add a service to the container if has not been added before
@@ -104,3 +104,4 @@ export default interface IServiceContainer
      */
     extendService<T>(key: string, extension: T) : IServiceContainer
 }
+export default IServiceContainer;
