@@ -17,6 +17,13 @@ export type ContentLink = {
   expanded?: IContent;
 }
 
+export function isContentLink(toTest: unknown) : toTest is ContentLink
+{
+    if (typeof(toTest) !== 'object')
+        return false;
+    return typeof((toTest as ContentLink).guidValue) == 'string' || typeof((toTest as ContentLink).id) == 'number';
+}
+
 export class ContentLinkService {
     private constructor() {
         // Just here to prevent instances

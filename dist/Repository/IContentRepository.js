@@ -2,13 +2,14 @@
 import { EventEmitter } from 'eventemitter3';
 import clone from 'lodash/cloneDeep';
 import deepEqual from 'deep-equal';
-// Import framework
-import { isNetworkError } from '../ContentDelivery/IContentDeliveryAPI';
-import { getIContentFromPathResponse } from '../ContentDeliveryAPI';
+import { isNetworkError } from '../ContentDelivery/NetworkErrorData';
+import { getIContentFromPathResponse } from '../ContentDelivery/PathResponse';
+import { isArray } from '../Util/ArrayUtils';
 // Import IndexedDB Wrappper
 import IndexedDB from '../IndexedDB/IndexedDB';
+import { readAndClearExpandedValue } from '../Property';
 import { ContentLinkService } from '../Models/ContentLink';
-import { genericPropertyIsProperty } from '../Models/IContent';
+import { isIContent } from '../Models/IContent';
 import { hostnameFilter, languageFilter } from '../Models/WebsiteList';
 /**
  * A wrapper for IndexedDB offering an Asynchronous API to load/fetch content items from the database
@@ -79,6 +80,15 @@ export class IContentRepository extends EventEmitter {
         }
     }
     /**
+     *
+     *
+     * @param infoObject The schema information for this repository
+     */
+    /*public setSchemaInfo(infoObject: IIContentSchemaInfo) : void
+    {
+        this._schemaInfo = infoObject;
+    }*/
+    /**
      * Load the IContent, first try IndexedDB, if not found in the IndexedDB load it from the
      * ContentDelivery API
      *
@@ -112,9 +122,8 @@ export class IContentRepository extends EventEmitter {
             const internalLoad = async () => {
                 const iContent = await this._api.getContent(reference, undefined, recursive ? ['*'] : []);
                 if (iContent) {
-                    if (!isNetworkError(iContent)) {
-                        await this.recursiveLoad(iContent, recursive);
-                    }
+                    if (!isNetworkError(iContent))
+                        this.recursiveLoad(iContent);
                     await this.ingestIContent(iContent);
                 }
                 delete this._loading[apiId];
@@ -302,10 +311,6 @@ export class IContentRepository extends EventEmitter {
         const isUpdate = current?.data ? true : false;
         if (!overwrite && isUpdate)
             return current.data;
-        if (deepEqual(iContent, current?.data, { strict: true })) {
-            this.debugMessage('Ignoring ingestion as there\'s no change');
-            return current.data;
-        }
         if (isUpdate) {
             this.debugMessage('Before update', iContent, current.data);
             this.emit('beforeUpdate', iContent, current.data);
@@ -313,6 +318,10 @@ export class IContentRepository extends EventEmitter {
         else {
             this.debugMessage('Before add', iContent);
             this.emit('beforeAdd', iContent);
+        }
+        if (deepEqual(iContent, current?.data, { strict: false })) {
+            this.debugMessage('Ignoring ingestion as there\'s no change');
+            return current.data;
         }
         const ingested = (await table.put(this.buildRepositoryItem(iContent))) ? iContent : null;
         if (isUpdate) {
@@ -351,72 +360,43 @@ export class IContentRepository extends EventEmitter {
             hosts: website.hosts?.map(x => x.name).join(' ') || website.id
         };
     }
+    getCurrentUrl() {
+        try {
+            return new URL(window.location.href);
+        }
+        catch (e) {
+            // Ignored on purpose.
+        }
+        return new URL('http://localhost:9000');
+    }
     buildRepositoryItem(iContent) {
+        const baseRoute = ContentLinkService.createRoute(iContent);
+        const routeUrl = baseRoute != null && baseRoute != "" ? new URL(ContentLinkService.createRoute(iContent) || "", this.getCurrentUrl()) : null;
         return {
             apiId: this.createStorageId(iContent, true),
             contentId: this.createStorageId(iContent, false),
             type: iContent.contentType?.join('/') ?? 'Errors/ContentTypeUnknown',
-            route: ContentLinkService.createRoute(iContent),
+            route: routeUrl ? routeUrl.pathname : null,
             data: iContent,
             added: Date.now(),
             accessed: Date.now(),
             guid: this._api.Language + '-' + iContent.contentLink.guidValue
         };
     }
-    async recursiveLoad(iContent, recurseDown = false) {
+    recursiveLoad(iContent) {
         for (const key of Object.keys(iContent)) {
-            const p = iContent[key];
-            if (genericPropertyIsProperty(p))
-                switch (p.propertyDataType) {
-                    case 'PropertyContentReference':
-                    case 'PropertyPageReference':
-                        {
-                            const cRef = p;
-                            if (cRef.expandedValue) {
-                                await this.ingestIContent(cRef.expandedValue);
-                                await this.recursiveLoad(cRef.expandedValue, recurseDown);
-                                delete iContent[key].expandedValue;
-                                break;
-                            }
-                            if (cRef.value && recurseDown) {
-                                await this.load(cRef.value, recurseDown);
-                            }
-                            break;
-                        }
-                    case 'PropertyContentArea':
-                        {
-                            const cArea = p;
-                            if (cArea.expandedValue) {
-                                await Promise.all(cArea.expandedValue?.map(async (x) => {
-                                    await this.ingestIContent(x);
-                                    await this.recursiveLoad(x);
-                                }));
-                                delete iContent[key].expandedValue;
-                                break;
-                            }
-                            if (cArea.value && recurseDown) {
-                                await Promise.all(cArea.value?.map(x => this.load(x.contentLink, recurseDown).catch(() => null)) || []);
-                            }
-                            break;
-                        }
-                    case 'PropertyContentReferenceList':
-                        {
-                            const cRefList = p;
-                            if (cRefList.expandedValue) {
-                                await Promise.all(cRefList.expandedValue?.map(async (x) => {
-                                    await this.ingestIContent(x);
-                                    await this.recursiveLoad(x);
-                                }));
-                                delete iContent[key].expandedValue;
-                                break;
-                            }
-                            if (cRefList.value && recurseDown) {
-                                await Promise.all(cRefList.value?.map(x => this.load(x, recurseDown).catch(() => null)) || []);
-                            }
-                            break;
-                        }
-                }
+            const expValue = readAndClearExpandedValue(iContent[key]);
+            if (!expValue)
+                continue;
+            if (isArray(expValue, isIContent))
+                expValue.forEach(x => this.ingestIContent(this.recursiveLoad(x)));
+            else if (isIContent(expValue))
+                this.ingestIContent(this.recursiveLoad(expValue));
+            else
+                this.debugMessage("Recursively loading a non IContent value - ignored", expValue);
+            continue;
         }
+        return iContent;
     }
     /**
      * Write a debug message

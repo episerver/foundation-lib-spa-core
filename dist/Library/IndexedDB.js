@@ -1,3 +1,2 @@
-import BaseIndexedDB from '../IndexedDB/IndexedDB';
-export const IndexedDB = BaseIndexedDB;
+export { IndexedDB } from '../IndexedDB/IndexedDB';
 //# sourceMappingURL=IndexedDB.js.map

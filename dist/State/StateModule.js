@@ -15,21 +15,26 @@ export class StateModule extends BaseInitializableModule {
         const store = context.getStore();
         const state = store.getState();
         const cfg = context.serviceContainer.getService("Config" /* Config */);
-        const cdAPI = context.serviceContainer.getService("IContentDeliveryAPI" /* ContentDeliveryAPI_V2 */);
-        // Setup CD-API Language to respond to the state changes.
+        // Setup CD-API Language to respond to the state changes, ensuring
+        // that it always takes the current CD-API instance from the container.
         Tools.observeStore(store, (x) => x?.OptiContentCloud?.currentLanguage || cfg.defaultLanguage, (newValue) => {
-            if (newValue)
+            if (newValue) {
+                const cdAPI = context.serviceContainer.getService("IContentDeliveryAPI" /* ContentDeliveryAPI_V2 */);
                 cdAPI.Language = newValue;
+            }
         });
         // Make sure the current language is applied
         const language = state?.OptiContentCloud?.currentLanguage;
-        if (!language)
+        if (!language) {
             store.dispatch({
                 type: "OptiContentCloud/SetState",
                 currentLanguage: cfg.defaultLanguage
             });
-        else
+        }
+        else {
+            const cdAPI = context.serviceContainer.getService("IContentDeliveryAPI" /* ContentDeliveryAPI_V2 */);
             cdAPI.Language = language || cfg.defaultLanguage;
+        }
     }
 }
 export default StateModule;

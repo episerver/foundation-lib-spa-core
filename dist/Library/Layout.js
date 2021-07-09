@@ -1,6 +1,2 @@
-import DefaultLayout from '../Components/Layout';
-/**
- * Layout capability
- */
-export const Default = DefaultLayout;
+export { Layout as Default } from '../Components/Layout';
 //# sourceMappingURL=Layout.js.map

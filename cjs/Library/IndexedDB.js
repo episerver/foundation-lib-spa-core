@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.IndexedDB = void 0;
-const IndexedDB_1 = require("../IndexedDB/IndexedDB");
-exports.IndexedDB = IndexedDB_1.default;
+var IndexedDB_1 = require("../IndexedDB/IndexedDB");
+Object.defineProperty(exports, "IndexedDB", { enumerable: true, get: function () { return IndexedDB_1.IndexedDB; } });
 //# sourceMappingURL=IndexedDB.js.map

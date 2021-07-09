@@ -1,8 +1,3 @@
-import * as StateNS from '../State/Reducer';
-import * as StateModelNS from '../State/CmsState';
-
-export import CmsState = StateModelNS.CmsState;
-export import CmsStateAction = StateNS.CmsSetStateAction;
-export import CmsAppState = StateNS.ContentAppState;
-export const CmsStateKey = StateNS.StateKey;
+export { CmsSetStateAction as CmsStateAction, ContentAppState as CmsAppState, StateKey as CmsStateKey } from '../State/Reducer';
+export { CmsState } from '../State/CmsState';
 export * from '../State/Tools'

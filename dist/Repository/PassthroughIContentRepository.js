@@ -1,7 +1,7 @@
 // Import libraries
 import { EventEmitter } from 'eventemitter3';
 import cloneDeep from 'lodash/cloneDeep';
-import { PathResponseIsIContent } from '../ContentDeliveryAPI';
+import { PathResponseIsIContent } from '../ContentDelivery/PathResponse';
 export class PassthroughIContentRepository extends EventEmitter {
     constructor(api, config) {
         super();

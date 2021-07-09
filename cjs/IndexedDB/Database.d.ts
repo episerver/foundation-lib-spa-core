@@ -3,8 +3,11 @@ import Store from './Store';
 export declare class Database {
     protected _idb: IDBDatabase;
     protected _stores: string[];
+    private _storeCache;
     get Raw(): IDBDatabase;
     get Stores(): string[];
+    get Name(): string;
+    get Version(): number;
     constructor(idb: IDBDatabase);
     replaceStore(name: string, keyPath?: string, autoIncrement?: boolean, indices?: TableIndex[]): Promise<boolean>;
     dropStore(name: string): Promise<boolean>;
@@ -12,6 +15,7 @@ export declare class Database {
     startTransaction(storeNames: string | string[], mode?: "readwrite" | "readonly"): Transaction;
     getStore<T = any>(name: string): Store<T>;
     hasStore(name: string): boolean;
+    toString(): string;
 }
 export declare type TableIndex = {
     name: string;

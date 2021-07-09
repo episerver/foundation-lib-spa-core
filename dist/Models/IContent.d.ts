@@ -4,13 +4,9 @@ import ContentTypePath from './ContentTypePath';
 import Language from './Language';
 import LanguageList from './LanguageList';
 import { IContentDeliveryResponseContext } from '../ContentDelivery/IContentDeliveryAPI';
-export declare type NameProperty = string | StringProperty;
-export declare type GenericProperty = string | null | undefined | Language | LanguageList | ContentTypePath | ContentLink | Property<unknown>;
-export declare function namePropertyIsString(prop: NameProperty): prop is string;
-export declare function genericPropertyIsProperty<TData>(prop: GenericProperty): prop is Property<TData>;
 export declare type IContent = {
     contentLink: ContentLink;
-    name: NameProperty;
+    name: StringProperty;
     language?: Language;
     existingLanguages?: LanguageList;
     masterLanguage?: Language;
@@ -26,10 +22,19 @@ export declare type IContent = {
     status?: string | null;
     serverContext?: Property<IContentDeliveryResponseContext>;
 };
-export default IContent;
-export interface IContentData extends IContent {
-    [name: string]: GenericProperty;
-}
+/**
+ * Test to see if a value is of type IContent, which is considered to be
+ * the case if - and only if - the following criteria are satisfied:
+ * - The parameter is an object
+ * - With a property contentType that is a non-empty array of strings
+ * - With a property contentLink that is an object that has either a non
+ *      empty "guid" or non empty "id" property
+ *
+ * @param       toTest      The value to be tested
+ * @returns     True if the value is IContent or false otherwise
+ */
+export declare const isIContent: (toTest: unknown) => toTest is IContent;
+export declare type IContentData = IContent & Record<string, Property<unknown>>;
 export declare abstract class BaseIContent<T extends IContent = IContent> implements IContent {
     get contentLink(): T["contentLink"];
     get name(): T["name"];
@@ -62,3 +67,4 @@ export declare abstract class BaseIContent<T extends IContent = IContent> implem
  * it can be autoloaded using strong typing using TypeScript.
  */
 export declare type IContentType = new <T extends IContent>(baseData: T) => BaseIContent<T>;
+export default IContent;

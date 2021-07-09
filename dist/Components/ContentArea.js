@@ -1,11 +1,13 @@
 import React, { Fragment } from 'react';
 import { useEpiserver } from '../Hooks/Context';
 import { ContentLinkService } from '../Models/ContentLink';
+import { isVerboseProperty } from '../Property';
 import EpiComponent from './EpiComponent';
 export const ContentArea = (props) => {
     const ctx = useEpiserver();
+    const value = isVerboseProperty(props.data) ? props.data.value : props.data;
     // Check if the areay is empty
-    if (!props.data?.value)
+    if (!value)
         return props.children ? React.createElement("div", null, props.children) : React.createElement(DefaultEmptyContentArea, { propertyName: props.propertyName });
     // Build the configuration
     const globalConfig = ctx.config()?.contentArea || {};
@@ -13,10 +15,11 @@ export const ContentArea = (props) => {
     const wrapperClass = getConfigValue(config, 'wrapperClass', 'content-area');
     // Render the items
     const items = [];
-    (props.data?.value || []).forEach((x, i) => {
+    (value || []).forEach((x, i) => {
         const className = getBlockClasses(x.displayOption, config).join(' ');
         const blockKey = `ContentAreaItem-${ContentLinkService.createApiId(x.contentLink, true, false)}-${i}`;
-        items.push(React.createElement(ContentAreaItem, { key: blockKey, item: x, config: config, idx: i, className: className, expandedValue: props.data?.expandedValue ? props.data?.expandedValue[i] : undefined }));
+        const expandedValue = x.expandedValue || (isVerboseProperty(props.data) && props.data.expandedValue ? props.data.expandedValue[i] : undefined);
+        items.push(React.createElement(ContentAreaItem, { key: blockKey, item: x, config: config, idx: i, className: className, expandedValue: expandedValue }));
     });
     // Return if no wrapping
     if (getConfigValue(config, "noWrap", false) === true)

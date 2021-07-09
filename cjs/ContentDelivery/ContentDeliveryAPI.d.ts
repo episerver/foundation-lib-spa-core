@@ -5,8 +5,9 @@ import Website from '../Models/Website';
 import WebsiteList from '../Models/WebsiteList';
 import IContent from '../Models/IContent';
 import { ContentReference } from '../Models/ContentLink';
-import { PathResponse, NetworkErrorData } from '../ContentDeliveryAPI';
-import ActionResponse from '../Models/ActionResponse';
+import PathResponse from './PathResponse';
+import NetworkErrorData from './NetworkErrorData';
+import ActionResponse from './ActionResponse';
 import { IOAuthRequest, IOAuthResponse } from './IAuthService';
 import IAuthTokenProvider from './IAuthTokenProvider';
 export declare class ContentDeliveryAPI implements IContentDeliveryAPi {
@@ -92,8 +93,7 @@ export declare class ContentDeliveryAPI implements IContentDeliveryAPi {
     protected doAdvancedRequest<T>(url: string | URL, options?: Partial<AxiosRequestConfig>, addDefaultQueryParams?: boolean, returnOnError?: boolean): Promise<IContentDeliveryResponse<T | NetworkErrorData>>;
     protected getDefaultRequestConfig(): AxiosRequestConfig;
     protected getHeaders(customHeaders?: AxiosHeaders): AxiosHeaders;
-    protected errorCounter: number;
-    protected createNetworkErrorResponse<T extends unknown = any>(error: T, response?: AxiosResponse): NetworkErrorData<T>;
+    protected createNetworkErrorResponse<ErrorType = unknown, ResponseType = unknown>(error: ErrorType, response?: AxiosResponse<ResponseType>): NetworkErrorData<ErrorType, ResponseType | unknown>;
 }
 export declare type AxiosHeaders = {
     [key: string]: string;

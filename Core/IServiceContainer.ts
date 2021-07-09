@@ -49,17 +49,33 @@ export const enum DefaultServices
     /**
      * Authorization services
      */
-    AuthService = 'AuthService'
+    AuthService = 'AuthService',
+
+    /**
+     * 
+     */
+    SchemaInfo = 'SchemaInfo'
 }
 
 export interface IContainerAwareService {
     setServiceContainer(container: IServiceContainer) : void;
 }
-
 export interface IContextAwareService {
     setContext(container: IEpiserverContext) : void;
 }
 
+export function isContainerAwareService(toTest: unknown) : toTest is IContainerAwareService
+{
+    if (typeof(toTest) != 'object')
+        return false;
+    return typeof((toTest as IContainerAwareService)?.setServiceContainer) == 'function';
+}
+export function isContextAwareService(toTest: unknown) : toTest is IContextAwareService
+{
+    if (typeof(toTest) != 'object')
+        return false;
+    return typeof((toTest as IContextAwareService)?.setContext) == 'function';
+}
 export interface IServiceContainer
 {
     /**
@@ -71,12 +87,30 @@ export interface IServiceContainer
     addService<T>(key: string, service: T) : IServiceContainer
 
     /**
+     * Add a service factory, enabling the service to be created when 
+     * used for the first time.
+     * 
+     * @param key The identifier in the container
+     * @param factory The service factory, invoked when the service is requested for the first time
+     */
+    addFactory<T>(key: string, factory: (container: IServiceContainer) => T) : IServiceContainer
+
+    /**
      * Add or update a service to the container
      * 
      * @param {string} key      The identifier in the container
      * @param {object} service  The actual service implementation
      */
     setService<T>(key: string, service: T) : IServiceContainer
+
+    /**
+     * Set a service factory, enabling the service to be created when 
+     * used for the first time.
+     * 
+     * @param key The identifier in the container
+     * @param factory The service factory, invoked when the service is requested for the first time
+     */
+    setFactory<T>(key: string, factory: (container: IServiceContainer) => T) : IServiceContainer
 
     /**
      * Check if a service key has been registered
@@ -89,9 +123,10 @@ export interface IServiceContainer
      * Retrieve a service by name
      * 
      * @param   {string}    key      The service name
+     * @param   {function}  guard    Check function that returns a boolean to indicate if the service meets the criteria
      * @returns {object}    The service (not checked by implementation)
      */
-    getService<T>(key: string) : T
+    getService<T>(key: string, guard ?: (toTest: unknown) => toTest is T) : T
 
     /**
      * Extend an existing service by applying the members of the provided

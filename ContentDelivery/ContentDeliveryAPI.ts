@@ -1,13 +1,13 @@
 import Axios, {  AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosStatic, AxiosTransformer, Method } from 'axios';
-import * as UUID from 'uuid';
-import IContentDeliveryAPi, { IContentDeliveryResponse, IContentDeliveryResponseContext, IContentDeliverySearchResults, isNetworkError } from './IContentDeliveryAPI';
+import IContentDeliveryAPi, { IContentDeliveryResponse, IContentDeliveryResponseContext, IContentDeliverySearchResults } from './IContentDeliveryAPI';
 import ContentDeliveryApiConfig, { DefaultConfig } from './Config';
 import Website from '../Models/Website';
 import WebsiteList, { hostnameFilter } from '../Models/WebsiteList';
 import IContent from '../Models/IContent';
 import { ContentReference, ContentLinkService } from '../Models/ContentLink';
-import { PathResponse, NetworkErrorData } from '../ContentDeliveryAPI';
-import ActionResponse, { ResponseType } from '../Models/ActionResponse';
+import PathResponse from './PathResponse';
+import NetworkErrorData, { isNetworkError, NetworkErrorContent } from './NetworkErrorData';
+import ActionResponse, { ResponseType } from './ActionResponse';
 import { IOAuthRequest, IOAuthResponse, networkErrorToOAuthError } from './IAuthService';
 import IAuthTokenProvider from './IAuthTokenProvider';
 
@@ -117,9 +117,9 @@ export class ContentDeliveryAPI implements IContentDeliveryAPi
             method: "POST",
             data: request,
             maxRedirects: 0, // Fail on redirect
-            transformRequest: (data: object, headers: AxiosHeaders) : string => {
+            transformRequest: (data: Record<string, unknown>, headers: AxiosHeaders) : string => {
                 headers["Content-Type"] = "application/x-www-form-urlencoded";
-                return Object.entries(data).map(x => `${encodeURIComponent(x[0])}=${encodeURIComponent(x[1])}`).join('&')
+                return Object.entries(data).map(x => `${encodeURIComponent(x[0])}=${encodeURIComponent(x[1] as string)}`).join('&')
             }
         }, false, true).then(r => r[0]).then(r => isNetworkError(r) ? networkErrorToOAuthError(r) : r);
     }
@@ -170,16 +170,16 @@ export class ContentDeliveryAPI implements IContentDeliveryAPi
         // Try CD-API 2.17+ method first
         const contentServiceUrl = new URL(this.ContentService, this.BaseURL);
         contentServiceUrl.searchParams.set('contentUrl', path);
-        if (select) contentServiceUrl.searchParams.set('select', select.join(','));
-        if (expand) contentServiceUrl.searchParams.set('expand', expand.join(','));
+        if (select && select.length) contentServiceUrl.searchParams.set('select', select.join(','));
+        if (expand && expand.length) contentServiceUrl.searchParams.set('expand', expand.join(','));
         const list = await this.doRequest<IContent[]>(contentServiceUrl);
         if (isNetworkError(list)) return list;
         if (list && list.length === 1) return list[0] as C;
 
         // Fallback to resolving by accessing the URL itself
         const url = new URL(path.startsWith('/') ? path.substr(1) : path, this.BaseURL);
-        if (select) url.searchParams.set('select', select.map(s => encodeURIComponent(s)).join(','));
-        if (expand) url.searchParams.set('expand', expand.map(s => encodeURIComponent(s)).join(','));
+        if (select && select.length) url.searchParams.set('select', select.map(s => encodeURIComponent(s)).join(','));
+        if (expand && expand.length) url.searchParams.set('expand', expand.map(s => encodeURIComponent(s)).join(','));
         return this.doRequest<PathResponse<T,C>>(url) // .catch(e => this.createNetworkErrorResponse(e));
     }
 
@@ -196,8 +196,8 @@ export class ContentDeliveryAPI implements IContentDeliveryAPi
         const url = new URL(this.ContentService + apiId, this.BaseURL);
 
         // Handle additional parameters
-        if (select) url.searchParams.set('select', select.map(s => encodeURIComponent(s)).join(','));
-        if (expand) url.searchParams.set('expand', expand.map(s => encodeURIComponent(s)).join(','));
+        if (select && select.length) url.searchParams.set('select', select.map(s => encodeURIComponent(s)).join(','));
+        if (expand && expand.length) url.searchParams.set('expand', expand.map(s => encodeURIComponent(s)).join(','));
 
         // Perform request
         return this.doRequest<C>(url).catch(e => this.createNetworkErrorResponse(e));
@@ -225,8 +225,8 @@ export class ContentDeliveryAPI implements IContentDeliveryAPi
         const url : URL = new URL(this.ContentService, this.BaseURL);
         if (refs)   url.searchParams.set('references', refs.map(s => encodeURIComponent(s)).join(','));
         if (guids)  url.searchParams.set('guids',      guids.map(s => encodeURIComponent(s)).join(','));
-        if (select) url.searchParams.set('select',     select.map(s => encodeURIComponent(s)).join(','));
-        if (expand) url.searchParams.set('expand',     expand.map(s => encodeURIComponent(s)).join(','));
+        if (select && select.length) url.searchParams.set('select',     select.map(s => encodeURIComponent(s)).join(','));
+        if (expand && expand.length) url.searchParams.set('expand',     expand.map(s => encodeURIComponent(s)).join(','));
 
         return this.doRequest<C[]>(url).then(r => isNetworkError(r) ? [r] : r).catch(e => [this.createNetworkErrorResponse(e)]);
     }
@@ -253,8 +253,8 @@ export class ContentDeliveryAPI implements IContentDeliveryAPi
         if (orderBy)      params.set('orderBy', orderBy);
         if (skip)         params.set('skip', skip.toString());
         if (top)          params.set('top', top.toString());
-        if (select)       params.set('select', select.join(','));
-        if (expand)       params.set('expand', expand.join(','));
+        if (select && select.length)       params.set('select', select.join(','));
+        if (expand && expand.length)       params.set('expand', expand.join(','));
         if (personalized) params.set('personalize', 'true');
 
         const url = this.SearchService + '?' + params.toString();
@@ -297,8 +297,8 @@ export class ContentDeliveryAPI implements IContentDeliveryAPi
         const url = new URL(this.ContentService + apiId + '/ancestors', this.BaseURL);
 
         // Handle additional parameters
-        if (select) url.searchParams.set('select', select.map(s => encodeURIComponent(s)).join(','));
-        if (expand) url.searchParams.set('expand', expand.map(s => encodeURIComponent(s)).join(','));
+        if (select && select.length) url.searchParams.set('select', select.map(s => encodeURIComponent(s)).join(','));
+        if (expand && expand.length) url.searchParams.set('expand', expand.map(s => encodeURIComponent(s)).join(','));
 
         // Perform request
         return this.doRequest<IContent[]>(url).then(r => isNetworkError(r) ? [r] : r).catch(e => [this.createNetworkErrorResponse(e)]);
@@ -311,8 +311,8 @@ export class ContentDeliveryAPI implements IContentDeliveryAPi
         const url = new URL(this.ContentService + apiId + '/children', this.BaseURL);
 
         // Handle additional parameters
-        if (select) url.searchParams.set('select', select.map(s => encodeURIComponent(s)).join(','));
-        if (expand) url.searchParams.set('expand', expand.map(s => encodeURIComponent(s)).join(','));
+        if (select && select.length) url.searchParams.set('select', select.map(s => encodeURIComponent(s)).join(','));
+        if (expand && expand.length) url.searchParams.set('expand', expand.map(s => encodeURIComponent(s)).join(','));
 
         // Perform request
         return this.doRequest<IContent[]>(url).then(r => isNetworkError(r) ? [r] : r).catch(e => [this.createNetworkErrorResponse(e)]);
@@ -393,7 +393,7 @@ export class ContentDeliveryAPI implements IContentDeliveryAPi
     
     private async doRequest<T>(url: string | URL, options: Partial<AxiosRequestConfig> = {}, addDefaultQueryParams = true) : Promise<T | NetworkErrorData>
     {
-        const [ responseData, responseInfo ] = await this.doAdvancedRequest<T>(url, options, addDefaultQueryParams);
+        const [ responseData ] = await this.doAdvancedRequest<T>(url, options, addDefaultQueryParams);
         return responseData;
     }
 
@@ -405,6 +405,7 @@ export class ContentDeliveryAPI implements IContentDeliveryAPi
             if (this.InEditMode) {
                 requestUrl.searchParams.set('epieditmode', 'True');
                 requestUrl.searchParams.set('preventcache', Math.round(Math.random() * 100000000).toString());
+                if (requestUrl.searchParams.has('expand')) requestUrl.searchParams.delete('expand');
 
                 // Propagate the view configurations
                 try {
@@ -418,8 +419,7 @@ export class ContentDeliveryAPI implements IContentDeliveryAPi
                 } catch (e) {
                     // Ignore on purpose
                 }
-            }
-            if (requestUrl.pathname.indexOf(this.ContentService) && this._config.AutoExpandAll && !requestUrl.searchParams.has('expand')) {
+            } else if (requestUrl.pathname.indexOf(this.ContentService) && this._config.AutoExpandAll && (!requestUrl.searchParams.has('expand') || requestUrl.searchParams.get('expand')?.trim() === "")) {
                 requestUrl.searchParams.set('expand', '*');
             }
         }
@@ -439,13 +439,13 @@ export class ContentDeliveryAPI implements IContentDeliveryAPi
 
         // Execute request
         try {
-            if (this._config.Debug) console.info('ContentDeliveryAPI Requesting', requestConfig.method+' '+requestConfig.url, requestConfig.data);
+            if (this._config.Debug) console.debug('ContentDeliveryAPI Requesting', requestConfig.method+' '+requestConfig.url, requestConfig.data);
             const response = await this.Axios.request<T>(requestConfig);
             if (response.status >= 400 && !returnOnError) {
-                if (this._config.Debug) console.info(`ContentDeliveryAPI Error ${ response.status }: ${ response.statusText }`, requestConfig.method+' '+requestConfig.url);
+                if (this._config.Debug) console.debug(`ContentDeliveryAPI Error ${ response.status }: ${ response.statusText }`, requestConfig.method+' '+requestConfig.url);
                 throw new Error(`${ response.status }: ${ response.statusText }`);
             }
-            const data = response.data || this.createNetworkErrorResponse('Empty response', response);
+            const data = response.status >= 400 ? this.createNetworkErrorResponse("Network error") : response.data || this.createNetworkErrorResponse('Empty response', response);
             const ctx : IContentDeliveryResponseContext = {
                 status: response.status,
                 statusText: response.statusText,
@@ -467,10 +467,10 @@ export class ContentDeliveryAPI implements IContentDeliveryAPi
                         break;
                 }
             }
-            if (this._config.Debug) console.info('ContentDeliveryAPI Response', requestConfig.method+' '+requestConfig.url, data, response.headers);
+            if (this._config.Debug) console.debug('ContentDeliveryAPI Response', requestConfig.method+' '+requestConfig.url, data, response.headers);
             return [ data, ctx ];
         } catch (e) {
-            if (this._config.Debug) console.info('ContentDeliveryAPI Error', requestConfig.method+' '+requestConfig.url, e);
+            if (this._config.Debug) console.debug('ContentDeliveryAPI Error', requestConfig.method+' '+requestConfig.url, e);
             throw e;
         }
     }
@@ -483,6 +483,8 @@ export class ContentDeliveryAPI implements IContentDeliveryAPi
             withCredentials: true,
             headers: this.getHeaders(),
             responseType: "json",
+            timeout: this._config.Timeout || 10000,
+            timeoutErrorMessage: "Request timeout exceeded"
         };
 
         // Set the adapter if needed
@@ -508,26 +510,9 @@ export class ContentDeliveryAPI implements IContentDeliveryAPi
         };
     }
 
-    protected errorCounter  = 0;
-
-    protected createNetworkErrorResponse<T extends unknown = any>(error : T, response ?: AxiosResponse) : NetworkErrorData<T>
+    protected createNetworkErrorResponse<ErrorType = unknown, ResponseType = unknown>(error : ErrorType, response ?: AxiosResponse<ResponseType>) : NetworkErrorData<ErrorType, ResponseType | unknown>
     {
-        const errorId = ++this.errorCounter;
-        return {
-            contentLink: {
-                guidValue: UUID.v4(),
-                id: errorId,
-                providerName: 'EpiserverSPA',
-                workId: 0,
-                url: ''
-            },
-            name: 'Network error',
-            error: {
-                propertyDataType: 'errorMessage',
-                value: error
-            },
-            contentType: ['Errors', 'NetworkError']
-        }
+        return response ? NetworkErrorContent.CreateFromResponse(error, response) : NetworkErrorContent.Create(error, 500, "Unknown network error");
     }
 }
 export type AxiosHeaders = { [key: string] : string }

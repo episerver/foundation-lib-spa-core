@@ -18,7 +18,6 @@ export const getGlobal = () => {
             ctx = global;
         }
         catch (e) { /* Ignore */ }
-    ;
     ctx = ctx || fallback;
     return ctx;
 };

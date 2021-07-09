@@ -1,33 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ContentDeliveryAPI = exports.getIContentFromPathResponse = exports.PathResponseIsActionResponse = exports.PathResponseIsIContent = void 0;
+exports.ContentDeliveryAPI = void 0;
 const tslib_1 = require("tslib");
 const axios_1 = require("axios");
 const ContentLink_1 = require("./Models/ContentLink");
-function PathResponseIsIContent(iContent) {
-    if (iContent.actionName) {
-        return false;
-    }
-    return true;
-}
-exports.PathResponseIsIContent = PathResponseIsIContent;
-function PathResponseIsActionResponse(actionResponse) {
-    if (actionResponse.actionName) {
-        return true;
-    }
-    return false;
-}
-exports.PathResponseIsActionResponse = PathResponseIsActionResponse;
-function getIContentFromPathResponse(response) {
-    if (PathResponseIsActionResponse(response)) {
-        return response.currentContent;
-    }
-    if (PathResponseIsIContent(response)) {
-        return response;
-    }
-    return null;
-}
-exports.getIContentFromPathResponse = getIContentFromPathResponse;
+const PathResponse_1 = require("./ContentDelivery/PathResponse");
 /**
  * ContentDelivery API Wrapper
  *
@@ -129,7 +106,7 @@ class ContentDeliveryAPI {
                 }
                 return null;
             }
-            let useGuid = content.guidValue ? this.config.preferGuid || forceGuid : false;
+            const useGuid = content.guidValue ? this.config.preferGuid || forceGuid : false;
             let serviceUrl;
             if (useGuid) {
                 serviceUrl = new URL(this.config.epiBaseUrl + this.componentService + content.guidValue);
@@ -149,7 +126,7 @@ class ContentDeliveryAPI {
             }
             return this.doRequest(serviceUrl.href).catch((r) => {
                 return this.buildNetworkError(r);
-            }).then(r => getIContentFromPathResponse(r));
+            }).then(r => PathResponse_1.getIContentFromPathResponse(r));
         });
     }
     getContentsByRefs(refs) {

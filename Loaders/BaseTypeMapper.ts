@@ -43,10 +43,9 @@ export abstract class BaseTypeMapper {
       return Promise.resolve(this.getType(typeName, true) as IContentType);
     }
     if (!this.isLoading(typeName)) {
-      const me = this;
       this.loading[typeName] = this.doLoadType(this.map[typeName]).then((t) => {
-        me.cache[typeName] = t;
-        delete me.loading[typeName];
+        this.cache[typeName] = t;
+        delete this.loading[typeName];
         return t;
       });
     }
@@ -65,7 +64,7 @@ export abstract class BaseTypeMapper {
     return new dataType(data);
   }
 
-  public getType(typeName: string, throwOnUnknown: boolean = true): IContentType | null {
+  public getType(typeName: string, throwOnUnknown = true): IContentType | null {
     if (this.isCached(typeName)) {
       return this.cache[typeName];
     }

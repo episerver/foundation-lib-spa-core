@@ -10,10 +10,10 @@ export class IndexedDB
 
     protected _name : string;
     protected _version : number;
-    protected _isAvailable : boolean = false;
+    protected _isAvailable = false;
     protected _idb : Database|undefined = undefined;
     protected _schemaUpgrade : SchemaUpgrade|undefined = undefined;
-    protected _debug : boolean = false;
+    protected _debug = false;
 
     public get IsAvailable() : boolean { return this._isAvailable; }
     public get IsOpen() : boolean { return this._idb ? true : false; }
@@ -21,7 +21,7 @@ export class IndexedDB
     public get Version() : number { return this._version; }
     public get Database() : Database|undefined { return this._idb; }
 
-    constructor(name: string, version: number, schemaUpgrade?: SchemaUpgrade, autoOpen?: boolean, debug: boolean = false) 
+    constructor(name: string, version: number, schemaUpgrade?: SchemaUpgrade, autoOpen?: boolean, debug = false) 
     {
         this._name = name;
         this._version = version;
@@ -40,19 +40,17 @@ export class IndexedDB
             const me = this;
             this._opening = new Promise<Database>((resolve, reject) => {
                 const idb = window.indexedDB.open(me._name, me._version);
-                idb.onsuccess = e => idb.result ? resolve(new Database(idb.result)) : reject('Unable to open the database');
-                idb.onerror = e => reject(idb.error);
-                idb.onblocked = e => reject("Visitor blocked IndexedDB usage");
+                idb.onsuccess = () => idb.result ? resolve(new Database(idb.result)) : reject('Unable to open the database');
+                idb.onerror = () => reject(idb.error);
+                idb.onblocked = () => reject("Visitor blocked IndexedDB usage");
                 idb.onupgradeneeded = (e: IDBVersionChangeEvent ) => {
                     if (!me._schemaUpgrade) {
                         reject("Schema upgrade required, but not provided")    
-                    } else {
-                        me._idb = idb.result ? new Database(idb.result) : undefined
-                        const t = new Transaction((e.currentTarget as any).transaction);
-                        if (me._idb) {
-                            const _idb : Database = me._idb;
-                            me._schemaUpgrade(_idb, t).then(x => x ? resolve(_idb) : reject('Unable to upgrade the database')).catch(x => reject(x))
-                        }
+                    } else if (idb.result) {
+                        me._idb = new Database(idb.result);
+                        const t = new Transaction((e.currentTarget as any).transaction, me._idb);
+                        const _idb : Database = me._idb;
+                        me._schemaUpgrade(_idb, t).then(x => x ? resolve(_idb) : reject('Unable to upgrade the database')).catch(x => reject(x))
                     }
                 }
             });

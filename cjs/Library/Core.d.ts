@@ -7,3 +7,4 @@ export { IEpiserverContext } from '../Core/IEpiserverContext';
 export { IInitializableModule, BaseInitializableModule } from '../Core/IInitializableModule';
 export { IEventEngine } from '../Core/IEventEngine';
 export { IStateReducerInfo } from '../Core/IStateReducerInfo';
+export * from '../Core/IContentSchema';

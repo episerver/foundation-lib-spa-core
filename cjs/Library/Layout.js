@@ -1,9 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Default = void 0;
-const Layout_1 = require("../Components/Layout");
-/**
- * Layout capability
- */
-exports.Default = Layout_1.default;
+var Layout_1 = require("../Components/Layout");
+Object.defineProperty(exports, "Default", { enumerable: true, get: function () { return Layout_1.Layout; } });
 //# sourceMappingURL=Layout.js.map

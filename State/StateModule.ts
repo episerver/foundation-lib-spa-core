@@ -3,41 +3,46 @@ import IConfig from '../AppConfig';
 import IStateReducerInfo from '../Core/IStateReducerInfo';
 import IEpiserverContext from '../Core/IEpiserverContext';
 import { DefaultServices } from '../Core/IServiceContainer';
-import CmsStateReducer, { PartialAppState, CmsSetStateAction, ContentAppState as CmsAppState } from './Reducer';
+import CmsStateReducer, { PartialAppState, ContentAppState as CmsAppState } from './Reducer';
 import * as Tools  from './Tools';
 import IContentDeliveryAPI from '../ContentDelivery/IContentDeliveryAPI';
 
 export class StateModule extends BaseInitializableModule implements IInitializableModule
 {
-    protected name: string = "Core State Engine";
+    protected name = "Core State Engine";
 
-    public SortOrder : number = 40;
+    public SortOrder = 40;
 
     public StartModule(context: IEpiserverContext): void
     {
         const store = context.getStore();
         const state = store.getState() as PartialAppState;
-        const cfg : Readonly<IConfig> = context.serviceContainer.getService<IConfig>(DefaultServices.Config);
-        const cdAPI : IContentDeliveryAPI = context.serviceContainer.getService<IContentDeliveryAPI>(DefaultServices.ContentDeliveryAPI_V2);
+        const cfg = context.serviceContainer.getService<Readonly<IConfig>>(DefaultServices.Config);
 
-        // Setup CD-API Language to respond to the state changes.
+        // Setup CD-API Language to respond to the state changes, ensuring
+        // that it always takes the current CD-API instance from the container.
         Tools.observeStore<string, CmsAppState>(
             store, 
             (x) => x?.OptiContentCloud?.currentLanguage || cfg.defaultLanguage,
             (newValue) => {
-                if (newValue) cdAPI.Language = newValue;
+                if (newValue) {
+                    const cdAPI = context.serviceContainer.getService<IContentDeliveryAPI>(DefaultServices.ContentDeliveryAPI_V2);
+                    cdAPI.Language = newValue;
+                }
             }
         );
 
         // Make sure the current language is applied
-        const language = state?.OptiContentCloud?.currentLanguage
-        if (!language)
+        const language = state?.OptiContentCloud?.currentLanguage;
+        if (!language) {
             store.dispatch({
                 type: "OptiContentCloud/SetState",
                 currentLanguage: cfg.defaultLanguage
             })
-        else
+        } else {
+            const cdAPI = context.serviceContainer.getService<IContentDeliveryAPI>(DefaultServices.ContentDeliveryAPI_V2);
             cdAPI.Language = language || cfg.defaultLanguage;
+        }
 
     }
 

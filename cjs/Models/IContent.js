@@ -1,18 +1,30 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.BaseIContent = exports.genericPropertyIsProperty = exports.namePropertyIsString = void 0;
-function namePropertyIsString(prop) {
-    if (prop && prop.trim) {
-        return true;
-    }
-    return false;
-}
-exports.namePropertyIsString = namePropertyIsString;
-function genericPropertyIsProperty(prop) {
-    var _a;
-    return ((_a = prop) === null || _a === void 0 ? void 0 : _a.propertyDataType) && typeof (prop.propertyDataType) == 'string' ? true : false;
-}
-exports.genericPropertyIsProperty = genericPropertyIsProperty;
+exports.BaseIContent = exports.isIContent = void 0;
+const ArrayUtils_1 = require("../Util/ArrayUtils");
+/**
+ * Test to see if a value is of type IContent, which is considered to be
+ * the case if - and only if - the following criteria are satisfied:
+ * - The parameter is an object
+ * - With a property contentType that is a non-empty array of strings
+ * - With a property contentLink that is an object that has either a non
+ *      empty "guid" or non empty "id" property
+ *
+ * @param       toTest      The value to be tested
+ * @returns     True if the value is IContent or false otherwise
+ */
+const isIContent = (toTest) => {
+    if (typeof (toTest) != "object")
+        return false;
+    if (!ArrayUtils_1.isArray(toTest.contentType, (x) => typeof (x) == 'string') || toTest.contentType.length == 0)
+        return false;
+    if (typeof (toTest.contentLink) != "object")
+        return false;
+    if (!(toTest.contentLink.guidValue || toTest.contentLink.id))
+        return false;
+    return true;
+};
+exports.isIContent = isIContent;
 class BaseIContent {
     constructor(baseData) {
         this._serverData = baseData;

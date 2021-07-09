@@ -3,7 +3,6 @@ import IServiceContainer from '../Core/IServiceContainer';
 import IEpiserverContext from '../Core/IEpiserverContext';
 import { IRepositoryConfig } from './IRepository';
 import IIContentRepository from './IIContentRepository';
-import IContentDeliveryAPI from '../ContentDelivery/IContentDeliveryAPI';
 declare type EpiContentSavedEvent = {
     successful: boolean;
     contentLink: string;
@@ -30,7 +29,7 @@ export default class RepositoryModule extends BaseInitializableModule implements
      * @param {IServiceContainer} container The Service Container to update
      */
     ConfigureContainer(container: IServiceContainer): void;
-    protected IIContentRepositoryFactory(container: IServiceContainer, api: IContentDeliveryAPI, config: Partial<IRepositoryConfig>): IIContentRepository;
+    protected IIContentRepositoryFactory(container: IServiceContainer, config: Partial<IRepositoryConfig>): IIContentRepository;
     StartModule(context: IEpiserverContext): void;
     protected patchContentRepository(repo: IIContentRepository, baseId: string, event: EpiContentSavedEvent, debug?: boolean): void;
     protected log(...args: unknown[]): void;

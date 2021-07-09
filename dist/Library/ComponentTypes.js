@@ -1,4 +1,2 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import * as EpiComponentNS from '../EpiComponent';
-export var AbstractComponent = EpiComponentNS.EpiComponent;
+export { EpiClassComponent as AbstractComponent } from '../EpiComponent';
 //# sourceMappingURL=ComponentTypes.js.map

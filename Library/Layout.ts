@@ -1,8 +1,1 @@
-import DefaultLayout, { LayoutComponent, LayoutProps } from '../Components/Layout';
-
-/**
- * Layout capability
- */
-export const Default = DefaultLayout;
-export type Component = LayoutComponent;
-export type Props = LayoutProps;
+export { Layout as Default, LayoutComponent as Component, LayoutProps as Props } from '../Components/Layout';

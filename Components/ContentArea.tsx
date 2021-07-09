@@ -3,7 +3,7 @@ import IEpiserverContext from '../Core/IEpiserverContext';
 import { useEpiserver } from '../Hooks/Context';
 import { ContentLinkService } from '../Models/ContentLink';
 import IContent from '../Models/IContent';
-import { ContentAreaProperty, ContentAreaPropertyItem } from '../Property';
+import { ContentAreaPropertyValue, ContentAreaProperty, ContentAreaPropertyItem, isVerboseProperty } from '../Property';
 import EpiComponent from './EpiComponent';
 
 export type ContentAreaSiteConfig = {
@@ -104,9 +104,10 @@ export type ContentAreaProps = ContentAreaSiteConfig & {
 
 export const ContentArea : FunctionComponent<ContentAreaProps> = (props) => {
     const ctx = useEpiserver();
+    const value = isVerboseProperty<ContentAreaPropertyValue, IContent[]>(props.data) ? props.data.value : props.data;
 
     // Check if the areay is empty
-    if (!props.data?.value) return props.children ? <div>{ props.children }</div> : <DefaultEmptyContentArea propertyName={ props.propertyName } />
+    if (!value) return props.children ? <div>{ props.children }</div> : <DefaultEmptyContentArea propertyName={ props.propertyName } />
 
     // Build the configuration
     const globalConfig = ctx.config()?.contentArea || {};
@@ -115,10 +116,11 @@ export const ContentArea : FunctionComponent<ContentAreaProps> = (props) => {
 
     // Render the items
     const items : ReactElement<ContentAreaItemProps>[] = [];
-    (props.data?.value || []).forEach((x,i) => {
+    (value || []).forEach((x,i) => {
         const className = getBlockClasses(x.displayOption, config).join(' ');
         const blockKey = `ContentAreaItem-${ ContentLinkService.createApiId(x.contentLink, true, false) }-${ i }`;
-        items.push(<ContentAreaItem key={ blockKey } item={x} config={config} idx={i} className={ className }  expandedValue={ props.data?.expandedValue ? props.data?.expandedValue[i] : undefined } />);
+        const expandedValue = x.expandedValue || (isVerboseProperty<ContentAreaPropertyValue, IContent[]>(props.data) && props.data.expandedValue ? props.data.expandedValue[i] : undefined);
+        items.push(<ContentAreaItem key={ blockKey } item={x} config={config} idx={i} className={ className }  expandedValue={ expandedValue } />);
     })
 
     // Return if no wrapping

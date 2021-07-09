@@ -35,7 +35,7 @@ export const getGlobal : <T extends unknown = GlobalContext>() => T = () =>
 {
     let ctx: any = null;
     if (!ctx) try { ctx = window; } catch (e) { /* Ignore */ } 
-    if (!ctx) try { ctx = global; } catch (e) { /* Ignore */ };
+    if (!ctx) try { ctx = global; } catch (e) { /* Ignore */ }
     ctx = ctx || fallback;
 
     return ctx;

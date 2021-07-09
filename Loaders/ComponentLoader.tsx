@@ -17,7 +17,7 @@ export type TComponentTypePromise<T extends unknown = ComponentProps<IContent>> 
  * Type defintiion to allow access to the pre-loaded modules
  */
 export type LoadedModuleList = {
-    [key: string]: ComponentType
+    [key: string]: ComponentType<unknown>
 }
 export type LoadingModuleList = {
     [key: string]: Promise<ComponentType>
@@ -151,6 +151,21 @@ export class ComponentLoader
         throw new Error(`The component ${component} has not been pre-loaded!`);
     }
 
+    /**
+     * Inject a pre-loaded component into the ComponentLoader class
+     * 
+     * @param componentKey The key of the component, e.g. the module path used to load the component.
+     * @param componentObject The loaded component
+     * @returns true if added to cache, false otherwise
+     */
+    public InjectType<T = ComponentProps<IContent>, P extends ComponentType<T> = ComponentType<T>>(componentKey: string, componentObject: P) : boolean
+    {
+        if (this.cache[componentKey])
+            return false;
+        this.cache[componentKey] = componentObject as ComponentType<unknown>;
+        return true;
+    }
+
     public LoadType<P = ComponentProps<IContent>>(component: string) : Promise<ComponentType<P>>
     {
         if (this.isPreLoaded(component)) 
@@ -164,28 +179,28 @@ export class ComponentLoader
             // Ignored on purpose
         }
 
-        this.loading[component] = this.doLoadComponentType(component).then(c => {
-            this.cache[component] = c;
+        this.loading[component] = this.doLoadComponentType<P>(component).then(c => {
+            this.cache[component] = c as ComponentType<unknown>;
             delete this.loading[component];
             return c;
         }).catch(() => {
             this.cache[component] = ComponentNotFound;
             delete this.loading[component];
             return this.cache[component];
-        });
+        }) as Promise<ComponentType<unknown>>;
         return this.loading[component] as Promise<ComponentType<P>>;
     }
 
-    protected doLoadComponentType(component: string) : Promise<ComponentType>
+    protected doLoadComponentType<PropsType = unknown>(component: string) : Promise<ComponentType<PropsType>>
     {
         const options = this.loaders.filter(x => x.canLoad(component));
         if (!options || options.length === 0)
-            return Promise.resolve<ComponentType>(ComponentNotFound as unknown as ComponentType);
+            return Promise.resolve(ComponentNotFound as unknown as ComponentType<PropsType>);
         
-        const tryOption = (idx : number) => new Promise<ComponentType>((resolve, reject) => {
+        const tryOption = (idx : number) => new Promise<ComponentType<PropsType>>((resolve, reject) => {
             options[idx].load(component).then(c => {
                 c.displayName = component;
-                resolve(c as unknown as ComponentType);
+                resolve(c as unknown as ComponentType<PropsType>);
             }).catch(e => {
                 if (this.debug) console.debug(`CL: Error loading ${ component }, resulting in error`, e);
                 if (options[idx + 1]) {

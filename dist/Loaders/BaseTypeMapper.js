@@ -15,10 +15,9 @@ export class BaseTypeMapper {
             return Promise.resolve(this.getType(typeName, true));
         }
         if (!this.isLoading(typeName)) {
-            const me = this;
             this.loading[typeName] = this.doLoadType(this.map[typeName]).then((t) => {
-                me.cache[typeName] = t;
-                delete me.loading[typeName];
+                this.cache[typeName] = t;
+                delete this.loading[typeName];
                 return t;
             });
         }

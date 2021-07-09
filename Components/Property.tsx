@@ -1,11 +1,11 @@
-import React, { HTMLAttributes, AnchorHTMLAttributes, ReactElement, PropsWithChildren, createElement } from 'react';
-import IContentProperty, { ContentReferenceProperty, ContentAreaProperty } from '../Property';
+import React, { HTMLAttributes, AnchorHTMLAttributes, ReactElement, PropsWithChildren, createElement, useState, useEffect } from 'react';
+import IContentProperty, { ContentAreaProperty, isVerboseProperty, readValue, readExpandedValue, ContentAreaPropertyValue } from '../Property';
 import IContent from '../Models/IContent';
 import IEpiserverContext from '../Core/IEpiserverContext';
-import { ContentLinkService } from '../Models/ContentLink';
+import ContentLink, { ContentLinkService } from '../Models/ContentLink';
 import EpiComponent from './EpiComponent';
 import ContentArea from './ContentArea';
-import { useEpiserver } from '../Hooks/Context';
+import { useEpiserver, useIContentSchema } from '../Hooks/Context';
 
 export type PropertyProps<T extends IContent> = HTMLAttributes<HTMLElement> &
 {
@@ -42,22 +42,55 @@ export type PropertyProps<T extends IContent> = HTMLAttributes<HTMLElement> &
 export function Property<T extends IContent>(props: PropsWithChildren<PropertyProps<T>>) : ReactElement<unknown> | null
 {
     const ctx = useEpiserver();
-    if (!hasProperty(props.iContent, props.field.toString())) {
-        return ctx.isDebugActive() ? <div>Property <span>{ props.field }</span> not present</div> : null;
-    }
-    const prop = getProperty(props.iContent, props.field);
-    const propType = isIContentProperty(prop) ? prop.propertyDataType : typeof(prop);
+    const schemaInfo = useIContentSchema();
+    const prop : IContentProperty = getProperty(props.iContent, props.field);
+    const [propType, setPropType] = useState<string | undefined>(
+        isVerboseProperty(prop) ? 
+                prop.propertyDataType : 
+                schemaInfo.getProperty(schemaInfo.getTypeNameFromIContent(props.iContent) || 'Unknown', props.field)?.type
+    );
+
+    // Allow updating the property when the schema has become
+    // avilable (the schema information can be loaded asynchronously)
+    useEffect(() => {
+        let isCancelled = false;
+        const iContentType = schemaInfo.getTypeNameFromIContent(props.iContent) || 'Unknown';
+        const basePropType = isVerboseProperty(prop) ? prop.propertyDataType : schemaInfo.getProperty(iContentType, props.field)?.type;
+        if (basePropType)
+            setPropType(basePropType);
+        else {
+            if (!schemaInfo.isReady)
+                schemaInfo.whenReady.then(s => {
+                    if (!isCancelled) {
+                        const type = s.getTypeNameFromIContent(props.iContent) || 'Unknown';
+                        setPropType(s.getProperty(type, props.field)?.type)
+                    }
+                });
+            else
+                setPropType(schemaInfo.getProperty(iContentType, props.field)?.type)
+        }
+            
+
+        return () => { isCancelled = true }
+    }, [schemaInfo, props.field, props.iContent, prop])
+
+    // Don't continue when we don't know the property type to render
+    if (!propType)
+        return ctx.isDebugActive() && schemaInfo.isReady ? <div className="alert alert-warning">Property <span>{ props.field }</span> not present</div> : null;
+
+    // Now, get the property value & expandedValue to start rendering it
+    const propValue = readValue(prop);
+    const expandedValue = readExpandedValue(prop as IContentProperty<ContentLink | ContentLink[] | ContentAreaPropertyValue>);
     let stringValue : string;
     switch (propType) {
         case 'string':
-            return isEditable(props.iContent, ctx) ? <span className={props.className} data-epi-edit={ props.field }>{ prop }</span> : (props.className ? <span className={ props.className }>{ prop }</span> : <>{ prop }</>);
         case 'PropertyString':
         case 'PropertyLongString':
-            stringValue = isIContentProperty(prop) ? (prop as IContentProperty<string>).value : '';
+            stringValue = propValue as string | undefined || "";
             return isEditable(props.iContent, ctx) ? <span className={props.className} data-epi-edit={ props.field }>{ stringValue }</span> : (props.className ? <span className={ props.className }>{ stringValue }</span> : <>{ stringValue}</>);
         case 'PropertyUrl': 
             {
-                const propUrlValue = isIContentProperty(prop) ? (prop as IContentProperty<string>).value : '';
+                const propUrlValue = propValue as string | undefined || "";
                 const propUrlprops : AnchorHTMLAttributes<HTMLAnchorElement> & {"data-epi-edit"?: string} = {
                     className: props.className,
                     href: propUrlValue,
@@ -72,52 +105,45 @@ export function Property<T extends IContent>(props: PropsWithChildren<PropertyPr
         case 'PropertyNumber':
         case 'PropertyFloatNumber':
             {
-                const propNumberValue : number = isIContentProperty(prop) ? (prop as IContentProperty<number>).value : 0;
+                const propNumberValue = propValue as number | undefined || 0;
                 const className = `number ${props.className}`;
                 return isEditable(props.iContent, ctx) ? <span className={ className } data-epi-edit={ props.field }>{ propNumberValue }</span> : <span className={ className }>{ propNumberValue }</span>;
             }
         case 'PropertyXhtmlString':
-            stringValue = isIContentProperty(prop) ? (prop as IContentProperty<string>).value : '';
+            stringValue = propValue as string | undefined || "";
             return isEditable(props.iContent, ctx) ? <div className={props.className} data-epi-edit={ props.field } dangerouslySetInnerHTML={ {__html: stringValue} }></div> : <div suppressHydrationWarning={true} className={ props.className } dangerouslySetInnerHTML={ {__html: stringValue} } />;
         case 'PropertyContentReference':
         case 'PropertyPageReference':
             {
                 let item : ReactElement | null = null;
-                if (isIContentProperty(prop)) {
-                    const link = (prop as ContentReferenceProperty).value;
-                    const expValue = (prop as ContentReferenceProperty).expandedValue;
+                const link = propValue as ContentLink | undefined;
+                if (link) {
+                    const expValue = link.expanded || expandedValue as IContent;
                     item = <EpiComponent contentLink={link} expandedValue={expValue} className={props.className} />
                 }
                 return isEditable(props.iContent, ctx) ? <div data-epi-edit={ props.field }>{ item }</div> : item;
             }
         case 'PropertyContentArea':
-            if (isIContentProperty(prop)) return isEditable(props.iContent, ctx) ? 
-                <ContentArea data={ prop as ContentAreaProperty} propertyName={ props.field as string } /> :
-                <ContentArea data={ prop as ContentAreaProperty} />;
+            if (prop) return isEditable(props.iContent, ctx) ? 
+                <ContentArea data={ prop as ContentAreaProperty } propertyName={ props.field as string } /> :
+                <ContentArea data={ prop as ContentAreaProperty } />;
             return null;
     }
-    return ctx.isDebugActive() ? <div className="alert alert-warning">Property type <span>{ propType }</span> not supported</div> : null;
+    return ctx.isDebugActive() ? <div className="alert alert-warning">Property type <span>{ propType || "UNKNOWN" }</span> not supported</div> : null;
 }
 Property.displayName = "Optimizely CMS: IContent Property Renderer";
 export default Property;
 
 function hasProperty(iContent: IContent, field: string) : boolean
 {
-    return (iContent as Record<string, unknown>)[field] ? true : false;
+    return (iContent as Record<string, IContentProperty<unknown, unknown>>)[field] ? true : false;
 }
-function getProperty<T extends IContent, K extends keyof T>(iContent: T, field: K) : T[K] | null
+function getProperty<T extends IContent, K extends keyof T>(iContent: T, field: K) : T[K] | undefined
 {
     if (hasProperty(iContent, field as string)) {
         return iContent[field];
     }
-    return null;
-}
-function isIContentProperty(p: unknown): p is IContentProperty<unknown>
-{
-    if (p && (p as IContentProperty<unknown>).propertyDataType && typeof((p as IContentProperty<unknown>).propertyDataType) === 'string') {
-        return true;
-    }
-    return false;
+    return undefined;
 }
 function isEditable(iContent: IContent, ctx: IEpiserverContext) : boolean
 {

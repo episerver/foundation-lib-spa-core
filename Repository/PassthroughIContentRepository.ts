@@ -4,6 +4,7 @@ import cloneDeep from 'lodash/cloneDeep';
 
 // Import framework
 import IContentDeliveryAPI from '../ContentDelivery/IContentDeliveryAPI';
+import { PathResponseIsIContent } from '../ContentDelivery/PathResponse';
 import { IRepositoryConfig, IRepositoryPolicy } from './IRepository';
 import IIContentRepository, { IPatchableRepositoryEvents } from './IIContentRepository';
 
@@ -12,7 +13,6 @@ import { ContentReference } from '../Models/ContentLink';
 import IContent from '../Models/IContent';
 import Website from '../Models/Website';
 import WebsiteList from '../Models/WebsiteList';
-import { PathResponseIsIContent } from '../ContentDeliveryAPI';
 
 export class PassthroughIContentRepository extends EventEmitter<IPatchableRepositoryEvents<ContentReference, IContent>, IIContentRepository> implements IIContentRepository
 {

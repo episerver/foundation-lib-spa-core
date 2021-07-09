@@ -3,9 +3,12 @@ declare type IndexType = string | number | Date | ArrayBufferView | ArrayBuffer 
 export declare class Store<DataType = any> {
     private _storeName;
     private _database;
-    private _idbs;
+    private _rawStore?;
     get Raw(): IDBObjectStore;
-    constructor(database: Database, storeName: string, objectStore?: IDBObjectStore);
+    get Write(): IDBObjectStore;
+    private getReadAccess;
+    private getWriteAccess;
+    constructor(database: Database, storeName: string, rawStore?: IDBObjectStore);
     indices(): string[];
     protected _indices(objectStore: IDBObjectStore): string[];
     getViaIndex(index: string, id: IndexType): Promise<DataType | null>;

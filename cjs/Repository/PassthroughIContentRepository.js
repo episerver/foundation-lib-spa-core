@@ -5,7 +5,7 @@ const tslib_1 = require("tslib");
 // Import libraries
 const eventemitter3_1 = require("eventemitter3");
 const cloneDeep_1 = require("lodash/cloneDeep");
-const ContentDeliveryAPI_1 = require("../ContentDeliveryAPI");
+const PathResponse_1 = require("../ContentDelivery/PathResponse");
 class PassthroughIContentRepository extends eventemitter3_1.EventEmitter {
     constructor(api, config) {
         super();
@@ -61,7 +61,7 @@ class PassthroughIContentRepository extends eventemitter3_1.EventEmitter {
         return this._api.getContent(contentId);
     }
     getByRoute(route) {
-        return this._api.resolveRoute(route).then(r => (ContentDeliveryAPI_1.PathResponseIsIContent(r) ? r : r.currentContent));
+        return this._api.resolveRoute(route).then(r => (PathResponse_1.PathResponseIsIContent(r) ? r : r.currentContent));
     }
     getByReference(reference, website) {
         let hostname = '*';

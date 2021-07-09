@@ -11,11 +11,13 @@ exports.CmsStateReducerInfo = {
                 newState = loadInitialState();
                 break;
             case "OptiContentCloud/SetState":
-                const toMerge = {};
-                cpyAttr("currentLanguage", action, toMerge);
-                newState = Object.assign(Object.assign({}, state), toMerge);
-                storeState(newState);
-                break;
+                {
+                    const toMerge = {};
+                    cpyAttr("currentLanguage", action, toMerge);
+                    newState = Object.assign(Object.assign({}, state), toMerge);
+                    storeState(newState);
+                    break;
+                }
         }
         return newState;
     }

@@ -7,6 +7,7 @@ const Store_1 = require("./Store");
 class Database {
     constructor(idb) {
         this._stores = [];
+        this._storeCache = {};
         this._idb = idb;
     }
     get Raw() {
@@ -19,6 +20,12 @@ class Database {
         }
         return this._stores;
     }
+    get Name() {
+        return this.Raw.name;
+    }
+    get Version() {
+        return this.Raw.version;
+    }
     replaceStore(name, keyPath, autoIncrement, indices) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             let success = yield this.dropStore(name);
@@ -29,6 +36,8 @@ class Database {
     }
     dropStore(name) {
         return new Promise((resolve, reject) => {
+            if (this._storeCache[name])
+                delete this._storeCache[name];
             if (this._idb.objectStoreNames.contains(name)) {
                 try {
                     this._idb.deleteObjectStore(name);
@@ -63,15 +72,20 @@ class Database {
         });
     }
     startTransaction(storeNames, mode = "readonly") {
-        return new Transaction_1.default(this._idb.transaction(storeNames, mode));
+        return Transaction_1.default.create(this, storeNames, mode);
     }
     getStore(name) {
         if (!this._idb.objectStoreNames.contains(name))
             throw new Error(`Store ${name} not found in the database`);
-        return new Store_1.default(this, name);
+        if (!this._storeCache[name])
+            this._storeCache[name] = new Store_1.default(this, name);
+        return this._storeCache[name];
     }
     hasStore(name) {
         return this._idb.objectStoreNames.contains(name);
+    }
+    toString() {
+        return `${this.Name} (Version: ${this.Version})`;
     }
 }
 exports.Database = Database;

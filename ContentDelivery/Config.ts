@@ -46,6 +46,11 @@ export type Config = {
      * - Routing
      */
     EnableExtensions: boolean
+
+    /**
+     * The number of miliseconds to wait on a reply prior to cancelling the request
+     */
+    Timeout?: number
 }
 
 /**
@@ -58,7 +63,8 @@ export const DefaultConfig : Config = {
     InEditMode: false,
     Language: 'en',
     AutoExpandAll: false,
-    EnableExtensions: false
+    EnableExtensions: false,
+    Timeout: 10000
 }
 
 export default Config;

@@ -6,11 +6,12 @@ const tslib_1 = require("tslib");
 const eventemitter3_1 = require("eventemitter3");
 const cloneDeep_1 = require("lodash/cloneDeep");
 const deep_equal_1 = require("deep-equal");
-// Import framework
-const IContentDeliveryAPI_1 = require("../ContentDelivery/IContentDeliveryAPI");
-const ContentDeliveryAPI_1 = require("../ContentDeliveryAPI");
+const NetworkErrorData_1 = require("../ContentDelivery/NetworkErrorData");
+const PathResponse_1 = require("../ContentDelivery/PathResponse");
+const ArrayUtils_1 = require("../Util/ArrayUtils");
 // Import IndexedDB Wrappper
 const IndexedDB_1 = require("../IndexedDB/IndexedDB");
+const Property_1 = require("../Property");
 const ContentLink_1 = require("../Models/ContentLink");
 const IContent_1 = require("../Models/IContent");
 const WebsiteList_1 = require("../Models/WebsiteList");
@@ -84,6 +85,15 @@ class IContentRepository extends eventemitter3_1.EventEmitter {
         }
     }
     /**
+     *
+     *
+     * @param infoObject The schema information for this repository
+     */
+    /*public setSchemaInfo(infoObject: IIContentSchemaInfo) : void
+    {
+        this._schemaInfo = infoObject;
+    }*/
+    /**
      * Load the IContent, first try IndexedDB, if not found in the IndexedDB load it from the
      * ContentDelivery API
      *
@@ -119,9 +129,8 @@ class IContentRepository extends eventemitter3_1.EventEmitter {
             const internalLoad = () => tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const iContent = yield this._api.getContent(reference, undefined, recursive ? ['*'] : []);
                 if (iContent) {
-                    if (!IContentDeliveryAPI_1.isNetworkError(iContent)) {
-                        yield this.recursiveLoad(iContent, recursive);
-                    }
+                    if (!NetworkErrorData_1.isNetworkError(iContent))
+                        this.recursiveLoad(iContent);
                     yield this.ingestIContent(iContent);
                 }
                 delete this._loading[apiId];
@@ -233,7 +242,7 @@ class IContentRepository extends eventemitter3_1.EventEmitter {
             });
             const resolveNetwork = () => tslib_1.__awaiter(this, void 0, void 0, function* () {
                 const resolvedRoute = yield this._api.resolveRoute(route);
-                const content = ContentDeliveryAPI_1.getIContentFromPathResponse(resolvedRoute);
+                const content = PathResponse_1.getIContentFromPathResponse(resolvedRoute);
                 if (content)
                     this.ingestIContent(content);
                 this.debugMessage(`Fetched iContent for route ${route} remotely`, content);
@@ -324,10 +333,6 @@ class IContentRepository extends eventemitter3_1.EventEmitter {
             const isUpdate = (current === null || current === void 0 ? void 0 : current.data) ? true : false;
             if (!overwrite && isUpdate)
                 return current.data;
-            if (deep_equal_1.default(iContent, current === null || current === void 0 ? void 0 : current.data, { strict: true })) {
-                this.debugMessage('Ignoring ingestion as there\'s no change');
-                return current.data;
-            }
             if (isUpdate) {
                 this.debugMessage('Before update', iContent, current.data);
                 this.emit('beforeUpdate', iContent, current.data);
@@ -335,6 +340,10 @@ class IContentRepository extends eventemitter3_1.EventEmitter {
             else {
                 this.debugMessage('Before add', iContent);
                 this.emit('beforeAdd', iContent);
+            }
+            if (deep_equal_1.default(iContent, current === null || current === void 0 ? void 0 : current.data, { strict: false })) {
+                this.debugMessage('Ignoring ingestion as there\'s no change');
+                return current.data;
             }
             const ingested = (yield table.put(this.buildRepositoryItem(iContent))) ? iContent : null;
             if (isUpdate) {
@@ -381,76 +390,44 @@ class IContentRepository extends eventemitter3_1.EventEmitter {
             hosts: ((_a = website.hosts) === null || _a === void 0 ? void 0 : _a.map(x => x.name).join(' ')) || website.id
         };
     }
+    getCurrentUrl() {
+        try {
+            return new URL(window.location.href);
+        }
+        catch (e) {
+            // Ignored on purpose.
+        }
+        return new URL('http://localhost:9000');
+    }
     buildRepositoryItem(iContent) {
         var _a, _b;
+        const baseRoute = ContentLink_1.ContentLinkService.createRoute(iContent);
+        const routeUrl = baseRoute != null && baseRoute != "" ? new URL(ContentLink_1.ContentLinkService.createRoute(iContent) || "", this.getCurrentUrl()) : null;
         return {
             apiId: this.createStorageId(iContent, true),
             contentId: this.createStorageId(iContent, false),
             type: (_b = (_a = iContent.contentType) === null || _a === void 0 ? void 0 : _a.join('/')) !== null && _b !== void 0 ? _b : 'Errors/ContentTypeUnknown',
-            route: ContentLink_1.ContentLinkService.createRoute(iContent),
+            route: routeUrl ? routeUrl.pathname : null,
             data: iContent,
             added: Date.now(),
             accessed: Date.now(),
             guid: this._api.Language + '-' + iContent.contentLink.guidValue
         };
     }
-    recursiveLoad(iContent, recurseDown = false) {
-        var _a, _b, _c, _d;
-        return tslib_1.__awaiter(this, void 0, void 0, function* () {
-            for (const key of Object.keys(iContent)) {
-                const p = iContent[key];
-                if (IContent_1.genericPropertyIsProperty(p))
-                    switch (p.propertyDataType) {
-                        case 'PropertyContentReference':
-                        case 'PropertyPageReference':
-                            {
-                                const cRef = p;
-                                if (cRef.expandedValue) {
-                                    yield this.ingestIContent(cRef.expandedValue);
-                                    yield this.recursiveLoad(cRef.expandedValue, recurseDown);
-                                    delete iContent[key].expandedValue;
-                                    break;
-                                }
-                                if (cRef.value && recurseDown) {
-                                    yield this.load(cRef.value, recurseDown);
-                                }
-                                break;
-                            }
-                        case 'PropertyContentArea':
-                            {
-                                const cArea = p;
-                                if (cArea.expandedValue) {
-                                    yield Promise.all((_a = cArea.expandedValue) === null || _a === void 0 ? void 0 : _a.map((x) => tslib_1.__awaiter(this, void 0, void 0, function* () {
-                                        yield this.ingestIContent(x);
-                                        yield this.recursiveLoad(x);
-                                    })));
-                                    delete iContent[key].expandedValue;
-                                    break;
-                                }
-                                if (cArea.value && recurseDown) {
-                                    yield Promise.all(((_b = cArea.value) === null || _b === void 0 ? void 0 : _b.map(x => this.load(x.contentLink, recurseDown).catch(() => null))) || []);
-                                }
-                                break;
-                            }
-                        case 'PropertyContentReferenceList':
-                            {
-                                const cRefList = p;
-                                if (cRefList.expandedValue) {
-                                    yield Promise.all((_c = cRefList.expandedValue) === null || _c === void 0 ? void 0 : _c.map((x) => tslib_1.__awaiter(this, void 0, void 0, function* () {
-                                        yield this.ingestIContent(x);
-                                        yield this.recursiveLoad(x);
-                                    })));
-                                    delete iContent[key].expandedValue;
-                                    break;
-                                }
-                                if (cRefList.value && recurseDown) {
-                                    yield Promise.all(((_d = cRefList.value) === null || _d === void 0 ? void 0 : _d.map(x => this.load(x, recurseDown).catch(() => null))) || []);
-                                }
-                                break;
-                            }
-                    }
-            }
-        });
+    recursiveLoad(iContent) {
+        for (const key of Object.keys(iContent)) {
+            const expValue = Property_1.readAndClearExpandedValue(iContent[key]);
+            if (!expValue)
+                continue;
+            if (ArrayUtils_1.isArray(expValue, IContent_1.isIContent))
+                expValue.forEach(x => this.ingestIContent(this.recursiveLoad(x)));
+            else if (IContent_1.isIContent(expValue))
+                this.ingestIContent(this.recursiveLoad(expValue));
+            else
+                this.debugMessage("Recursively loading a non IContent value - ignored", expValue);
+            continue;
+        }
+        return iContent;
     }
     /**
      * Write a debug message

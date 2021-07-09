@@ -7,23 +7,48 @@ export class Store<DataType = any>
 {
     private _storeName : string;
     private _database : Database;
-    private _idbs : IDBObjectStore;
+    private _rawStore ?: IDBObjectStore;
 
     public get Raw() : IDBObjectStore
     {
-        return this._idbs;
+        if (this._rawStore) return this._rawStore;
+        return this.getReadAccess().getRawStore(this._storeName);
     }
 
-    public constructor(database : Database, storeName: string, objectStore ?: IDBObjectStore)
+    public get Write() : IDBObjectStore
     {
+        if (this._rawStore) {
+            if (this._rawStore.transaction.mode === "readonly")
+                throw new Error("Can't write to a transaction bound, read-only store");
+            return this._rawStore;
+        }
+        return this.getWriteAccess().getRawStore(this._storeName);
+    }
+
+    private getReadAccess() : Transaction
+    {
+        return Transaction.create(this._database, this._storeName, "readonly");
+    }
+
+    private getWriteAccess() : Transaction
+    {
+        return Transaction.create(this._database, this._storeName, "readwrite");
+    }
+
+    public constructor(database : Database, storeName: string, rawStore ?: IDBObjectStore)
+    {
+        //Validated parameter relation
+        if (!database.hasStore(storeName))
+            throw new Error(`The store ${ storeName } does not exist in ${ database.toString() }`)
+
+        // Store values
         this._storeName = storeName;
         this._database = database;
-        this._idbs = objectStore || this._database.startTransaction(this._storeName, "readonly").getRawStore(this._storeName);
+        this._rawStore = rawStore;
     }
 
     public indices() : string[] {
-        const rawStore = this._idbs;
-        return this._indices(rawStore);
+        return this._indices(this.Raw);
     }
 
     protected _indices(objectStore: IDBObjectStore) : string[]
@@ -38,10 +63,10 @@ export class Store<DataType = any>
     public async getViaIndex(index: string, id: IndexType) : Promise<DataType | null>
     {
         return new Promise<DataType | null>((resolve, reject) => {
-            if (this._indices(this._idbs).indexOf(index) < 0) {
+            if (this.indices().indexOf(index) < 0) {
                 reject(`Requested index ${ index } not present on store ${ this._storeName }`);
             }
-            const objectIndex = this._idbs.index(index);
+            const objectIndex = this.Raw.index(index);
             const search = objectIndex.get(id);
             search.onsuccess = () => resolve(search.result);
             search.onerror = (e) => reject(e);
@@ -52,7 +77,7 @@ export class Store<DataType = any>
     {
         return new Promise<DataType[]>((resolve, reject) => {
             const items : DataType[] = [];
-            const request = this._idbs.openCursor();
+            const request = this.Raw.openCursor();
             request.onerror = e => reject(e);
             request.onsuccess = e => {
                 const cursor : IDBCursorWithValue = (e.target as any).result;
@@ -69,9 +94,7 @@ export class Store<DataType = any>
     public get(id : IndexType) : Promise<DataType>
     {
         return new Promise<DataType>((resolve, reject) => {
-            const t = this._database.startTransaction(this._storeName, "readonly");
-            const s = t.Raw.objectStore(this._storeName);
-            const r = s.get(id);
+            const r = this.Raw.get(id);
             r.onsuccess = (e) => resolve((e.target as any).result as DataType)
             r.onerror = (e) => reject(e)
         });
@@ -80,9 +103,7 @@ export class Store<DataType = any>
     public put(data : DataType, id ?: IndexType) : Promise<boolean>
     {
         return new Promise<boolean>((resolve, reject) => {
-            const t = this._database.startTransaction(this._storeName, "readwrite");
-            const s = t.Raw.objectStore(this._storeName);
-            const r = s.put(data, id);
+            const r = this.Write.put(data, id);
             r.onerror = (e) => reject(e);
             r.onsuccess = () => resolve(true);
         });
@@ -91,8 +112,7 @@ export class Store<DataType = any>
     public putAll(records : { data: DataType, id ?: IndexType}[]) : Promise<boolean>
     {
         return new Promise<boolean>((resolve, reject) => {
-            const t = this._database.startTransaction(this._storeName, "readwrite");
-            const s = t.getRawStore(this._storeName);
+            const s = this.Write;
             const promises : Promise<boolean>[] = records.map(record => new Promise<boolean>((rresolve, rreject) => {
                 const r = s.put(record.data, record.id);
                 r.onerror = e => rreject(e);
@@ -105,9 +125,7 @@ export class Store<DataType = any>
     public add(data : DataType, id ?: IndexType) : Promise<any>
     {
         return new Promise<boolean>((resolve, reject) => {
-            const t = this._database.startTransaction(this._storeName, "readwrite");
-            const s = t.Raw.objectStore(this._storeName);
-            const r = s.add(data, id);
+            const r = this.Write.add(data, id);
             r.onerror = (e) => reject(e);
             r.onsuccess = () => resolve(true);
         });

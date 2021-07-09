@@ -1,9 +1,12 @@
 import { Component, ReactText } from 'react';
 import { Method } from 'axios';
 import IContent from './Models/IContent';
-import ActionResponse from './Models/ActionResponse';
 import ContentLink from './Models/ContentLink';
 import IEpiserverContext from './Core/IEpiserverContext';
+import IContentDeliveryAPI from './ContentDelivery/IContentDeliveryAPI';
+import NetworkErrorData from './ContentDelivery/NetworkErrorData';
+import ActionResponse from './ContentDelivery/ActionResponse';
+import { readPropertyValue, readPropertyExpandedValue } from './Property';
 /**
  * Base properties to be applied to every Episerver component
  */
@@ -47,7 +50,7 @@ export interface ComponentProps<T extends IContent> {
     /**
      * The controller action data to be used
      */
-    actionData?: any;
+    actionData?: unknown;
     /**
      * Legacy application context, kept as argument for now. Used when provided
      * resolved at runtime otherwise.
@@ -67,18 +70,20 @@ export interface ComponentProps<T extends IContent> {
 /**
  * Type do describe a generic EpiComponent type
  */
-export declare type EpiComponentType<T extends IContent = IContent> = new (props: ComponentProps<T>) => EpiComponent<T>;
+export declare type EpiClassComponentType<T extends IContent = IContent> = new (props: ComponentProps<T>) => EpiClassComponent<T>;
 /**
  * Base abstract class to be used by components representing an Episerver IContent component (e.g. Block, Page, Media,
  * Catalog, Product, etc...)
  */
-export declare abstract class EpiComponent<T extends IContent = IContent, S = {}> extends Component<ComponentProps<T>, S, {}> {
+export declare abstract class EpiClassComponent<T extends IContent = IContent, S = Record<string, unknown>> extends Component<ComponentProps<T>, S> {
     /**
      * The component name as injected by the ComponentLoader
      */
     static displayName: string;
     protected currentComponentId: number;
     protected currentComponentGuid: string;
+    protected read: typeof readPropertyValue;
+    protected readExpanded: typeof readPropertyExpandedValue;
     constructor(props: ComponentProps<T>);
     protected getInitialState?(): S;
     protected componentInitialize?(): void;
@@ -99,6 +104,7 @@ export declare abstract class EpiComponent<T extends IContent = IContent, S = {}
      */
     protected getCurrentContentLink(): ContentLink;
     protected getContext(): IEpiserverContext;
+    protected getContentDeliveryApi(): IContentDeliveryAPI;
     /**
      * Invoke a method on the underlying controller for this component, using strongly typed arguments and responses.
      *
@@ -106,7 +112,7 @@ export declare abstract class EpiComponent<T extends IContent = IContent, S = {}
      * @param verb The HTTP method to use when invoking, defaults to 'GET'
      * @param args The data to send (will be converted to JSON)
      */
-    protected invokeTyped<TypeIn, TypeOut>(method: string, verb?: Method, args?: TypeIn): Promise<ActionResponse<TypeOut>>;
+    protected invokeTyped<TypeIn, TypeOut>(method: string, verb?: Method, args?: TypeIn): Promise<ActionResponse<TypeOut | NetworkErrorData<unknown>>>;
     /**
      * Invoke a method on the underlying controller for this component
      *
@@ -114,8 +120,9 @@ export declare abstract class EpiComponent<T extends IContent = IContent, S = {}
      * @param verb The HTTP method to use when invoking, defaults to 'GET'
      * @param args The data to send (will be converted to JSON)
      */
-    protected invoke(method: string, verb?: Method, args?: object): Promise<ActionResponse<any>>;
-    protected htmlObject(htmlValue: string): any;
-    protected navigateTo(toPage: string | ContentLink): void;
+    protected invoke(method: string, verb?: Method, args?: Record<string, unknown>): Promise<ActionResponse<unknown>>;
+    protected htmlObject(htmlValue: string): {
+        __html: string;
+    };
 }
-export default EpiComponent;
+export default EpiClassComponent;

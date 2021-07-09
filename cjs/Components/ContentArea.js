@@ -4,24 +4,26 @@ exports.ContentArea = void 0;
 const react_1 = require("react");
 const Context_1 = require("../Hooks/Context");
 const ContentLink_1 = require("../Models/ContentLink");
+const Property_1 = require("../Property");
 const EpiComponent_1 = require("./EpiComponent");
 const ContentArea = (props) => {
-    var _a, _b, _c;
+    var _a;
     const ctx = Context_1.useEpiserver();
+    const value = Property_1.isVerboseProperty(props.data) ? props.data.value : props.data;
     // Check if the areay is empty
-    if (!((_a = props.data) === null || _a === void 0 ? void 0 : _a.value))
+    if (!value)
         return props.children ? react_1.default.createElement("div", null, props.children) : react_1.default.createElement(DefaultEmptyContentArea, { propertyName: props.propertyName });
     // Build the configuration
-    const globalConfig = ((_b = ctx.config()) === null || _b === void 0 ? void 0 : _b.contentArea) || {};
+    const globalConfig = ((_a = ctx.config()) === null || _a === void 0 ? void 0 : _a.contentArea) || {};
     const config = Object.assign(Object.assign({}, globalConfig), props);
     const wrapperClass = getConfigValue(config, 'wrapperClass', 'content-area');
     // Render the items
     const items = [];
-    (((_c = props.data) === null || _c === void 0 ? void 0 : _c.value) || []).forEach((x, i) => {
-        var _a, _b;
+    (value || []).forEach((x, i) => {
         const className = getBlockClasses(x.displayOption, config).join(' ');
         const blockKey = `ContentAreaItem-${ContentLink_1.ContentLinkService.createApiId(x.contentLink, true, false)}-${i}`;
-        items.push(react_1.default.createElement(ContentAreaItem, { key: blockKey, item: x, config: config, idx: i, className: className, expandedValue: ((_a = props.data) === null || _a === void 0 ? void 0 : _a.expandedValue) ? (_b = props.data) === null || _b === void 0 ? void 0 : _b.expandedValue[i] : undefined }));
+        const expandedValue = x.expandedValue || (Property_1.isVerboseProperty(props.data) && props.data.expandedValue ? props.data.expandedValue[i] : undefined);
+        items.push(react_1.default.createElement(ContentAreaItem, { key: blockKey, item: x, config: config, idx: i, className: className, expandedValue: expandedValue }));
     });
     // Return if no wrapping
     if (getConfigValue(config, "noWrap", false) === true)

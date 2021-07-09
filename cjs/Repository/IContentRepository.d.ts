@@ -1,11 +1,12 @@
 import { EventEmitter } from 'eventemitter3';
 import IContentDeliveryAPI from '../ContentDelivery/IContentDeliveryAPI';
-import { IRepositoryConfig } from './IRepository';
 import { IIContentRepository, WebsiteRepositoryItem, IPatchableRepositoryEvents, IContentRepositoryItem } from './IIContentRepository';
-import { NetworkErrorData } from '../ContentDeliveryAPI';
+import NetworkErrorData from '../ContentDelivery/NetworkErrorData';
+import { IRepositoryConfig } from './IRepository';
 import IndexedDB from '../IndexedDB/IndexedDB';
 import SchemaUpgrade from '../IndexedDB/SchemaUpgrade';
 import Store from '../IndexedDB/Store';
+import { IIContentSchemaInfo } from '../Core/IContentSchema';
 import { ContentReference } from '../Models/ContentLink';
 import IContent, { IContentData } from '../Models/IContent';
 import Website from '../Models/Website';
@@ -23,12 +24,18 @@ export declare class IContentRepository extends EventEmitter<IPatchableRepositor
     };
     protected _websitesLoading: Promise<WebsiteList> | undefined;
     protected _config: IRepositoryConfig;
+    protected _schemaInfo: IIContentSchemaInfo | undefined;
     /**
      * Create a new instance
      *
      * @param { IContentDeliveryAPI } api The ContentDelivery API wrapper to use within this IContent Repository
      */
     constructor(api: IContentDeliveryAPI, config?: Partial<IRepositoryConfig>, serverContext?: IServerContextAccessor);
+    /**
+     *
+     *
+     * @param infoObject The schema information for this repository
+     */
     /**
      * Load the IContent, first try IndexedDB, if not found in the IndexedDB load it from the
      * ContentDelivery API
@@ -93,8 +100,9 @@ export declare class IContentRepository extends EventEmitter<IPatchableRepositor
     protected getTable(): Promise<Store<IContentRepositoryItem>>;
     protected getWebsiteTable(): Promise<Store<WebsiteRepositoryItem>>;
     protected buildWebsiteRepositoryItem(website: Website): WebsiteRepositoryItem;
+    protected getCurrentUrl(): URL;
     protected buildRepositoryItem(iContent: IContent): IContentRepositoryItem;
-    protected recursiveLoad(iContent: IContentData, recurseDown?: boolean): Promise<void>;
+    protected recursiveLoad(iContent: IContentData): IContentData;
     protected schemaUpgrade: SchemaUpgrade;
     /**
      * Write a debug message

@@ -21,7 +21,21 @@ export class ComponentPreLoader {
                 return false;
             }
         }
-        return Promise.resolve(true);
+        return true;
+    }
+    /**
+     * Use the implementation preloader to perform the pre-loading and inject the components into the ComponentLoader
+     *
+     * @param logic
+     * @param loader
+     * @returns
+     */
+    static async loadComponents(logic, loader) {
+        return logic ? logic().then(config => {
+            for (const modulePath in config)
+                loader.InjectType(modulePath, config[modulePath]);
+            return loader;
+        }) : Promise.resolve(loader);
     }
     /**
      * Verify if all provided components are pre-loaded

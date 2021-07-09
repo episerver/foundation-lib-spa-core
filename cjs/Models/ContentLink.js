@@ -1,7 +1,13 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ContentLinkService = void 0;
+exports.ContentLinkService = exports.isContentLink = void 0;
 const Spa_1 = require("../Spa");
+function isContentLink(toTest) {
+    if (typeof (toTest) !== 'object')
+        return false;
+    return typeof (toTest.guidValue) == 'string' || typeof (toTest.id) == 'number';
+}
+exports.isContentLink = isContentLink;
 class ContentLinkService {
     constructor() {
         // Just here to prevent instances

@@ -102,6 +102,19 @@ export class ComponentLoader {
         }
         throw new Error(`The component ${component} has not been pre-loaded!`);
     }
+    /**
+     * Inject a pre-loaded component into the ComponentLoader class
+     *
+     * @param componentKey The key of the component, e.g. the module path used to load the component.
+     * @param componentObject The loaded component
+     * @returns true if added to cache, false otherwise
+     */
+    InjectType(componentKey, componentObject) {
+        if (this.cache[componentKey])
+            return false;
+        this.cache[componentKey] = componentObject;
+        return true;
+    }
     LoadType(component) {
         if (this.isPreLoaded(component))
             return Promise.resolve(this.getPreLoadedType(component));

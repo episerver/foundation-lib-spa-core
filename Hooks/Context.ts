@@ -1,6 +1,7 @@
 import { EnhancedStore } from '@reduxjs/toolkit';
 import { useContext, useState, createContext, Context } from 'react';
 import IContentDeliveryAPI from '../ContentDelivery/IContentDeliveryAPI';
+import { IIContentSchemaInfo } from '../Core/IContentSchema';
 import IEpiserverContext from '../Core/IEpiserverContext';
 import IEventEngine from '../Core/IEventEngine';
 import IServiceContainer, { DefaultServices } from '../Core/IServiceContainer';
@@ -21,7 +22,7 @@ export default Episerver;
  * React Hook (for functional components) to retrieve the Episerver Context from 
  * the nearest Provider in the virtual dom.
  * 
- * @returns  { Core.IEpiserverContext }
+ * @returns  { IEpiserverContext }
  */
 export function useEpiserver() : IEpiserverContext {
     const myContext = useContext(Episerver);
@@ -35,14 +36,10 @@ export function useEpiserver() : IEpiserverContext {
  * React Hook (for functional components) to retrieve the Episerver Service Container
  * from the nearest Provider in the virtual dom.
  * 
- * @returns  { Core.IServiceContainer }
+ * @returns  { IServiceContainer }
  */
 export function useServiceContainer() : IServiceContainer {
-    const myContext = useContext(Episerver);
-    if (!myContext) {
-        throw new Error('There\'s no Episerver Context provider above this component.');
-    }
-    return myContext.serviceContainer;
+    return useEpiserver().serviceContainer;
 }
 
 /**
@@ -50,11 +47,17 @@ export function useServiceContainer() : IServiceContainer {
  * from the nearest Provider in the virtual dom
  */
 export function useIContentRepository() : IContentRepository {
-    const myContext = useContext(Episerver);
-    if (!myContext) {
-        throw new Error('There\'s no Episerver Context provider above this component.');
-    }
-    return myContext.serviceContainer.getService<IContentRepository>(DefaultServices.IContentRepository_V2);
+    return useServiceContainer().getService<IContentRepository>(DefaultServices.IContentRepository_V2);
+}
+
+/**
+ * Allow access to the current schema definition
+ * 
+ * @returns The current schema descriptor
+ */
+export function useIContentSchema() : IIContentSchemaInfo
+{
+    return useServiceContainer().getService<IIContentSchemaInfo>(DefaultServices.SchemaInfo);
 }
 
 /**
@@ -62,29 +65,35 @@ export function useIContentRepository() : IContentRepository {
  * from the nearest Provider in the virtual dom
  */
 export function useContentDeliveryAPI() : IContentDeliveryAPI {
-    const myContext = useContext(Episerver);
-    if (!myContext) {
-        throw new Error('There\'s no Episerver Context provider above this component.');
-    }
-    return myContext.serviceContainer.getService<IContentDeliveryAPI>(DefaultServices.ContentDeliveryAPI_V2);
+    return useServiceContainer().getService<IContentDeliveryAPI>(DefaultServices.ContentDeliveryAPI_V2);
 }
 
 /**
- * create your forceUpdate hook
+ * Force update hook, returns a force-update method, which
+ * will trigger a state change of the component.
  */
 export function useForceUpdate() : () => void {
     const [value, setValue] = useState<number>(0); // integer state
     return () => setValue(value + 1); // update the state to force render
 }
 
+/**
+ * Obtain access to the Server Context, either as static information for hydrating the
+ * page client side or rendering it on the server side.
+ * 
+ * @returns The Server Context of the current environment
+ */
 export function useServerSideRendering() : IServerContextAccessor {
-    const sc = useServiceContainer();
-    return sc.getService<IServerContextAccessor>(DefaultServices.ServerContext);
+    return useServiceContainer().getService<IServerContextAccessor>(DefaultServices.ServerContext);
 }
 
+/**
+ * Allow access to the global event engine, for globally distributed events.
+ * 
+ * @returns The event engine
+ */
 export function useEvents() : IEventEngine {
-    const sc = useServiceContainer();
-    return sc.getService<IEventEngine>(DefaultServices.EventEngine);
+    return useServiceContainer().getService<IEventEngine>(DefaultServices.EventEngine);
 }
 
 export function useStore() : EnhancedStore {

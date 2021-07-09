@@ -1,10 +1,14 @@
 import { Component, ReactText } from 'react';
 import { Method } from 'axios';
 import IContent from './Models/IContent';
-import ActionResponse from './Models/ActionResponse';
 import ContentLink from './Models/ContentLink';
 import IEpiserverContext from './Core/IEpiserverContext';
 import CurrentContext from './Spa';
+import { DefaultServices } from './Core/IServiceContainer';
+import IContentDeliveryAPI from './ContentDelivery/IContentDeliveryAPI';
+import NetworkErrorData from './ContentDelivery/NetworkErrorData';
+import ActionResponse from './ContentDelivery/ActionResponse';
+import { readPropertyValue, readPropertyExpandedValue } from './Property';
 
 /**
  * Base properties to be applied to every Episerver component
@@ -58,7 +62,7 @@ export interface ComponentProps<T extends IContent> {
     /**
      * The controller action data to be used
      */
-    actionData?: any
+    actionData?: unknown
 
     /**
      * Legacy application context, kept as argument for now. Used when provided
@@ -82,13 +86,13 @@ export interface ComponentProps<T extends IContent> {
 /**
  * Type do describe a generic EpiComponent type
  */
-export type EpiComponentType<T extends IContent = IContent> = new (props : ComponentProps<T>)  => EpiComponent<T>;
+export type EpiClassComponentType<T extends IContent = IContent> = new (props : ComponentProps<T>)  => EpiClassComponent<T>;
 
 /**
  * Base abstract class to be used by components representing an Episerver IContent component (e.g. Block, Page, Media, 
  * Catalog, Product, etc...)
  */
-export abstract class EpiComponent<T extends IContent = IContent, S = {}> extends Component<ComponentProps<T>, S, {}>
+export abstract class EpiClassComponent<T extends IContent = IContent, S = Record<string, unknown>> extends Component<ComponentProps<T>, S>
 {
     /**
      * The component name as injected by the ComponentLoader
@@ -97,6 +101,8 @@ export abstract class EpiComponent<T extends IContent = IContent, S = {}> extend
 
     protected currentComponentId : number;
     protected currentComponentGuid : string;
+    protected read = readPropertyValue;
+    protected readExpanded = readPropertyExpandedValue;
 
     public constructor (props : ComponentProps<T>)
     {
@@ -147,6 +153,11 @@ export abstract class EpiComponent<T extends IContent = IContent, S = {}> extend
         return context;
     }
 
+    protected getContentDeliveryApi() : IContentDeliveryAPI
+    {
+        return this.getContext().serviceContainer.getService<IContentDeliveryAPI>(DefaultServices.ContentDeliveryAPI_V2);
+    }
+
     /**
      * Invoke a method on the underlying controller for this component, using strongly typed arguments and responses.
      * 
@@ -154,9 +165,9 @@ export abstract class EpiComponent<T extends IContent = IContent, S = {}> extend
      * @param verb The HTTP method to use when invoking, defaults to 'GET'
      * @param args The data to send (will be converted to JSON)
      */
-    protected invokeTyped<TypeIn, TypeOut>(method: string, verb?: Method, args?: TypeIn) : Promise<ActionResponse<TypeOut>>
+    protected invokeTyped<TypeIn, TypeOut>(method: string, verb?: Method, args?: TypeIn) : Promise<ActionResponse<TypeOut | NetworkErrorData<unknown>>>
     {
-        return this.getContext().contentDeliveryApi().invokeTypedControllerMethod<TypeOut, TypeIn>(this.getCurrentContentLink(), method, verb, args);
+        return this.getContentDeliveryApi().invoke<TypeOut, TypeIn>(this.getCurrentContentLink(), method, verb, args);
     }
 
     /**
@@ -166,22 +177,15 @@ export abstract class EpiComponent<T extends IContent = IContent, S = {}> extend
      * @param verb The HTTP method to use when invoking, defaults to 'GET'
      * @param args The data to send (will be converted to JSON)
      */
-    protected invoke(method: string, verb?: Method, args?: object) : Promise<ActionResponse<any>>
+    protected invoke(method: string, verb?: Method, args?: Record<string, unknown>) : Promise<ActionResponse<unknown>>
     {
-        return this.getContext().contentDeliveryApi().invokeControllerMethod(this.getCurrentContentLink(), method, verb, args);
+        return this.getContentDeliveryApi().invoke(this.getCurrentContentLink(), method, verb, args);
     }
 
-    protected htmlObject(htmlValue : string) : any
+    protected htmlObject(htmlValue : string) : { __html: string }
     {
-        return {
-            __html: htmlValue
-        };
-    }
-
-    protected navigateTo(toPage: string | ContentLink)
-    {
-        this.getContext().navigateTo(toPage);
+        return { __html: htmlValue };
     }
 }
 
-export default EpiComponent;
+export default EpiClassComponent;

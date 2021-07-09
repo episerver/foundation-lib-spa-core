@@ -4,6 +4,7 @@ import Store from './Store';
 export class Database {
     protected _idb : IDBDatabase
     protected _stores : string[] = [];
+    private _storeCache : { [ key: string ]: Store } = {}
 
     public get Raw() : IDBDatabase 
     {
@@ -16,6 +17,14 @@ export class Database {
             for (const storeName of this._idb.objectStoreNames) this._stores.push(storeName);
         }
         return this._stores;
+    }
+
+    public get Name() : string {
+        return this.Raw.name;
+    }
+
+    public get Version() : number {
+        return this.Raw.version;
     }
 
     public constructor(idb : IDBDatabase)
@@ -34,6 +43,7 @@ export class Database {
     public dropStore(name: string) : Promise<boolean>
     {
         return new Promise<boolean>((resolve, reject) => {
+            if (this._storeCache[name]) delete this._storeCache[name];
             if (this._idb.objectStoreNames.contains(name)) {
                 try {
                     this._idb.deleteObjectStore(name);
@@ -71,20 +81,27 @@ export class Database {
         })
     }
 
-    public startTransaction(storeNames: string | string[], mode : "readwrite"|"readonly" = "readonly")
+    public startTransaction(storeNames: string | string[], mode : "readwrite"|"readonly" = "readonly") : Transaction
     {
-        return new Transaction(this._idb.transaction(storeNames, mode));
+        return Transaction.create(this, storeNames, mode);
     }
 
     public getStore<T = any>(name : string) : Store<T>
     {
         if (!this._idb.objectStoreNames.contains(name)) throw new Error(`Store ${ name } not found in the database`);
-        return new Store<T>(this, name);
+        if (!this._storeCache[name])
+            this._storeCache[name] = new Store<T>(this, name);
+        return this._storeCache[name];
     }
 
     public hasStore(name: string) : boolean
     {
         return this._idb.objectStoreNames.contains(name);
+    }
+
+    public toString() : string
+    {
+        return `${ this.Name } (Version: ${ this.Version })`;
     }
 }
 

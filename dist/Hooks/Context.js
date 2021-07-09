@@ -10,7 +10,7 @@ export default Episerver;
  * React Hook (for functional components) to retrieve the Episerver Context from
  * the nearest Provider in the virtual dom.
  *
- * @returns  { Core.IEpiserverContext }
+ * @returns  { IEpiserverContext }
  */
 export function useEpiserver() {
     const myContext = useContext(Episerver);
@@ -23,51 +23,57 @@ export function useEpiserver() {
  * React Hook (for functional components) to retrieve the Episerver Service Container
  * from the nearest Provider in the virtual dom.
  *
- * @returns  { Core.IServiceContainer }
+ * @returns  { IServiceContainer }
  */
 export function useServiceContainer() {
-    const myContext = useContext(Episerver);
-    if (!myContext) {
-        throw new Error('There\'s no Episerver Context provider above this component.');
-    }
-    return myContext.serviceContainer;
+    return useEpiserver().serviceContainer;
 }
 /**
  * React Hook (for functional components) to retrieve the Episerver Content Repository
  * from the nearest Provider in the virtual dom
  */
 export function useIContentRepository() {
-    const myContext = useContext(Episerver);
-    if (!myContext) {
-        throw new Error('There\'s no Episerver Context provider above this component.');
-    }
-    return myContext.serviceContainer.getService("IContentRepository_V2" /* IContentRepository_V2 */);
+    return useServiceContainer().getService("IContentRepository_V2" /* IContentRepository_V2 */);
+}
+/**
+ * Allow access to the current schema definition
+ *
+ * @returns The current schema descriptor
+ */
+export function useIContentSchema() {
+    return useServiceContainer().getService("SchemaInfo" /* SchemaInfo */);
 }
 /**
  * React Hook (for functional components) to retrieve the Episerver Content Delivery API
  * from the nearest Provider in the virtual dom
  */
 export function useContentDeliveryAPI() {
-    const myContext = useContext(Episerver);
-    if (!myContext) {
-        throw new Error('There\'s no Episerver Context provider above this component.');
-    }
-    return myContext.serviceContainer.getService("IContentDeliveryAPI" /* ContentDeliveryAPI_V2 */);
+    return useServiceContainer().getService("IContentDeliveryAPI" /* ContentDeliveryAPI_V2 */);
 }
 /**
- * create your forceUpdate hook
+ * Force update hook, returns a force-update method, which
+ * will trigger a state change of the component.
  */
 export function useForceUpdate() {
     const [value, setValue] = useState(0); // integer state
     return () => setValue(value + 1); // update the state to force render
 }
+/**
+ * Obtain access to the Server Context, either as static information for hydrating the
+ * page client side or rendering it on the server side.
+ *
+ * @returns The Server Context of the current environment
+ */
 export function useServerSideRendering() {
-    const sc = useServiceContainer();
-    return sc.getService("ServerContext" /* ServerContext */);
+    return useServiceContainer().getService("ServerContext" /* ServerContext */);
 }
+/**
+ * Allow access to the global event engine, for globally distributed events.
+ *
+ * @returns The event engine
+ */
 export function useEvents() {
-    const sc = useServiceContainer();
-    return sc.getService("EventEngine" /* EventEngine */);
+    return useServiceContainer().getService("EventEngine" /* EventEngine */);
 }
 export function useStore() {
     return useEpiserver().getStore();

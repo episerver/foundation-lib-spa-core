@@ -2,18 +2,12 @@ import { AxiosRequestConfig, Method } from 'axios';
 import AppConfig from './AppConfig';
 import IContent from './Models/IContent';
 import ContentLink, { ContentReference } from './Models/ContentLink';
-import ActionResponse from './Models/ActionResponse';
+import ActionResponse from './ContentDelivery/ActionResponse';
 import WebsiteList from './Models/WebsiteList';
 import Website from './Models/Website';
 import PathProvider from './PathProvider';
-import Property from './Property';
-export declare type PathResponse<T = any, C extends IContent = IContent> = C | ActionResponse<T, C>;
-export declare type NetworkErrorData<T = any> = IContent & {
-    error: Property<T>;
-};
-export declare function PathResponseIsIContent(iContent: PathResponse): iContent is IContent;
-export declare function PathResponseIsActionResponse<P extends any = any>(actionResponse: PathResponse): actionResponse is ActionResponse<P>;
-export declare function getIContentFromPathResponse<IContentType extends IContent = IContent>(response: PathResponse<any, IContentType>): IContentType | null;
+import NetworkErrorData from './ContentDelivery/NetworkErrorData';
+import PathResponse from './ContentDelivery/PathResponse';
 /**
  * ContentDelivery API Wrapper
  *

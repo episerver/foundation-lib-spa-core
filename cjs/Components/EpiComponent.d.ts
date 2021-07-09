@@ -1,21 +1,17 @@
 import { ReactElement, FunctionComponent } from 'react';
+import ContentLink from '../Models/ContentLink';
 import IContent from '../Models/IContent';
-import IEpiserverContext from '../Core/IEpiserverContext';
 import { ComponentProps } from '../EpiComponent';
+import { Property, VerboseProperty } from '../Property';
 /**
  * The properties for the Episerver CMS Component
  */
-export declare type EpiComponentProps<T extends IContent = IContent> = Omit<ComponentProps<T>, "data" | "context"> & {
+export declare type EpiComponentProps<ContentType extends IContent = IContent, LinkType extends Property = Property<ContentLink, ContentType>> = Omit<ComponentProps<ContentType>, "data" | "contentLink"> & {
+    contentLink: LinkType;
     /**
      * The data for the component, if it has been fetched before.
      */
-    expandedValue: T | undefined;
-    /**
-     * Legacy context, kept as argument for now, but ignored by the implementation
-     *
-     * @deprecated
-     */
-    context?: IEpiserverContext;
+    expandedValue?: LinkType extends VerboseProperty<ContentLink, ContentType> ? undefined : ContentType;
 };
 declare function EpiComponent<T extends IContent = IContent>(props: EpiComponentProps<T>): ReactElement<unknown> | null;
 declare namespace EpiComponent {

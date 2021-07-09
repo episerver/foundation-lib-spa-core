@@ -1,4 +1,4 @@
 import IServiceContainer from './Core/IServiceContainer';
 import AppConfig from './AppConfig';
-import SSRResponse from './ServerSideRendering/Response';
-export default function RenderServerSide(config: AppConfig, serviceContainer?: IServiceContainer): SSRResponse;
+import ServerSideRenderingResponse from './ServerSideRendering/ServerSideRenderingResponse';
+export default function RenderServerSide(config: AppConfig, serviceContainer?: IServiceContainer): ServerSideRenderingResponse;

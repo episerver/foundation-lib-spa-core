@@ -6,6 +6,7 @@ const Context_1 = require("../Hooks/Context");
 const ContentLink_1 = require("../Models/ContentLink");
 const EpiComponent_1 = require("./EpiComponent");
 const Spinner_1 = require("./Spinner");
+const Tools_1 = require("../State/Tools");
 const RoutedComponent = (props) => {
     const epi = Context_1.useEpiserver();
     const repo = Context_1.useIContentRepository();
@@ -13,19 +14,25 @@ const RoutedComponent = (props) => {
     const path = props.location.pathname;
     const [iContent, setIContent] = react_1.useState(ssr.getIContentByPath(path));
     const debug = epi.isDebugActive();
-    const lang = epi.Language;
     // Handle path changes
     react_1.useEffect(() => {
         let isCancelled = false;
         repo.getByRoute(path).then(c => {
+            var _a;
             if (isCancelled)
                 return;
             epi.setRoutedContent(c || undefined);
             setIContent(c);
+            if (typeof ((_a = c === null || c === void 0 ? void 0 : c.language) === null || _a === void 0 ? void 0 : _a.name) == 'string' && c.language.name.length > 0 && c.language.name !== epi.Language) {
+                if (debug)
+                    console.debug('RoutedComponent.onRoutedContentReceived => Changing language (from, to)', epi.Language, c.language.name);
+                Tools_1.setLanguage(c.language.name, epi.getStore());
+            }
         });
         return () => { isCancelled = true; epi.setRoutedContent(); };
-    }, [path, repo, epi]);
+    }, [path, repo, epi, debug]);
     // Handle content changes
+    const lang = epi.Language;
     react_1.useEffect(() => {
         let isCancelled = false;
         if (!iContent)
@@ -60,7 +67,7 @@ const RoutedComponent = (props) => {
             repo.removeListener("afterPatch", afterPatch);
             repo.removeListener("afterUpdate", afterUpdate);
         };
-    }, [repo, debug, lang, iContent]);
+    }, [repo, debug, iContent, lang]);
     if (iContent === null)
         return react_1.default.createElement(Spinner_1.Spinner, null);
     return react_1.default.createElement(EpiComponent_1.IContentRenderer, { data: iContent, path: props.location.pathname });

@@ -26,7 +26,23 @@ class ComponentPreLoader {
                     return false;
                 }
             }
-            return Promise.resolve(true);
+            return true;
+        });
+    }
+    /**
+     * Use the implementation preloader to perform the pre-loading and inject the components into the ComponentLoader
+     *
+     * @param logic
+     * @param loader
+     * @returns
+     */
+    static loadComponents(logic, loader) {
+        return tslib_1.__awaiter(this, void 0, void 0, function* () {
+            return logic ? logic().then(config => {
+                for (const modulePath in config)
+                    loader.InjectType(modulePath, config[modulePath]);
+                return loader;
+            }) : Promise.resolve(loader);
         });
     }
     /**

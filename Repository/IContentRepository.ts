@@ -4,10 +4,12 @@ import clone from 'lodash/cloneDeep';
 import deepEqual from 'deep-equal';
 
 // Import framework
-import IContentDeliveryAPI, { isNetworkError } from '../ContentDelivery/IContentDeliveryAPI';
-import { IRepositoryConfig, IRepositoryPolicy } from './IRepository';
+import IContentDeliveryAPI from '../ContentDelivery/IContentDeliveryAPI';
 import { IIContentRepository, WebsiteRepositoryItem, IPatchableRepositoryEvents, IContentRepositoryItem } from './IIContentRepository';
-import { NetworkErrorData, getIContentFromPathResponse } from '../ContentDeliveryAPI';
+import NetworkErrorData, { isNetworkError } from '../ContentDelivery/NetworkErrorData';
+import { getIContentFromPathResponse } from '../ContentDelivery/PathResponse';
+import { IRepositoryConfig, IRepositoryPolicy } from './IRepository';
+import { isArray } from '../Util/ArrayUtils';
 
 // Import IndexedDB Wrappper
 import IndexedDB from '../IndexedDB/IndexedDB';
@@ -15,9 +17,10 @@ import SchemaUpgrade from '../IndexedDB/SchemaUpgrade';
 import Store from '../IndexedDB/Store';
 
 // Import Taxonomy
-import Property, { ContentAreaProperty, ContentReferenceProperty, ContentReferenceListProperty } from '../Property';
+import { IIContentSchemaInfo } from '../Core/IContentSchema';
+import { readAndClearExpandedValue } from '../Property';
 import { ContentReference, ContentLinkService } from '../Models/ContentLink';
-import IContent, { IContentData, GenericProperty, genericPropertyIsProperty } from '../Models/IContent';
+import IContent, { IContentData, isIContent } from '../Models/IContent';
 import Website from '../Models/Website';
 import WebsiteList, { hostnameFilter, languageFilter } from '../Models/WebsiteList';
 import IServerContextAccessor from '../ServerSideRendering/IServerContextAccessor';
@@ -37,6 +40,7 @@ export class IContentRepository extends EventEmitter<IPatchableRepositoryEvents<
         policy: IRepositoryPolicy.NetworkFirst, // Default network first
         debug: false // Default to disabling debug mode
     }
+    protected _schemaInfo : IIContentSchemaInfo | undefined;
 
     /**
      * Create a new instance
@@ -85,6 +89,16 @@ export class IContentRepository extends EventEmitter<IPatchableRepositoryEvents<
     }
 
     /**
+     * 
+     * 
+     * @param infoObject The schema information for this repository
+     */
+    /*public setSchemaInfo(infoObject: IIContentSchemaInfo) : void
+    {
+        this._schemaInfo = infoObject;
+    }*/
+
+    /**
      * Load the IContent, first try IndexedDB, if not found in the IndexedDB load it from the
      * ContentDelivery API
      * 
@@ -123,9 +137,8 @@ export class IContentRepository extends EventEmitter<IPatchableRepositoryEvents<
             const internalLoad = async () => {
                 const iContent = await this._api.getContent<IContentType>(reference, undefined, recursive ? ['*'] : []);
                 if (iContent) {
-                    if (!isNetworkError(iContent)) {
-                        await this.recursiveLoad(iContent, recursive);
-                    }
+                    if (!isNetworkError(iContent))
+                        this.recursiveLoad(iContent);
                     await this.ingestIContent(iContent);
                 }
                 delete this._loading[apiId];
@@ -335,16 +348,16 @@ export class IContentRepository extends EventEmitter<IPatchableRepositoryEvents<
         const current = await table.get(this.createStorageId(iContent, true));
         const isUpdate = current?.data ? true : false;
         if (!overwrite && isUpdate) return current.data;
-        if (deepEqual(iContent, current?.data, { strict: true })) {
-            this.debugMessage('Ignoring ingestion as there\'s no change');
-            return current.data;
-        }
         if (isUpdate) {
             this.debugMessage('Before update', iContent, current.data);
             this.emit('beforeUpdate', iContent, current.data);
         } else {
             this.debugMessage('Before add', iContent);
             this.emit('beforeAdd', iContent);
+        }
+        if (deepEqual(iContent, current?.data, { strict: false })) {
+            this.debugMessage('Ignoring ingestion as there\'s no change');
+            return current.data;
         }
         const ingested = (await table.put(this.buildRepositoryItem(iContent))) ? iContent : null;
         if (isUpdate) {
@@ -391,12 +404,24 @@ export class IContentRepository extends EventEmitter<IPatchableRepositoryEvents<
         }
     }
 
+    protected getCurrentUrl() : URL
+    {
+        try {
+            return new URL(window.location.href);
+        } catch (e) {
+            // Ignored on purpose.
+        }
+        return new URL('http://localhost:9000');
+    }
+
     protected buildRepositoryItem(iContent: IContent) : IContentRepositoryItem {
+        const baseRoute = ContentLinkService.createRoute(iContent);
+        const routeUrl = baseRoute != null && baseRoute != "" ? new URL(ContentLinkService.createRoute(iContent) || "", this.getCurrentUrl()) : null;
         return {
             apiId: this.createStorageId(iContent, true),
             contentId: this.createStorageId(iContent, false),
             type: iContent.contentType?.join('/') ?? 'Errors/ContentTypeUnknown',
-            route: ContentLinkService.createRoute(iContent),
+            route: routeUrl ? routeUrl.pathname : null,
             data: iContent,
             added: Date.now(),
             accessed: Date.now(),
@@ -404,60 +429,22 @@ export class IContentRepository extends EventEmitter<IPatchableRepositoryEvents<
         }
     }
 
-    protected async recursiveLoad(iContent: IContentData, recurseDown = false) : Promise<void>
+    protected recursiveLoad(iContent: IContentData) : IContentData
     {
         for (const key of Object.keys(iContent)) {
-            const p : GenericProperty = iContent[key];
-            if (genericPropertyIsProperty<unknown>(p)) switch (p.propertyDataType) {
-                case 'PropertyContentReference':
-                case 'PropertyPageReference': 
-                    {
-                        const cRef = p as ContentReferenceProperty;
-                        if (cRef.expandedValue) {
-                            await this.ingestIContent(cRef.expandedValue);
-                            await this.recursiveLoad(cRef.expandedValue, recurseDown);
-                            delete (iContent[key] as Property<unknown>).expandedValue;
-                            break;
-                        }
-                        if (cRef.value && recurseDown) {
-                            await this.load(cRef.value, recurseDown);
-                        }
-                        break;
-                    }
-                case 'PropertyContentArea':
-                    {
-                        const cArea = p as ContentAreaProperty;
-                        if (cArea.expandedValue) {
-                            await Promise.all(cArea.expandedValue?.map(async x => {
-                                await this.ingestIContent(x);
-                                await this.recursiveLoad(x);
-                            }));
-                            delete (iContent[key] as Property<unknown>).expandedValue;
-                            break;
-                        }
-                        if (cArea.value && recurseDown) {
-                            await Promise.all(cArea.value?.map(x => this.load(x.contentLink, recurseDown).catch(() => null)) || []);
-                        }
-                        break;
-                    }
-                case 'PropertyContentReferenceList':
-                    {
-                        const cRefList = p as ContentReferenceListProperty;
-                        if (cRefList.expandedValue) {
-                            await Promise.all(cRefList.expandedValue?.map(async x => {
-                                await this.ingestIContent(x);
-                                await this.recursiveLoad(x);
-                            }));
-                            delete (iContent[key] as Property<unknown>).expandedValue;
-                            break;
-                        }
-                        if (cRefList.value && recurseDown) {
-                            await Promise.all(cRefList.value?.map(x => this.load(x, recurseDown).catch(() => null)) || []);
-                        }
-                        break;
-                    }
-            }
+            const expValue = readAndClearExpandedValue(iContent[key]);
+            if (!expValue) 
+                continue;
+
+            if (isArray(expValue, isIContent))
+                (expValue as IContent[]).forEach(x => this.ingestIContent(this.recursiveLoad(x)));
+            else if (isIContent(expValue))
+                this.ingestIContent(this.recursiveLoad(expValue));
+            else
+                this.debugMessage("Recursively loading a non IContent value - ignored", expValue);
+            continue;
         }
+        return iContent;
     }
 
     protected schemaUpgrade : SchemaUpgrade = async db => {

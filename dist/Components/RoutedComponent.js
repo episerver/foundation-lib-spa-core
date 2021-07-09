@@ -3,6 +3,7 @@ import { useEpiserver, useIContentRepository, useServerSideRendering } from '../
 import { ContentLinkService } from '../Models/ContentLink';
 import { IContentRenderer } from './EpiComponent';
 import { Spinner } from './Spinner';
+import { setLanguage } from '../State/Tools';
 export const RoutedComponent = (props) => {
     const epi = useEpiserver();
     const repo = useIContentRepository();
@@ -10,7 +11,6 @@ export const RoutedComponent = (props) => {
     const path = props.location.pathname;
     const [iContent, setIContent] = useState(ssr.getIContentByPath(path));
     const debug = epi.isDebugActive();
-    const lang = epi.Language;
     // Handle path changes
     useEffect(() => {
         let isCancelled = false;
@@ -19,10 +19,16 @@ export const RoutedComponent = (props) => {
                 return;
             epi.setRoutedContent(c || undefined);
             setIContent(c);
+            if (typeof (c?.language?.name) == 'string' && c.language.name.length > 0 && c.language.name !== epi.Language) {
+                if (debug)
+                    console.debug('RoutedComponent.onRoutedContentReceived => Changing language (from, to)', epi.Language, c.language.name);
+                setLanguage(c.language.name, epi.getStore());
+            }
         });
         return () => { isCancelled = true; epi.setRoutedContent(); };
-    }, [path, repo, epi]);
+    }, [path, repo, epi, debug]);
     // Handle content changes
+    const lang = epi.Language;
     useEffect(() => {
         let isCancelled = false;
         if (!iContent)
@@ -57,7 +63,7 @@ export const RoutedComponent = (props) => {
             repo.removeListener("afterPatch", afterPatch);
             repo.removeListener("afterUpdate", afterUpdate);
         };
-    }, [repo, debug, lang, iContent]);
+    }, [repo, debug, iContent, lang]);
     if (iContent === null)
         return React.createElement(Spinner, null);
     return React.createElement(IContentRenderer, { data: iContent, path: props.location.pathname });

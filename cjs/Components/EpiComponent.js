@@ -7,6 +7,7 @@ const Context_1 = require("../Hooks/Context");
 const ContentLink_1 = require("../Models/ContentLink");
 const Spinner_1 = require("../Components/Spinner");
 const react_router_1 = require("react-router");
+const Property_1 = require("../Property");
 const safeLanguageId = (ref, branch = '##', def = '', inclWorkId = true) => {
     try {
         return ref ? ContentLink_1.ContentLinkService.createLanguageId(ref, branch, inclWorkId) : def;
@@ -23,19 +24,21 @@ function EpiComponent(props) {
     // Get convenience variables from services
     const debug = ctx.isDebugActive();
     const lang = ctx.Language;
+    const contentLink = Property_1.isVerboseProperty(props.contentLink) ? props.contentLink.value : props.contentLink;
+    const expandedValue = Property_1.isVerboseProperty(props.contentLink) ? props.contentLink.expandedValue : props.contentLink.expanded || props.expandedValue;
     // Get identifiers from props
     const initialContent = () => {
         if (!props.expandedValue)
-            return ssr.getIContent(props.contentLink);
-        const expandedId = safeLanguageId(props.expandedValue, lang);
-        const linkId = safeLanguageId(props.contentLink, lang);
-        return expandedId === linkId ? props.expandedValue : ssr.getIContent(props.contentLink);
+            return ssr.getIContent(contentLink);
+        const expandedId = safeLanguageId(expandedValue, lang);
+        const linkId = safeLanguageId(contentLink, lang);
+        return expandedId === linkId ? expandedValue : ssr.getIContent(contentLink);
     };
     const [iContent, setIContent] = react_1.useState(initialContent);
     // Make sure the right iContent has been assigned and will be kept in sync
     react_1.useEffect(() => {
         let isCancelled = false;
-        const linkId = safeLanguageId(props.contentLink, lang, 'linkId');
+        const linkId = safeLanguageId(contentLink, lang, 'linkId');
         // Define listeners to ensure content changes affect the component
         const onContentPatched = (contentLink, oldValue, newValue) => {
             const itemApiId = safeLanguageId(contentLink, lang, 'patchedId');
@@ -58,7 +61,7 @@ function EpiComponent(props) {
         // Bind listeners and load content
         repo.addListener("afterPatch", onContentPatched);
         repo.addListener("afterUpdate", onContentUpdated);
-        repo.load(props.contentLink).then(x => { if (!isCancelled)
+        repo.load(contentLink, false).then(x => { if (!isCancelled)
             setIContent(x); });
         // Cancel effect and remove listeners
         return () => {
@@ -66,7 +69,7 @@ function EpiComponent(props) {
             repo.removeListener("afterPatch", onContentPatched);
             repo.removeListener("afterUpdate", onContentUpdated);
         };
-    }, [props.contentLink, repo, debug, lang]);
+    }, [contentLink, repo, debug, lang]);
     if (!iContent)
         return react_1.default.createElement(Spinner_1.Spinner, null);
     return react_1.default.createElement(exports.IContentRenderer, { data: iContent, contentType: props.contentType, actionName: props.actionName, actionData: props.actionData });

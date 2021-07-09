@@ -1,5 +1,5 @@
-import ContentLink from './ContentLink';
-import IContent from './IContent';
+import ContentLink from '../Models/ContentLink';
+import IContent from '../Models/IContent';
 
 export const enum ResponseType {
   ActionResult = 'ActionResult',

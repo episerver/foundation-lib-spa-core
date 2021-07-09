@@ -2,31 +2,61 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Property = void 0;
 const react_1 = require("react");
+const Property_1 = require("../Property");
 const ContentLink_1 = require("../Models/ContentLink");
 const EpiComponent_1 = require("./EpiComponent");
 const ContentArea_1 = require("./ContentArea");
 const Context_1 = require("../Hooks/Context");
 function Property(props) {
+    var _a;
     const ctx = Context_1.useEpiserver();
-    if (!hasProperty(props.iContent, props.field.toString())) {
-        return ctx.isDebugActive() ? react_1.default.createElement("div", null,
+    const schemaInfo = Context_1.useIContentSchema();
+    const prop = getProperty(props.iContent, props.field);
+    const [propType, setPropType] = react_1.useState(Property_1.isVerboseProperty(prop) ?
+        prop.propertyDataType :
+        (_a = schemaInfo.getProperty(schemaInfo.getTypeNameFromIContent(props.iContent) || 'Unknown', props.field)) === null || _a === void 0 ? void 0 : _a.type);
+    // Allow updating the property when the schema has become
+    // avilable (the schema information can be loaded asynchronously)
+    react_1.useEffect(() => {
+        var _a, _b;
+        let isCancelled = false;
+        const iContentType = schemaInfo.getTypeNameFromIContent(props.iContent) || 'Unknown';
+        const basePropType = Property_1.isVerboseProperty(prop) ? prop.propertyDataType : (_a = schemaInfo.getProperty(iContentType, props.field)) === null || _a === void 0 ? void 0 : _a.type;
+        if (basePropType)
+            setPropType(basePropType);
+        else {
+            if (!schemaInfo.isReady)
+                schemaInfo.whenReady.then(s => {
+                    var _a;
+                    if (!isCancelled) {
+                        const type = s.getTypeNameFromIContent(props.iContent) || 'Unknown';
+                        setPropType((_a = s.getProperty(type, props.field)) === null || _a === void 0 ? void 0 : _a.type);
+                    }
+                });
+            else
+                setPropType((_b = schemaInfo.getProperty(iContentType, props.field)) === null || _b === void 0 ? void 0 : _b.type);
+        }
+        return () => { isCancelled = true; };
+    }, [schemaInfo, props.field, props.iContent, prop]);
+    // Don't continue when we don't know the property type to render
+    if (!propType)
+        return ctx.isDebugActive() && schemaInfo.isReady ? react_1.default.createElement("div", { className: "alert alert-warning" },
             "Property ",
             react_1.default.createElement("span", null, props.field),
             " not present") : null;
-    }
-    const prop = getProperty(props.iContent, props.field);
-    const propType = isIContentProperty(prop) ? prop.propertyDataType : typeof (prop);
+    // Now, get the property value & expandedValue to start rendering it
+    const propValue = Property_1.readValue(prop);
+    const expandedValue = Property_1.readExpandedValue(prop);
     let stringValue;
     switch (propType) {
         case 'string':
-            return isEditable(props.iContent, ctx) ? react_1.default.createElement("span", { className: props.className, "data-epi-edit": props.field }, prop) : (props.className ? react_1.default.createElement("span", { className: props.className }, prop) : react_1.default.createElement(react_1.default.Fragment, null, prop));
         case 'PropertyString':
         case 'PropertyLongString':
-            stringValue = isIContentProperty(prop) ? prop.value : '';
+            stringValue = propValue || "";
             return isEditable(props.iContent, ctx) ? react_1.default.createElement("span", { className: props.className, "data-epi-edit": props.field }, stringValue) : (props.className ? react_1.default.createElement("span", { className: props.className }, stringValue) : react_1.default.createElement(react_1.default.Fragment, null, stringValue));
         case 'PropertyUrl':
             {
-                const propUrlValue = isIContentProperty(prop) ? prop.value : '';
+                const propUrlValue = propValue || "";
                 const propUrlprops = {
                     className: props.className,
                     href: propUrlValue,
@@ -41,26 +71,26 @@ function Property(props) {
         case 'PropertyNumber':
         case 'PropertyFloatNumber':
             {
-                const propNumberValue = isIContentProperty(prop) ? prop.value : 0;
+                const propNumberValue = propValue || 0;
                 const className = `number ${props.className}`;
                 return isEditable(props.iContent, ctx) ? react_1.default.createElement("span", { className: className, "data-epi-edit": props.field }, propNumberValue) : react_1.default.createElement("span", { className: className }, propNumberValue);
             }
         case 'PropertyXhtmlString':
-            stringValue = isIContentProperty(prop) ? prop.value : '';
+            stringValue = propValue || "";
             return isEditable(props.iContent, ctx) ? react_1.default.createElement("div", { className: props.className, "data-epi-edit": props.field, dangerouslySetInnerHTML: { __html: stringValue } }) : react_1.default.createElement("div", { suppressHydrationWarning: true, className: props.className, dangerouslySetInnerHTML: { __html: stringValue } });
         case 'PropertyContentReference':
         case 'PropertyPageReference':
             {
                 let item = null;
-                if (isIContentProperty(prop)) {
-                    const link = prop.value;
-                    const expValue = prop.expandedValue;
+                const link = propValue;
+                if (link) {
+                    const expValue = link.expanded || expandedValue;
                     item = react_1.default.createElement(EpiComponent_1.default, { contentLink: link, expandedValue: expValue, className: props.className });
                 }
                 return isEditable(props.iContent, ctx) ? react_1.default.createElement("div", { "data-epi-edit": props.field }, item) : item;
             }
         case 'PropertyContentArea':
-            if (isIContentProperty(prop))
+            if (prop)
                 return isEditable(props.iContent, ctx) ?
                     react_1.default.createElement(ContentArea_1.default, { data: prop, propertyName: props.field }) :
                     react_1.default.createElement(ContentArea_1.default, { data: prop });
@@ -68,7 +98,7 @@ function Property(props) {
     }
     return ctx.isDebugActive() ? react_1.default.createElement("div", { className: "alert alert-warning" },
         "Property type ",
-        react_1.default.createElement("span", null, propType),
+        react_1.default.createElement("span", null, propType || "UNKNOWN"),
         " not supported") : null;
 }
 exports.Property = Property;
@@ -81,13 +111,7 @@ function getProperty(iContent, field) {
     if (hasProperty(iContent, field)) {
         return iContent[field];
     }
-    return null;
-}
-function isIContentProperty(p) {
-    if (p && p.propertyDataType && typeof (p.propertyDataType) === 'string') {
-        return true;
-    }
-    return false;
+    return undefined;
 }
 function isEditable(iContent, ctx) {
     if (!ctx.isEditable())

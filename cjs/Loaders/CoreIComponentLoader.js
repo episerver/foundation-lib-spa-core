@@ -19,11 +19,11 @@ class CoreIComponentLoader {
             if (this.debug)
                 console.debug(`Loading component: ${componentName}`);
             const component = componentName.substr(15);
+            // We would want to add webpackPrefetch: true, yet with larger projects, the prefetching eats all concurrent connections and delaying the page
             return Promise.resolve().then(() => require(
             /* webpackInclude: /\.tsx$/ */
             /* webpackExclude: /\.noimport\.tsx$/ */
             /* webpackChunkName: "components" */
-            /* webpackPrefetch: true */
             /* webpackMode: "lazy" */
             "app/Components/" + component)).then(exports => {
                 if (!(exports && exports.default))

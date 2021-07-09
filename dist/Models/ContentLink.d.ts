@@ -13,6 +13,7 @@ export declare type ContentLink = {
     url: string;
     expanded?: IContent;
 };
+export declare function isContentLink(toTest: unknown): toTest is ContentLink;
 export declare class ContentLinkService {
     private constructor();
     static referenceIsIContent(ref: ContentReference): ref is IContent;

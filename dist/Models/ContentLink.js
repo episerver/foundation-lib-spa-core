@@ -1,4 +1,9 @@
 import EpiContext from '../Spa';
+export function isContentLink(toTest) {
+    if (typeof (toTest) !== 'object')
+        return false;
+    return typeof (toTest.guidValue) == 'string' || typeof (toTest.id) == 'number';
+}
 export class ContentLinkService {
     constructor() {
         // Just here to prevent instances

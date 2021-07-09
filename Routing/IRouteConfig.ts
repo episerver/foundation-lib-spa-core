@@ -16,5 +16,5 @@ export interface IRouteConfigItem extends RouteProps
     routes ?:       IRouteConfigItem[]
 }
 
-type IRouteConfig = IRouteConfigItem[];
+export type IRouteConfig = IRouteConfigItem[];
 export default IRouteConfig;

@@ -1,15 +1,18 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.EpiComponent = void 0;
+exports.EpiClassComponent = void 0;
 const react_1 = require("react");
 const Spa_1 = require("./Spa");
+const Property_1 = require("./Property");
 /**
  * Base abstract class to be used by components representing an Episerver IContent component (e.g. Block, Page, Media,
  * Catalog, Product, etc...)
  */
-class EpiComponent extends react_1.Component {
+class EpiClassComponent extends react_1.Component {
     constructor(props) {
         super(props);
+        this.read = Property_1.readPropertyValue;
+        this.readExpanded = Property_1.readPropertyExpandedValue;
         this.currentComponentId = this.props.data.contentLink.id;
         this.currentComponentGuid = this.props.data.contentLink.guidValue;
         if (this.componentInitialize)
@@ -45,6 +48,9 @@ class EpiComponent extends react_1.Component {
         const context = this.props.context || Spa_1.default;
         return context;
     }
+    getContentDeliveryApi() {
+        return this.getContext().serviceContainer.getService("IContentDeliveryAPI" /* ContentDeliveryAPI_V2 */);
+    }
     /**
      * Invoke a method on the underlying controller for this component, using strongly typed arguments and responses.
      *
@@ -53,7 +59,7 @@ class EpiComponent extends react_1.Component {
      * @param args The data to send (will be converted to JSON)
      */
     invokeTyped(method, verb, args) {
-        return this.getContext().contentDeliveryApi().invokeTypedControllerMethod(this.getCurrentContentLink(), method, verb, args);
+        return this.getContentDeliveryApi().invoke(this.getCurrentContentLink(), method, verb, args);
     }
     /**
      * Invoke a method on the underlying controller for this component
@@ -63,17 +69,12 @@ class EpiComponent extends react_1.Component {
      * @param args The data to send (will be converted to JSON)
      */
     invoke(method, verb, args) {
-        return this.getContext().contentDeliveryApi().invokeControllerMethod(this.getCurrentContentLink(), method, verb, args);
+        return this.getContentDeliveryApi().invoke(this.getCurrentContentLink(), method, verb, args);
     }
     htmlObject(htmlValue) {
-        return {
-            __html: htmlValue
-        };
-    }
-    navigateTo(toPage) {
-        this.getContext().navigateTo(toPage);
+        return { __html: htmlValue };
     }
 }
-exports.EpiComponent = EpiComponent;
-exports.default = EpiComponent;
+exports.EpiClassComponent = EpiClassComponent;
+exports.default = EpiClassComponent;
 //# sourceMappingURL=EpiComponent.js.map

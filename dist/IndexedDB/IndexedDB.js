@@ -29,20 +29,18 @@ export class IndexedDB {
             const me = this;
             this._opening = new Promise((resolve, reject) => {
                 const idb = window.indexedDB.open(me._name, me._version);
-                idb.onsuccess = e => idb.result ? resolve(new Database(idb.result)) : reject('Unable to open the database');
-                idb.onerror = e => reject(idb.error);
-                idb.onblocked = e => reject("Visitor blocked IndexedDB usage");
+                idb.onsuccess = () => idb.result ? resolve(new Database(idb.result)) : reject('Unable to open the database');
+                idb.onerror = () => reject(idb.error);
+                idb.onblocked = () => reject("Visitor blocked IndexedDB usage");
                 idb.onupgradeneeded = (e) => {
                     if (!me._schemaUpgrade) {
                         reject("Schema upgrade required, but not provided");
                     }
-                    else {
-                        me._idb = idb.result ? new Database(idb.result) : undefined;
-                        const t = new Transaction(e.currentTarget.transaction);
-                        if (me._idb) {
-                            const _idb = me._idb;
-                            me._schemaUpgrade(_idb, t).then(x => x ? resolve(_idb) : reject('Unable to upgrade the database')).catch(x => reject(x));
-                        }
+                    else if (idb.result) {
+                        me._idb = new Database(idb.result);
+                        const t = new Transaction(e.currentTarget.transaction, me._idb);
+                        const _idb = me._idb;
+                        me._schemaUpgrade(_idb, t).then(x => x ? resolve(_idb) : reject('Unable to upgrade the database')).catch(x => reject(x));
                     }
                 };
             });

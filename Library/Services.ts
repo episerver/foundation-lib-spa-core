@@ -1,5 +1,2 @@
-import * as ContentLinkNS from '../Models/ContentLink';
-import StringUtils from '../Util/StringUtils';
-
-export const ContentLink = ContentLinkNS.ContentLinkService
-export const String = StringUtils;
+export { ContentLinkService as ContentLink } from '../Models/ContentLink';
+export { StringUtils as String } from '../Util/StringUtils';

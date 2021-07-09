@@ -1,7 +1,3 @@
-// Core SPA Libray
-import * as Core from './Library/Core';
-import initServer from './InitServer';
-import initBrowser from './InitBrowser';
 // Namespace exports
 export * as Core from './Library/Core';
 export * as ContentDelivery from './Library/ContentDelivery';
@@ -19,32 +15,35 @@ export * as State from './Library/State';
 export * as Interfaces from './Library/Interfaces';
 export * as Enums from './Library/Enums';
 export * as Guards from './Library/Guards';
+// Export Hooks
+export * from './Hooks/Context';
+export * from './Hooks/Utils';
 // Export default context
+export { default as AppGlobal } from './AppGlobal';
 export { default as GlobalContext } from './Spa';
+export const __doPreload__ = () => Promise.resolve({});
+import DefaultServiceContainer from './Core/DefaultServiceContainer';
+import initServer from './InitServer';
+import initBrowser from './InitBrowser';
 /**
  * Generic initialization function, usable for both Browser & Server side rendering
  *
  * @see     InitServer
  * @see     InitBrowser
- * @param   {Core.IConfig}         config              The main configuration object
- * @param   {Core.IServiceContainer}  serviceContainer    The service container to use, if a specific one is desired
+ * @param   {IConfig}         config              The main configuration object
+ * @param   {IServiceContainer}  serviceContainer    The service container to use, if a specific one is desired
  * @param   {string}            containerElementId  The element that should be populated by React-DOM on the Browser
  * @param   {boolean}           ssr                 Marker to hint Server Side rendering
- * @returns {ServerSideRendering.Response|void}  The result of the initialization method invoked
+ * @returns {ServerSideRenderingResponse|void}  The result of the initialization method invoked
  */
-export function init(config, serviceContainer, containerElementId, ssr) {
-    serviceContainer = serviceContainer || new Core.DefaultServiceContainer();
+export function init(config, serviceContainer, containerElementId, ssr, preload) {
+    serviceContainer = serviceContainer || new DefaultServiceContainer();
     if (ssr) {
         return initServer(config, serviceContainer);
     }
     else {
-        return initBrowser(config, containerElementId, serviceContainer);
+        return initBrowser(config, containerElementId, serviceContainer, preload);
     }
 }
-/**
- * Export all hooks in the global scope
- */
-export * from './Hooks/Context';
-export { default as AppGlobal } from './AppGlobal';
 export default init;
 //# sourceMappingURL=index.js.map

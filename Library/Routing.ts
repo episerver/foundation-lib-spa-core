@@ -1,13 +1,2 @@
-import * as RoutingNS from '../Routing/EpiSpaRouter';
-import IRouteConfigBase, { IRouteConfigItem as IRouteConfigItemBase, IRouteConfigComponentProps as IRouteConfigComponentPropsBase } from '../Routing/IRouteConfig';
-
-/**
- * Routing capability
- */
-export const Router = RoutingNS.Router;
-export const Content = RoutingNS.RoutedContent;
-export type RouterProps = RoutingNS.RouterProps;
-export type ContentProps = RoutingNS.RoutedContentProps;
-export type IRoutingConfig = IRouteConfigBase;
-export type IRoutingItem   = IRouteConfigItemBase;
-export type RoutedComponentProps<T> = IRouteConfigComponentPropsBase<T>;
+export { Router, RoutedContent as Content, RouterProps, RoutedContentProps as ContentProps } from '../Routing/EpiSpaRouter';
+export { IRouteConfig as IRoutingConfig, IRouteConfigItem as IRoutingItem, IRouteConfigComponentProps as RoutedComponentProps } from '../Routing/IRouteConfig';

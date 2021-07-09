@@ -1,6 +1,6 @@
 import IContentDeliveryAPI from './IContentDeliveryAPI';
 import IAuthStorage from './IAuthStorage';
-import { NetworkErrorData } from '../ContentDeliveryAPI';
+import NetworkErrorData from './NetworkErrorData';
 import EventEmitter from 'eventemitter3';
 
 export const networkErrorToOAuthError : (message: NetworkErrorData) => IOAuthErrorResponse = (message) => {

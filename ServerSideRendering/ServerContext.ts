@@ -96,7 +96,6 @@ export type SerializedServerContext = DefaultServerContext & {
 }
 
 export type ServerContext<T extends DefaultServerContext = DefaultServerContext> = T & {
-  
   /**
    * Allow custom properties to be written/read from the 
    * context.

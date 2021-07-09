@@ -1,42 +1,13 @@
-import Axios, { AxiosRequestConfig, Method, AxiosResponse, AxiosAdapter, AxiosPromise } from 'axios';
+import Axios, { AxiosRequestConfig, Method, AxiosResponse } from 'axios';
 import AppConfig from './AppConfig';
 import IContent from './Models/IContent';
 import ContentLink, { ContentReference, ContentLinkService } from './Models/ContentLink';
-import ActionResponse, { ResponseType } from './Models/ActionResponse';
+import ActionResponse, { ResponseType } from './ContentDelivery/ActionResponse';
 import WebsiteList from './Models/WebsiteList';
 import Website from './Models/Website';
 import PathProvider from './PathProvider';
-import Property from './Property';
-
-export type PathResponse<T = any, C extends IContent = IContent> = C | ActionResponse<T, C>;
-
-export type NetworkErrorData<T = any> = IContent & {
-  error: Property<T>;
-}
-
-export function PathResponseIsIContent(iContent: PathResponse): iContent is IContent {
-  if ((iContent as ActionResponse<any>).actionName) {
-    return false;
-  }
-  return true;
-}
-export function PathResponseIsActionResponse<P extends any = any>(actionResponse: PathResponse): actionResponse is ActionResponse<P>
-{
-  if ((actionResponse as ActionResponse<P>).actionName) {
-    return true;
-  }
-  return false;
-}
-export function getIContentFromPathResponse<IContentType extends IContent = IContent>(response: PathResponse<any, IContentType>) : IContentType | null
-{
-  if (PathResponseIsActionResponse(response)) {
-    return response.currentContent;
-  }
-  if (PathResponseIsIContent(response)) {
-    return response;
-  }
-  return null;
-}
+import NetworkErrorData from './ContentDelivery/NetworkErrorData';
+import PathResponse, { getIContentFromPathResponse } from './ContentDelivery/PathResponse';
 
 /**
  * ContentDelivery API Wrapper
@@ -45,16 +16,16 @@ export function getIContentFromPathResponse<IContentType extends IContent = ICon
  */
 export class ContentDeliveryAPI {
   protected config: AppConfig;
-  protected componentService: string = '/api/episerver/v2.0/content/';
-  protected websiteService: string = '/api/episerver/v3/site/';
-  protected methodService: string = '/api/episerver/v3/action/';
-  protected debug: boolean = false;
+  protected componentService = '/api/episerver/v2.0/content/';
+  protected websiteService = '/api/episerver/v3/site/';
+  protected methodService = '/api/episerver/v3/action/';
+  protected debug = false;
   protected pathProvider: PathProvider;
 
   /**
    * Marker to keep if we're in edit mode
    */
-  protected inEditMode: boolean = false;
+  protected inEditMode = false;
 
   /**
    * Internal cache of the websites retrieved from the ContentDelivery API
@@ -162,14 +133,14 @@ export class ContentDeliveryAPI {
     return list[0];
   }
 
-  public async getContent(content: ContentLink, forceGuid: boolean = false): Promise<IContent | null> {
+  public async getContent(content: ContentLink, forceGuid = false): Promise<IContent | null> {
     if (!(content && (content.guidValue || content.url))) {
       if (this.config.enableDebug) {
         console.warn('Loading content for an empty reference ', content);
       }
       return null;
     }
-    let useGuid = content.guidValue ? this.config.preferGuid || forceGuid : false;
+    const useGuid = content.guidValue ? this.config.preferGuid || forceGuid : false;
     let serviceUrl: URL;
     if (useGuid) {
       serviceUrl = new URL(this.config.epiBaseUrl + this.componentService + content.guidValue);

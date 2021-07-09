@@ -1,30 +1,25 @@
 import React, { useState, useEffect, ReactElement, Component, FunctionComponent, PropsWithChildren } from 'react';
 import StringUtils from '../Util/StringUtils';
 import { useEpiserver, useIContentRepository, useServiceContainer, useServerSideRendering } from '../Hooks/Context';
-import { ContentReference, ContentLinkService } from '../Models/ContentLink';
+import ContentLink, { ContentReference, ContentLinkService } from '../Models/ContentLink';
 import IContent from '../Models/IContent';
 import ComponentLoader from '../Loaders/ComponentLoader';
-import IEpiserverContext from '../Core/IEpiserverContext';
 import { DefaultServices } from '../Core/IServiceContainer';
 import { ComponentProps } from '../EpiComponent';
 import { Spinner } from '../Components/Spinner';
 import { useLocation } from 'react-router';
+import { Property, VerboseProperty, isVerboseProperty } from '../Property';
 
 /**
  * The properties for the Episerver CMS Component
  */
-export type EpiComponentProps<T extends IContent = IContent> = Omit<ComponentProps<T>, "data"|"context"> & {
+export type EpiComponentProps<ContentType extends IContent = IContent, LinkType extends Property = Property<ContentLink, ContentType>> = Omit<ComponentProps<ContentType>, "data"|"contentLink"> & {
+    contentLink : LinkType
+
 	/**
 	 * The data for the component, if it has been fetched before.
 	 */
-	expandedValue: T | undefined
-    
-    /**
-     * Legacy context, kept as argument for now, but ignored by the implementation
-     * 
-     * @deprecated
-     */
-    context?: IEpiserverContext
+	expandedValue ?: LinkType extends VerboseProperty<ContentLink, ContentType> ? undefined : ContentType
 }
 
 const safeLanguageId = (ref: ContentReference | null | undefined, branch = '##', def = '', inclWorkId = true) => {
@@ -45,19 +40,22 @@ function EpiComponent<T extends IContent = IContent>(props: EpiComponentProps<T>
     const debug = ctx.isDebugActive();
     const lang = ctx.Language;
 
+    const contentLink = isVerboseProperty(props.contentLink) ? props.contentLink.value : props.contentLink;
+    const expandedValue = isVerboseProperty(props.contentLink) ? props.contentLink.expandedValue : props.contentLink.expanded || props.expandedValue;
+
     // Get identifiers from props
     const initialContent = () => {
-        if (!props.expandedValue) return ssr.getIContent<T>(props.contentLink);
-        const expandedId = safeLanguageId(props.expandedValue, lang);
-        const linkId = safeLanguageId(props.contentLink, lang);
-        return expandedId === linkId ? props.expandedValue : ssr.getIContent<T>(props.contentLink);
+        if (!props.expandedValue) return ssr.getIContent<T>(contentLink);
+        const expandedId = safeLanguageId(expandedValue, lang);
+        const linkId = safeLanguageId(contentLink, lang);
+        return expandedId === linkId ? expandedValue : ssr.getIContent<T>(contentLink);
     };
     const [ iContent, setIContent ] = useState(initialContent);
 
     // Make sure the right iContent has been assigned and will be kept in sync
     useEffect(() => {
         let isCancelled = false;
-        const linkId = safeLanguageId(props.contentLink, lang, 'linkId');
+        const linkId = safeLanguageId(contentLink, lang, 'linkId');
 
         // Define listeners to ensure content changes affect the component
         const onContentPatched = (contentLink: ContentReference, oldValue: IContent, newValue: IContent) => {
@@ -79,7 +77,7 @@ function EpiComponent<T extends IContent = IContent>(props: EpiComponentProps<T>
         // Bind listeners and load content
         repo.addListener("afterPatch", onContentPatched);
         repo.addListener("afterUpdate", onContentUpdated);
-        repo.load(props.contentLink).then(x => { if (!isCancelled) setIContent(x as T) });
+        repo.load(contentLink, false).then(x => { if (!isCancelled) setIContent(x as T) });
 
         // Cancel effect and remove listeners
         return () => { 
@@ -87,7 +85,7 @@ function EpiComponent<T extends IContent = IContent>(props: EpiComponentProps<T>
             repo.removeListener("afterPatch", onContentPatched);
             repo.removeListener("afterUpdate", onContentUpdated);
         }
-    }, [ props.contentLink, repo, debug, lang ]);
+    }, [ contentLink, repo, debug, lang ]);
 
     if (!iContent)
         return <Spinner />

@@ -1,7 +1,7 @@
 import IStateReducerInfo, { InitializationAction } from '../Core/IStateReducerInfo';
 import CmsState from './CmsState';
 
-export const StateKey : string = "OptiContentCloud";
+export const StateKey = "OptiContentCloud";
 
 export type CmsSetStateAction = {
     type: 'OptiContentCloud/SetState',
@@ -30,11 +30,13 @@ export const CmsStateReducerInfo : IStateReducerInfo<CmsState, CmsStateActionTyp
                 newState = loadInitialState();
                 break;
             case "OptiContentCloud/SetState":
-                const toMerge : Partial<CmsState> = {};
-                cpyAttr<CmsState>("currentLanguage", action, toMerge);
-                newState = { ...state, ...toMerge }
-                storeState(newState);
-                break;
+                {
+                    const toMerge : Partial<CmsState> = {};
+                    cpyAttr<CmsState>("currentLanguage", action, toMerge);
+                    newState = { ...state, ...toMerge }
+                    storeState(newState);
+                    break;
+                }
         }
 
         return newState;

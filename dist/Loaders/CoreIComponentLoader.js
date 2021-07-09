@@ -15,11 +15,11 @@ export default class CoreIComponentLoader {
         if (this.debug)
             console.debug(`Loading component: ${componentName}`);
         const component = componentName.substr(15);
+        // We would want to add webpackPrefetch: true, yet with larger projects, the prefetching eats all concurrent connections and delaying the page
         return import(
         /* webpackInclude: /\.tsx$/ */
         /* webpackExclude: /\.noimport\.tsx$/ */
         /* webpackChunkName: "components" */
-        /* webpackPrefetch: true */
         /* webpackMode: "lazy" */
         "app/Components/" + component) // Can't use the constant here, as it will Prevent Webpack from properly loading the component
             .then(exports => {

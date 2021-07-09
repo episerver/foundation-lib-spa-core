@@ -8,7 +8,7 @@ const CmsCommunicator = (props) => {
     const context = Context_1.useEpiserver();
     const myScriptFile = props.scriptFile || ScriptFile;
     const myScriptPath = props.scriptPath || ScriptPath;
-    const myScriptUrl = new URL(myScriptPath + myScriptFile, context.getEpiserverURL());
+    const myScriptUrl = context.getEpiserverUrl(myScriptPath + myScriptFile);
     if ((context.isEditable() || context.isInEditMode()) && (context.isServerSideRendering() || !communicatorLoaded(myScriptFile))) {
         if (context.isDebugActive())
             console.debug("CmsCommunicator: Updating document domain");

@@ -7,7 +7,7 @@ export declare type TComponentTypePromise<T extends unknown = ComponentProps<ICo
  * Type defintiion to allow access to the pre-loaded modules
  */
 export declare type LoadedModuleList = {
-    [key: string]: ComponentType;
+    [key: string]: ComponentType<unknown>;
 };
 export declare type LoadingModuleList = {
     [key: string]: Promise<ComponentType>;
@@ -73,8 +73,16 @@ export declare class ComponentLoader {
      */
     getPreLoadedType<P = ComponentProps<IContent>>(component: string, throwOnUnknown?: boolean): ComponentType<P> | null;
     getPreLoadedComponent(component: string, props: ComponentProps<IContent>): ReactNode;
+    /**
+     * Inject a pre-loaded component into the ComponentLoader class
+     *
+     * @param componentKey The key of the component, e.g. the module path used to load the component.
+     * @param componentObject The loaded component
+     * @returns true if added to cache, false otherwise
+     */
+    InjectType<T = ComponentProps<IContent>, P extends ComponentType<T> = ComponentType<T>>(componentKey: string, componentObject: P): boolean;
     LoadType<P = ComponentProps<IContent>>(component: string): Promise<ComponentType<P>>;
-    protected doLoadComponentType(component: string): Promise<ComponentType>;
+    protected doLoadComponentType<PropsType = unknown>(component: string): Promise<ComponentType<PropsType>>;
     LoadComponent<P = ComponentProps<IContent>>(component: string, props: P): Promise<ReactElement<P>>;
 }
 export default ComponentLoader;

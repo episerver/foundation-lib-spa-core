@@ -1,13 +1,13 @@
 import { Method, AxiosTransformer, AxiosRequestConfig } from 'axios';
-import ActionResponse from '../Models/ActionResponse';
 import { ContentReference } from '../Models/ContentLink';
 import IContent from '../Models/IContent';
 import Website from '../Models/Website';
 import WebsiteList from '../Models/WebsiteList';
-import { PathResponse, NetworkErrorData } from '../ContentDeliveryAPI';
+import ActionResponse from './ActionResponse';
+import PathResponse from './PathResponse';
+import { NetworkErrorData } from './NetworkErrorData';
 import { IOAuthResponse } from './IAuthService';
 import IAuthTokenProvider from './IAuthTokenProvider';
-export declare function isNetworkError(content: any): content is NetworkErrorData;
 export declare type IContentDeliverySearchResults<T extends IContent = IContent> = {
     TotalMatching: number;
     Results: T[];

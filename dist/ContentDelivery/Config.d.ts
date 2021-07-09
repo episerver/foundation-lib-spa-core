@@ -39,6 +39,10 @@ export declare type Config = {
      * - Routing
      */
     EnableExtensions: boolean;
+    /**
+     * The number of miliseconds to wait on a reply prior to cancelling the request
+     */
+    Timeout?: number;
 };
 /**
  * Default configuration for the ContentDeliveryAPI

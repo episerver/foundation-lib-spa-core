@@ -1,6 +1,3 @@
-// Set SSR
-import getGlobal from './AppGlobal';
-
 // Global Libraries && Poly-fills
 import ReactDOMServer from 'react-dom/server';
 import { Helmet } from 'react-helmet';
@@ -15,15 +12,10 @@ import CmsSite from './Components/CmsSite';
 import AppConfig from './AppConfig';
 
 // Episerver SPA/PWA Server Side Rendering libs
-import SSRResponse from './ServerSideRendering/Response';
+import ServerSideRenderingResponse from './ServerSideRendering/ServerSideRenderingResponse';
 
-export default function RenderServerSide(config: AppConfig, serviceContainer?: IServiceContainer): SSRResponse
+export default function RenderServerSide(config: AppConfig, serviceContainer?: IServiceContainer): ServerSideRenderingResponse
 {
-    // Update context
-    const ctx = getGlobal();
-    ctx.epi = ctx.epi || {};
-    ctx.epi.isServerSideRendering = true;
-
     // Initialize Episerver Context, for Server Side Rendering
     serviceContainer = serviceContainer || new DefaultServiceContainer();
     config.enableSpinner = false;
@@ -35,14 +27,14 @@ export default function RenderServerSide(config: AppConfig, serviceContainer?: I
     const body = ReactDOMServer.renderToString(<CmsSite context={ EpiSpaContext } staticContext={ staticContext } />);
     const meta = Helmet.renderStatic();
 
-    return {
-        Body: body,
-        HtmlAttributes: meta.htmlAttributes.toString(),
-        Title: meta.title.toString(),
-        Meta: meta.meta.toString(),
-        Link: meta.link.toString(),
-        Script: meta.script.toString(),
-        Style: meta.style.toString(),
-        BodyAttributes: meta.bodyAttributes.toString()
-    };
+    const response = new ServerSideRenderingResponse();
+    response.Body = body;
+    response.HtmlAttributes = meta.htmlAttributes.toString();
+    response.Title = meta.title.toString();
+    response.Meta = meta.meta.toString();
+    response.Link = meta.link.toString();
+    response.Script = meta.script.toString();
+    response.Style = meta.style.toString();
+    response.BodyAttributes = meta.bodyAttributes.toString();
+    return response;
 }

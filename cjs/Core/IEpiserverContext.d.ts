@@ -1,22 +1,15 @@
-import { AnyAction, EnhancedStore } from '@reduxjs/toolkit';
+import { EnhancedStore } from '@reduxjs/toolkit';
 import IServiceContainer from './IServiceContainer';
 import EpiConfig from '../AppConfig';
-import ContentDeliveryAPI from '../ContentDeliveryAPI';
 import IEventEngine from './IEventEngine';
-import { ContentReference, ContentApiId } from '../Models/ContentLink';
+import { ContentReference } from '../Models/ContentLink';
 import ComponentLoader from '../Loaders/ComponentLoader';
 import IContent from '../Models/IContent';
-import Website from '../Models/Website';
 /**
  * The context for an Episerver SPA, enabling access to the core logic of the SPA.
  */
 export interface IEpiserverContext {
     readonly serviceContainer: IServiceContainer;
-    /**
-     *
-     * @deprecated Switch to the ContentDeliveryAPI V2, fetchable from the serviceContainer
-     */
-    readonly contentStorage: ContentDeliveryAPI;
     /**
      * The current language code
      */
@@ -40,20 +33,6 @@ export interface IEpiserverContext {
      */
     isServerSideRendering(): boolean;
     /**
-     * Dispatch an action to the context (Redux store)
-     *
-     * @deprecated Use getStore to get the Redux instance and run your logic manually
-     * @param action
-     */
-    dispatch<T extends AnyAction>(action: AnyAction): T;
-    /**
-     * Invoke a function on the context (Redux store)
-     *
-     * @deprecated Use getStore to get the Redux instance and run your logic manually
-     * @param action
-     */
-    invoke<T extends AnyAction>(action: AnyAction): T;
-    /**
      * Get the store
      */
     getStore(): EnhancedStore;
@@ -70,32 +49,18 @@ export interface IEpiserverContext {
      */
     componentLoader(): ComponentLoader;
     /**
-     * Get an instance of the ContentDeliveryAPI
-     *
-     * @deprecated Use the React Hook for functional components
-     */
-    contentDeliveryApi<API extends ContentDeliveryAPI = ContentDeliveryAPI>(): API;
-    /**
-     * Navigate to a specific item
-     *
-     * @deprecated
-     * @param item
-     */
-    navigateTo(item: ContentReference): void;
-    /**
      * Transform a path to a full URL that can be used to reference the Episerver instance
+     * invoke the method without parameters to retrieve the base URL of the ContentCloud
+     * instance.
      *
-     * @param path
+     * @param   path    The path inside the Content Cloud instance
+     * @param   action  The Action to include in the URL
+     * @returns The URL for the Content Cloud resource
      */
-    getEpiserverUrl(path: ContentReference, action?: string): string;
+    getEpiserverUrl(path?: ContentReference, action?: string): URL;
     /**
-     * Transform a content reference to a SPA Route
-     *
-     * @param path The content to generate the route within the spa for
-     */
-    getSpaRoute(path: ContentReference): string;
-    /**
-     * The path to navigate to, using the history object (using the useHistory hook of react-router)
+     * The path for a specific content item, assuming that Content Cloud controls the URLs
+     * and routing within the SPA.
      *
      * @param {ContentReference} content The content to build the path for
      * @param {string} action  The action to run on the content, if any
@@ -103,89 +68,17 @@ export interface IEpiserverContext {
      */
     buildPath(content: ContentReference, action?: string): string;
     /**
-     * Retrieve an item from the state based upon it's GUID, will return
-     * null if the content is not in the state.
+     * Marker to indicate if the page is in edit mode
      *
-     * @deprecated  Use the get method of the IContentRepository_V2 Service instead
-     * @param guid The GUID of the content to fetch
+     * @returns True when edit mode is active
      */
-    getContentByGuid(guid: string): IContent | null;
-    /**
-     * Retrieve an item from the state based upon it's GUID, will trigger async
-     * fetching of the content by GUID if the content is not in the state
-     *
-     * @deprecated  Use the load method of the IContentRepository_V2 Service instead
-     * @param guid The GUID of the content to fetch
-     */
-    loadContentByGuid(guid: string): Promise<IContent>;
-    /**
-     * Retrieve an item from the state based upon it's ID, will return
-     * null if the content is not in the state.
-     *
-     * @deprecated  Use the getByContentId method of the IContentRepository_V2 Service instead
-     * @param id The API ID (combination of ContentProvider & ID) of the content to fetch
-     */
-    getContentById(id: ContentApiId): IContent | null;
-    /**
-     * Retrieve an item from the state based upon it's GUID, will trigger async
-     * fetching of the content by GUID if the content is not in the state
-     *
-     * @deprecated  Use the getByContentId method of the IContentRepository_V2 Service instead
-     * @param id The API ID (combination of ContentProvider & ID) of the content to fetch
-     */
-    loadContentById(id: ContentApiId): Promise<IContent>;
-    /**
-     *
-     * @deprecated  Use the getByReference method of the IContentRepository_V2 Service instead
-     * @param ref
-     */
-    getContentByRef(ref: string): IContent | null;
-    /**
-     *
-     * @deprecated  Use the getByReference method of the IContentRepository_V2 Service instead
-     * @param ref
-     */
-    loadContentByRef(ref: string): Promise<IContent>;
-    /**
-     *
-     * @deprecated  Use the getByRoute method of the IContentRepository_V2 Service instead
-     * @param path
-     */
-    getContentByPath(path: string): IContent | null;
-    /**
-     *
-     * @deprecated  Use the getByRoute method of the IContentRepository_V2 Service instead
-     * @param path
-     */
-    loadContentByPath(path: string): Promise<IContent>;
-    /**
-     * Retrieve the website that's currently being rendered by the system, returns null
-     * if the website is not yet loaded into the state.
-     *
-     * @deprecated  Use the getCurrentWebsite method of the IContentRepository_V2 Service instead
-     */
-    getCurrentWebsite(): Website | null;
-    /**
-     * Retrieve the website that's currently being rendered by the system, returns null
-     * if the website is not yet loaded into the state.
-     *
-     * @deprecated  Use the getCurrentWebsite method of the IContentRepository_V2 Service instead
-     */
-    loadCurrentWebsite(): Promise<Website | null>;
-    /**
-     *
-     * @deprecated  No longer needed as the IContentRepository_V2 Service automatically caches content
-     * @param iContent
-     */
-    injectContent(iContent: IContent): void;
     isInEditMode(): boolean;
-    isEditable(): boolean;
     /**
-     * Retrieve the current path
+     * Marker to indicate if the page is in edit mode and the on-page editing is active
      *
-     * @deprecated Use React-Router instead
+     * @returns True when on-page editing is active
      */
-    getCurrentPath(): string;
+    isEditable(): boolean;
     /**
      * Retrieve the currently routed content
      *
@@ -201,22 +94,10 @@ export interface IEpiserverContext {
      */
     setRoutedContent(iContent?: IContent): IEpiserverContext;
     /**
-     * Get the cached content by ContentReference object
-     *
-     * @deprecated Use the repository / server side rendering instead
-     * @param ref The content reference to load
-     */
-    getContentByContentRef(ref: ContentReference): IContent | null;
-    /**
      * Get the domain where the SPA is running. If it's configured to be
      * running at https://example.com/spa/, this method returns: https://example.com
      */
     getSpaDomain(): string;
     getSpaBasePath(): string;
-    /**
-     * Get the URL where Episerver is running, without trailing slash, so that
-     * all paths can start with a traling slash.
-     */
-    getEpiserverURL(): string;
 }
 export default IEpiserverContext;

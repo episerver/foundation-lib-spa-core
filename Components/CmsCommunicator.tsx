@@ -25,7 +25,7 @@ export const CmsCommunicator : FunctionComponent<CmsCommunicatorProps> = (props)
     const context = useEpiserver();
     const myScriptFile = props.scriptFile || ScriptFile;
     const myScriptPath = props.scriptPath || ScriptPath;
-    const myScriptUrl = new URL(myScriptPath + myScriptFile, context.getEpiserverURL());
+    const myScriptUrl = context.getEpiserverUrl(myScriptPath + myScriptFile);
 
     if ((context.isEditable() || context.isInEditMode()) && (context.isServerSideRendering() || !communicatorLoaded(myScriptFile)))
     {

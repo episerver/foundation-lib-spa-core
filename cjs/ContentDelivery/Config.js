@@ -11,6 +11,7 @@ exports.DefaultConfig = {
     InEditMode: false,
     Language: 'en',
     AutoExpandAll: false,
-    EnableExtensions: false
+    EnableExtensions: false,
+    Timeout: 10000
 };
 //# sourceMappingURL=Config.js.map

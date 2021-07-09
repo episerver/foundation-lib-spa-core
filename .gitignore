@@ -2,6 +2,7 @@
 /node_modules
 /lib
 package-lock.json
+*.tsbuildinfo
 
 # Ensure bin folder is always included, even if it's exluded by a higher-up .gitignore
 !/bin

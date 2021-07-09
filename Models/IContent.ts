@@ -4,32 +4,11 @@ import ContentTypePath from './ContentTypePath';
 import Language from './Language';
 import LanguageList from './LanguageList';
 import { IContentDeliveryResponseContext } from '../ContentDelivery/IContentDeliveryAPI';
-
-export type NameProperty = string | StringProperty;
-export type GenericProperty =
-  | string
-  | null
-  | undefined
-  | Language
-  | LanguageList
-  | ContentTypePath
-  | ContentLink
-  | Property<unknown>;
-
-export function namePropertyIsString(prop: NameProperty): prop is string {
-  if (prop && (prop as string).trim) {
-    return true;
-  }
-  return false;
-}
-export function genericPropertyIsProperty<TData>(prop: GenericProperty) : prop is Property<TData>
-{
-  return (prop as Property<TData>)?.propertyDataType && typeof((prop as Property<TData>).propertyDataType) == 'string' ? true : false;
-}
+import { isArray } from '../Util/ArrayUtils';
 
 export type IContent = {
   contentLink: ContentLink
-  name: NameProperty
+  name: StringProperty
   language?: Language
   existingLanguages?: LanguageList
   masterLanguage?: Language
@@ -45,11 +24,31 @@ export type IContent = {
   status?: string | null
   serverContext ?: Property<IContentDeliveryResponseContext>
 }
-export default IContent;
 
-export interface IContentData extends IContent {
-  [name: string]: GenericProperty;
+/**
+ * Test to see if a value is of type IContent, which is considered to be
+ * the case if - and only if - the following criteria are satisfied:
+ * - The parameter is an object
+ * - With a property contentType that is a non-empty array of strings
+ * - With a property contentLink that is an object that has either a non
+ *      empty "guid" or non empty "id" property
+ * 
+ * @param       toTest      The value to be tested
+ * @returns     True if the value is IContent or false otherwise
+ */
+export const isIContent : (toTest: unknown) => toTest is IContent = (toTest) : toTest is IContent =>
+{
+    if (typeof(toTest) != "object") return false;
+    if (!isArray((toTest as IContent).contentType, (x) : x is string => typeof(x) == 'string' ) || (toTest as IContent).contentType.length == 0)
+        return false;
+    if (typeof((toTest as IContent).contentLink) != "object") 
+        return false;
+    if (!((toTest as IContent).contentLink.guidValue || (toTest as IContent).contentLink.id))
+        return false;
+    return true;
 }
+
+export type IContentData = IContent & Record<string, Property<unknown>>;
 
 export abstract class BaseIContent<T extends IContent = IContent> implements IContent {
   public get contentLink() : T["contentLink"] { return this.getProperty("contentLink"); }
@@ -98,3 +97,5 @@ export abstract class BaseIContent<T extends IContent = IContent> implements ICo
  * it can be autoloaded using strong typing using TypeScript.
  */
 export type IContentType = new <T extends IContent>(baseData: T) => BaseIContent<T>;
+
+export default IContent;

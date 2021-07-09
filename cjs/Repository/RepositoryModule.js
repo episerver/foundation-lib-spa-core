@@ -4,9 +4,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const merge_1 = require("lodash/merge");
 // Core libraries
 const IInitializableModule_1 = require("../Core/IInitializableModule");
-// Legacy & depricated classes
-const ContentDeliveryAPI_1 = require("../ContentDeliveryAPI");
-const ContentDeliveryAPI_2 = require("../ContentDelivery/ContentDeliveryAPI");
+const IContentSchema_1 = require("../Core/IContentSchema");
+const ContentDeliveryAPI_1 = require("../ContentDelivery/ContentDeliveryAPI");
 const FetchAdapter_1 = require("../ContentDelivery/FetchAdapter");
 // Repository flavours
 const IContentRepository_1 = require("./IContentRepository");
@@ -40,7 +39,6 @@ class RepositoryModule extends IInitializableModule_1.BaseInitializableModule {
     ConfigureContainer(container) {
         // Get Application Config
         const config = container.getService("Config" /* Config */);
-        const epiContext = container.getService("Context" /* Context */);
         const context = container.getService("ExecutionContext" /* ExecutionContext */);
         // Build New ContentDeliveryAPI Connector
         const newApiClassicConfig = {
@@ -51,31 +49,34 @@ class RepositoryModule extends IInitializableModule_1.BaseInitializableModule {
             EnableExtensions: true,
             Language: config.defaultLanguage
         };
-        const newAPI = new ContentDeliveryAPI_2.default(config.iContentDelivery ? Object.assign(Object.assign({}, newApiClassicConfig), config.iContentDelivery) : newApiClassicConfig);
-        // Build Old ContentDeliveryAPI Connector
-        const oldAPI = new ContentDeliveryAPI_1.default(epiContext, config);
-        oldAPI.setInEditMode(newAPI.InEpiserverShell);
-        // Build repository configuration
-        const defaultRepositoryConfig = {
-            debug: config.enableDebug,
-            policy: "LocalStorageFirst" /* LocalStorageFirst */
-        };
-        const repositoryConfig = config.iContentRepository ? Object.assign(Object.assign({}, defaultRepositoryConfig), config.iContentRepository) : Object.assign({}, defaultRepositoryConfig);
-        // Create repository
-        const repository = this.IIContentRepositoryFactory(container, newAPI, repositoryConfig);
-        if (config.enableDebug && newAPI.InEpiserverShell)
-            this.log(`${this.name}: Detected Episerver Shell - Disabling IndexedDB`);
-        // Configure Authentication
-        const authStorage = context.isServerSideRendering ? new ServerAuthStorage_1.default() : new BrowserAuthStorage_1.default();
-        container.addService("AuthService" /* AuthService */, new DefaultAuthService_1.default(newAPI, authStorage));
-        // Add Services to container
-        container.addService("ContentDeliveryAPI" /* ContentDeliveryApi */, oldAPI);
-        container.addService("IContentDeliveryAPI" /* ContentDeliveryAPI_V2 */, newAPI);
-        container.addService("IContentRepository_V2" /* IContentRepository_V2 */, repository);
+        const newAPI = container.hasService("IContentDeliveryAPI" /* ContentDeliveryAPI_V2 */) ?
+            container.getService("IContentDeliveryAPI" /* ContentDeliveryAPI_V2 */) :
+            new ContentDeliveryAPI_1.default(config.iContentDelivery ? Object.assign(Object.assign({}, newApiClassicConfig), config.iContentDelivery) : newApiClassicConfig);
+        if (!container.hasService("AuthService" /* AuthService */)) {
+            const authStorage = context.isServerSideRendering ? new ServerAuthStorage_1.default() : new BrowserAuthStorage_1.default();
+            container.addService("AuthService" /* AuthService */, new DefaultAuthService_1.default(newAPI, authStorage));
+        }
+        if (!container.hasService("IContentDeliveryAPI" /* ContentDeliveryAPI_V2 */))
+            container.addService("IContentDeliveryAPI" /* ContentDeliveryAPI_V2 */, newAPI);
+        if (!container.hasService("IContentRepository_V2" /* IContentRepository_V2 */))
+            container.addFactory("IContentRepository_V2" /* IContentRepository_V2 */, (container) => {
+                const config = container.getService("Config" /* Config */);
+                const defaultRepositoryConfig = {
+                    debug: config.enableDebug,
+                    policy: "LocalStorageFirst" /* LocalStorageFirst */
+                };
+                const repositoryConfig = config.iContentRepository ? Object.assign(Object.assign({}, defaultRepositoryConfig), config.iContentRepository) : Object.assign({}, defaultRepositoryConfig);
+                return this.IIContentRepositoryFactory(container, repositoryConfig);
+            });
+        if (!container.hasService("SchemaInfo" /* SchemaInfo */))
+            container.addFactory("SchemaInfo" /* SchemaInfo */, (container) => {
+                return new IContentSchema_1.IContentSchemaInfo(container.getService("Config" /* Config */));
+            });
     }
-    IIContentRepositoryFactory(container, api, config) {
+    IIContentRepositoryFactory(container, config) {
         const ssr = container.getService("ServerContext" /* ServerContext */);
         const context = container.getService("ExecutionContext" /* ExecutionContext */);
+        const api = container.getService("IContentDeliveryAPI" /* ContentDeliveryAPI_V2 */);
         if (context.isServerSideRendering)
             return new ServerSideIContentRepository_1.default(api, config, ssr);
         if (context.isInEditMode)
@@ -102,7 +103,6 @@ class RepositoryModule extends IInitializableModule_1.BaseInitializableModule {
                 context.serviceContainer.getService("ExecutionContext" /* ExecutionContext */).isEditable = windowName !== 'compareView';
                 context.serviceContainer.getService("ExecutionContext" /* ExecutionContext */).isInEditMode = true;
                 context.serviceContainer.getService("IContentDeliveryAPI" /* ContentDeliveryAPI_V2 */).InEditMode = true;
-                context.serviceContainer.getService("ContentDeliveryAPI" /* ContentDeliveryApi */).setInEditMode(true);
             }
         };
         const onEpiContentSaved = (event) => {

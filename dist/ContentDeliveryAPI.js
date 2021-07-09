@@ -1,26 +1,6 @@
 import Axios from 'axios';
 import { ContentLinkService } from './Models/ContentLink';
-export function PathResponseIsIContent(iContent) {
-    if (iContent.actionName) {
-        return false;
-    }
-    return true;
-}
-export function PathResponseIsActionResponse(actionResponse) {
-    if (actionResponse.actionName) {
-        return true;
-    }
-    return false;
-}
-export function getIContentFromPathResponse(response) {
-    if (PathResponseIsActionResponse(response)) {
-        return response.currentContent;
-    }
-    if (PathResponseIsIContent(response)) {
-        return response;
-    }
-    return null;
-}
+import { getIContentFromPathResponse } from './ContentDelivery/PathResponse';
 /**
  * ContentDelivery API Wrapper
  *
@@ -113,7 +93,7 @@ export class ContentDeliveryAPI {
             }
             return null;
         }
-        let useGuid = content.guidValue ? this.config.preferGuid || forceGuid : false;
+        const useGuid = content.guidValue ? this.config.preferGuid || forceGuid : false;
         let serviceUrl;
         if (useGuid) {
             serviceUrl = new URL(this.config.epiBaseUrl + this.componentService + content.guidValue);

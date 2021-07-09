@@ -1,12 +1,26 @@
-export function namePropertyIsString(prop) {
-    if (prop && prop.trim) {
-        return true;
-    }
-    return false;
-}
-export function genericPropertyIsProperty(prop) {
-    return prop?.propertyDataType && typeof (prop.propertyDataType) == 'string' ? true : false;
-}
+import { isArray } from '../Util/ArrayUtils';
+/**
+ * Test to see if a value is of type IContent, which is considered to be
+ * the case if - and only if - the following criteria are satisfied:
+ * - The parameter is an object
+ * - With a property contentType that is a non-empty array of strings
+ * - With a property contentLink that is an object that has either a non
+ *      empty "guid" or non empty "id" property
+ *
+ * @param       toTest      The value to be tested
+ * @returns     True if the value is IContent or false otherwise
+ */
+export const isIContent = (toTest) => {
+    if (typeof (toTest) != "object")
+        return false;
+    if (!isArray(toTest.contentType, (x) => typeof (x) == 'string') || toTest.contentType.length == 0)
+        return false;
+    if (typeof (toTest.contentLink) != "object")
+        return false;
+    if (!(toTest.contentLink.guidValue || toTest.contentLink.id))
+        return false;
+    return true;
+};
 export class BaseIContent {
     constructor(baseData) {
         this._serverData = baseData;

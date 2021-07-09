@@ -2,18 +2,38 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Store = void 0;
 const tslib_1 = require("tslib");
+const Transaction_1 = require("./Transaction");
 class Store {
-    constructor(database, storeName, objectStore) {
+    constructor(database, storeName, rawStore) {
+        //Validated parameter relation
+        if (!database.hasStore(storeName))
+            throw new Error(`The store ${storeName} does not exist in ${database.toString()}`);
+        // Store values
         this._storeName = storeName;
         this._database = database;
-        this._idbs = objectStore || this._database.startTransaction(this._storeName, "readonly").getRawStore(this._storeName);
+        this._rawStore = rawStore;
     }
     get Raw() {
-        return this._idbs;
+        if (this._rawStore)
+            return this._rawStore;
+        return this.getReadAccess().getRawStore(this._storeName);
+    }
+    get Write() {
+        if (this._rawStore) {
+            if (this._rawStore.transaction.mode === "readonly")
+                throw new Error("Can't write to a transaction bound, read-only store");
+            return this._rawStore;
+        }
+        return this.getWriteAccess().getRawStore(this._storeName);
+    }
+    getReadAccess() {
+        return Transaction_1.default.create(this._database, this._storeName, "readonly");
+    }
+    getWriteAccess() {
+        return Transaction_1.default.create(this._database, this._storeName, "readwrite");
     }
     indices() {
-        const rawStore = this._idbs;
-        return this._indices(rawStore);
+        return this._indices(this.Raw);
     }
     _indices(objectStore) {
         const indices = [];
@@ -25,10 +45,10 @@ class Store {
     getViaIndex(index, id) {
         return tslib_1.__awaiter(this, void 0, void 0, function* () {
             return new Promise((resolve, reject) => {
-                if (this._indices(this._idbs).indexOf(index) < 0) {
+                if (this.indices().indexOf(index) < 0) {
                     reject(`Requested index ${index} not present on store ${this._storeName}`);
                 }
-                const objectIndex = this._idbs.index(index);
+                const objectIndex = this.Raw.index(index);
                 const search = objectIndex.get(id);
                 search.onsuccess = () => resolve(search.result);
                 search.onerror = (e) => reject(e);
@@ -38,7 +58,7 @@ class Store {
     all() {
         return new Promise((resolve, reject) => {
             const items = [];
-            const request = this._idbs.openCursor();
+            const request = this.Raw.openCursor();
             request.onerror = e => reject(e);
             request.onsuccess = e => {
                 const cursor = e.target.result;
@@ -54,26 +74,21 @@ class Store {
     }
     get(id) {
         return new Promise((resolve, reject) => {
-            const t = this._database.startTransaction(this._storeName, "readonly");
-            const s = t.Raw.objectStore(this._storeName);
-            const r = s.get(id);
+            const r = this.Raw.get(id);
             r.onsuccess = (e) => resolve(e.target.result);
             r.onerror = (e) => reject(e);
         });
     }
     put(data, id) {
         return new Promise((resolve, reject) => {
-            const t = this._database.startTransaction(this._storeName, "readwrite");
-            const s = t.Raw.objectStore(this._storeName);
-            const r = s.put(data, id);
+            const r = this.Write.put(data, id);
             r.onerror = (e) => reject(e);
             r.onsuccess = () => resolve(true);
         });
     }
     putAll(records) {
         return new Promise((resolve, reject) => {
-            const t = this._database.startTransaction(this._storeName, "readwrite");
-            const s = t.getRawStore(this._storeName);
+            const s = this.Write;
             const promises = records.map(record => new Promise((rresolve, rreject) => {
                 const r = s.put(record.data, record.id);
                 r.onerror = e => rreject(e);
@@ -84,9 +99,7 @@ class Store {
     }
     add(data, id) {
         return new Promise((resolve, reject) => {
-            const t = this._database.startTransaction(this._storeName, "readwrite");
-            const s = t.Raw.objectStore(this._storeName);
-            const r = s.add(data, id);
+            const r = this.Write.add(data, id);
             r.onerror = (e) => reject(e);
             r.onsuccess = () => resolve(true);
         });

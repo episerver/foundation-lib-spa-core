@@ -1,12 +1,15 @@
 import { Component } from 'react';
 import CurrentContext from './Spa';
+import { readPropertyValue, readPropertyExpandedValue } from './Property';
 /**
  * Base abstract class to be used by components representing an Episerver IContent component (e.g. Block, Page, Media,
  * Catalog, Product, etc...)
  */
-export class EpiComponent extends Component {
+export class EpiClassComponent extends Component {
     constructor(props) {
         super(props);
+        this.read = readPropertyValue;
+        this.readExpanded = readPropertyExpandedValue;
         this.currentComponentId = this.props.data.contentLink.id;
         this.currentComponentGuid = this.props.data.contentLink.guidValue;
         if (this.componentInitialize)
@@ -42,6 +45,9 @@ export class EpiComponent extends Component {
         const context = this.props.context || CurrentContext;
         return context;
     }
+    getContentDeliveryApi() {
+        return this.getContext().serviceContainer.getService("IContentDeliveryAPI" /* ContentDeliveryAPI_V2 */);
+    }
     /**
      * Invoke a method on the underlying controller for this component, using strongly typed arguments and responses.
      *
@@ -50,7 +56,7 @@ export class EpiComponent extends Component {
      * @param args The data to send (will be converted to JSON)
      */
     invokeTyped(method, verb, args) {
-        return this.getContext().contentDeliveryApi().invokeTypedControllerMethod(this.getCurrentContentLink(), method, verb, args);
+        return this.getContentDeliveryApi().invoke(this.getCurrentContentLink(), method, verb, args);
     }
     /**
      * Invoke a method on the underlying controller for this component
@@ -60,16 +66,11 @@ export class EpiComponent extends Component {
      * @param args The data to send (will be converted to JSON)
      */
     invoke(method, verb, args) {
-        return this.getContext().contentDeliveryApi().invokeControllerMethod(this.getCurrentContentLink(), method, verb, args);
+        return this.getContentDeliveryApi().invoke(this.getCurrentContentLink(), method, verb, args);
     }
     htmlObject(htmlValue) {
-        return {
-            __html: htmlValue
-        };
-    }
-    navigateTo(toPage) {
-        this.getContext().navigateTo(toPage);
+        return { __html: htmlValue };
     }
 }
-export default EpiComponent;
+export default EpiClassComponent;
 //# sourceMappingURL=EpiComponent.js.map

@@ -1,8 +1,5 @@
-import * as DefaultAccessorNS from '../ServerSideRendering/IServerContextAccessor';
-import * as BrowserAccessorNS from '../ServerSideRendering/BrowserServerContextAccessor';
-import * as DotNetAccessorNS from '../ServerSideRendering/DotNetServerContextAccessor';
-export var Factory = DefaultAccessorNS.Factory;
-export var Accessor = BrowserAccessorNS.BrowserServerContextAccessor;
-export var BrowserAccessor = BrowserAccessorNS.BrowserServerContextAccessor;
-export var DotNetAccessor = DotNetAccessorNS.DotNetServerContextAccessor;
+export { ServerSideRenderingResponse, ServerSideRenderingResponse as Response } from '../ServerSideRendering/ServerSideRenderingResponse';
+export { Factory } from '../ServerSideRendering/IServerContextAccessor';
+export { BrowserServerContextAccessor as Accessor, BrowserServerContextAccessor as BrowserAccessor } from '../ServerSideRendering/BrowserServerContextAccessor';
+export { DotNetServerContextAccessor as DotNetAccessor } from '../ServerSideRendering/DotNetServerContextAccessor';
 //# sourceMappingURL=ServerSideRendering.js.map

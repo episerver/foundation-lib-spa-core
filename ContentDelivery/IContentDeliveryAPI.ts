@@ -1,24 +1,13 @@
 import { Method, AxiosTransformer, AxiosRequestConfig } from 'axios';
-import ActionResponse from '../Models/ActionResponse';
 import { ContentReference } from '../Models/ContentLink';
 import IContent from '../Models/IContent';
 import Website from '../Models/Website';
 import WebsiteList from '../Models/WebsiteList';
-import { PathResponse, NetworkErrorData } from '../ContentDeliveryAPI';
+import ActionResponse from './ActionResponse';
+import PathResponse from './PathResponse';
+import { NetworkErrorData } from './NetworkErrorData';
 import { IOAuthResponse } from './IAuthService';
 import IAuthTokenProvider from './IAuthTokenProvider';
-
-export function isNetworkError(content: any) : content is NetworkErrorData
-{
-    try {
-        if (typeof(content) !== 'object') return false;
-        const typeString = content?.contentType?.join('/') || '';
-        const providerName = content?.contentLink?.providerName || '';
-        return typeString === 'Errors/NetworkError' && providerName === 'EpiserverSPA';
-    } catch (e) {
-        return false;
-    }
-}
 
 export type IContentDeliverySearchResults<T extends IContent = IContent> = { TotalMatching: number, Results: T[] }
 export type IContentDeliveryResponse<T> = [ T, IContentDeliveryResponseContext ];

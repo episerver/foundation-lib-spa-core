@@ -1,4 +1,7 @@
 import ComponentLoader from './ComponentLoader';
+import { ComponentType } from 'react';
+
+export type ImplementationPreLoader = (() => Promise<{ [modulePath: string] :  ComponentType<unknown>}>) | undefined;
 
 /**
  * Type definition to be used within the main Episerver SPA configuration
@@ -27,7 +30,23 @@ export class ComponentPreLoader {
         return false;
       }
     }
-    return Promise.resolve<boolean>(true);
+    return true;
+  }
+
+  /**
+   * Use the implementation preloader to perform the pre-loading and inject the components into the ComponentLoader
+   * 
+   * @param logic 
+   * @param loader 
+   * @returns 
+   */
+  public static async loadComponents(logic: ImplementationPreLoader, loader: ComponentLoader) : Promise<ComponentLoader>
+  {
+    return logic ? logic().then(config => {
+      for (const modulePath in config)
+        loader.InjectType<unknown>(modulePath, config[modulePath]);
+      return loader;
+    }) : Promise.resolve(loader);
   }
 
   /**

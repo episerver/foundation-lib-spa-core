@@ -1,4 +1,3 @@
-import * as StateNS from '../State/Reducer';
-export const CmsStateKey = StateNS.StateKey;
+export { StateKey as CmsStateKey } from '../State/Reducer';
 export * from '../State/Tools';
 //# sourceMappingURL=State.js.map

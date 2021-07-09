@@ -1,4 +1,4 @@
-import React, { useState, useEffect, FunctionComponent } from 'react';
+import React, { useState, useEffect, useCallback, FunctionComponent } from 'react';
 import { RouteComponentProps } from 'react-router';
 
 import { useEpiserver, useIContentRepository, useServerSideRendering } from '../Hooks/Context';
@@ -6,6 +6,7 @@ import { ContentReference, ContentLinkService } from '../Models/ContentLink';
 import IContent from '../Models/IContent';
 import { IContentRenderer } from './EpiComponent';
 import { Spinner } from './Spinner';
+import { setLanguage } from '../State/Tools';
 
 export const RoutedComponent : FunctionComponent<RouteComponentProps> = (props: RouteComponentProps) =>
 {
@@ -15,7 +16,6 @@ export const RoutedComponent : FunctionComponent<RouteComponentProps> = (props: 
     const path = props.location.pathname;
     const [iContent, setIContent] = useState<IContent | null>(ssr.getIContentByPath(path));
     const debug = epi.isDebugActive();
-    const lang = epi.Language;
 
     // Handle path changes
     useEffect(() => {
@@ -24,11 +24,16 @@ export const RoutedComponent : FunctionComponent<RouteComponentProps> = (props: 
             if (isCancelled) return;
             epi.setRoutedContent(c || undefined);
             setIContent(c);
+            if (typeof(c?.language?.name) == 'string' && c.language.name.length > 0 && c.language.name !== epi.Language) {
+                if (debug) console.debug('RoutedComponent.onRoutedContentReceived => Changing language (from, to)', epi.Language, c.language.name);
+                setLanguage(c.language.name, epi.getStore());
+            }
         });
         return () => { isCancelled = true; epi.setRoutedContent(); };
-    }, [ path, repo, epi ]);
+    }, [ path, repo, epi, debug ]);
 
     // Handle content changes
+    const lang = epi.Language;
     useEffect(() => {
         let isCancelled = false;
         if (!iContent) return () => { isCancelled = true; };
@@ -59,7 +64,7 @@ export const RoutedComponent : FunctionComponent<RouteComponentProps> = (props: 
             repo.removeListener("afterPatch", afterPatch);
             repo.removeListener("afterUpdate", afterUpdate);
         }
-    }, [ repo, debug, lang, iContent]);
+    }, [ repo, debug, iContent, lang]);
 
     if (iContent === null) return <Spinner />
     return <IContentRenderer data={ iContent } path={ props.location.pathname } />
