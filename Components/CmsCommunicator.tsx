@@ -27,7 +27,7 @@ export const CmsCommunicator : FunctionComponent<CmsCommunicatorProps> = (props)
     const myScriptPath = props.scriptPath || ScriptPath;
     const myScriptUrl = context.getEpiserverUrl(myScriptPath + myScriptFile);
 
-    if ((context.isEditable() || context.isInEditMode()) && (context.isServerSideRendering() || !communicatorLoaded(myScriptFile)))
+    if (context.isEditable() || context.isInEditMode())
     {
         if (context.isDebugActive()) console.debug("CmsCommunicator: Updating document domain");
         try {
@@ -36,13 +36,15 @@ export const CmsCommunicator : FunctionComponent<CmsCommunicatorProps> = (props)
         } catch (e) {
             if (context.isDebugActive()) console.error("CmsCommunicator: FAILED Updating document domain", e);
         }
-        if (context.isDebugActive()) console.debug("CmsCommunicator: Injecting script");
-        try {
-            const tag = document.createElement("script");
-            tag.src = myScriptUrl.href;
-            document.body.appendChild(tag);
-        } catch (e) {
-            if (context.isDebugActive()) console.error("CmsCommunicator: FAILED Injecting script", e);
+        if (!context.isServerSideRendering() && !communicatorLoaded(myScriptFile)) {
+            if (context.isDebugActive()) console.debug("CmsCommunicator: Injecting script");
+            try {
+                const tag = document.createElement("script");
+                tag.src = myScriptUrl.href;
+                document.body.appendChild(tag);
+            } catch (e) {
+                if (context.isDebugActive()) console.error("CmsCommunicator: FAILED Injecting script", e);
+            }
         }
     }
 
