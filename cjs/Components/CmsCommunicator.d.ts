@@ -9,7 +9,7 @@ export declare type CmsCommunicatorProps = {
     /**
      * Override the script file for the communicator script
      *
-     * @default clientresources/epi-cms/communicationinjector.js
+     * @default clientresources/epi-cms/communicationInjector.js
      */
     scriptFile?: string;
 };

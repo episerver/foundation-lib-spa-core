@@ -37,7 +37,7 @@ function communicatorLoaded(file) {
         const scripts = document.getElementsByTagName("script");
         for (let i = 0; i < scripts.length; i++) {
             const script = scripts.item(i);
-            if (script?.src && script.src.substr(-1 * file.length) === file)
+            if (script?.src && script.src.toLowerCase().substr(-1 * file.length) === file.toLowerCase())
                 return true;
         }
     }

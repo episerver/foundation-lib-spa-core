@@ -16,7 +16,7 @@ export type CmsCommunicatorProps = {
     /**
      * Override the script file for the communicator script
      * 
-     * @default clientresources/epi-cms/communicationinjector.js
+     * @default clientresources/epi-cms/communicationInjector.js
      */
     scriptFile?: string
 };
@@ -54,7 +54,7 @@ function communicatorLoaded(file: string) : boolean {
         const scripts = document.getElementsByTagName("script");
         for (let i = 0; i < scripts.length; i++) {
             const script = scripts.item(i);
-            if (script?.src && script.src.substr(-1 * file.length) === file)
+            if (script?.src && script.src.toLowerCase().substr(-1 * file.length) === file.toLowerCase())
                 return true;
         }
     } catch (e) {
