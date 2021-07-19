@@ -1,4 +1,5 @@
 import IContent from './IContent';
+import ContentTypePath from './ContentTypePath';
 import EpiContext from '../Spa';
 
 export type ContentReference = IContent | ContentLink | string
@@ -15,11 +16,12 @@ export type ContentLink = {
   providerName?: string;
   url: string;
   expanded?: IContent;
+  contentType?: ContentTypePath;
 }
 
 export function isContentLink(toTest: unknown) : toTest is ContentLink
 {
-    if (typeof(toTest) !== 'object')
+    if (typeof(toTest) !== 'object' || toTest === null)
         return false;
     return typeof((toTest as ContentLink).guidValue) == 'string' || typeof((toTest as ContentLink).id) == 'number';
 }

@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ContentLinkService = exports.isContentLink = void 0;
 const Spa_1 = require("../Spa");
 function isContentLink(toTest) {
-    if (typeof (toTest) !== 'object')
+    if (typeof (toTest) !== 'object' || toTest === null)
         return false;
     return typeof (toTest.guidValue) == 'string' || typeof (toTest.id) == 'number';
 }

@@ -1,6 +1,6 @@
 import EpiContext from '../Spa';
 export function isContentLink(toTest) {
-    if (typeof (toTest) !== 'object')
+    if (typeof (toTest) !== 'object' || toTest === null)
         return false;
     return typeof (toTest.guidValue) == 'string' || typeof (toTest.id) == 'number';
 }

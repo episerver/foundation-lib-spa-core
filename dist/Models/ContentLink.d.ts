@@ -1,4 +1,5 @@
 import IContent from './IContent';
+import ContentTypePath from './ContentTypePath';
 export declare type ContentReference = IContent | ContentLink | string;
 export declare type ContentApiId = string;
 /**
@@ -12,6 +13,7 @@ export declare type ContentLink = {
     providerName?: string;
     url: string;
     expanded?: IContent;
+    contentType?: ContentTypePath;
 };
 export declare function isContentLink(toTest: unknown): toTest is ContentLink;
 export declare class ContentLinkService {
