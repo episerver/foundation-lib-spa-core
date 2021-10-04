@@ -62,7 +62,7 @@ const ElementNavigation : React.FunctionComponent = (props) : React.ReactElement
 
                 // Only act if we remain on the same domain
                 if (targetUrl.origin === currentUrl.origin) {
-                    newPath = targetUrl.pathname;
+                    newPath = targetUrl.pathname + targetUrl.hash;
                 }
             }
 
