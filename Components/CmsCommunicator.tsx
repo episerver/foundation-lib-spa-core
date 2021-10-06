@@ -1,5 +1,4 @@
-import { FunctionComponent } from 'react';
-
+import { FunctionComponent, useEffect } from 'react';
 import { useEpiserver } from '../Hooks/Context';
 
 const ScriptPath = "episerver/cms/latest/";
@@ -27,26 +26,51 @@ export const CmsCommunicator : FunctionComponent<CmsCommunicatorProps> = (props)
     const myScriptPath = props.scriptPath || ScriptPath;
     const myScriptUrl = context.getEpiserverUrl(myScriptPath + myScriptFile);
 
+    const shouldLoadScript = (context.isEditable() || context.isInEditMode()) && (!context.isServerSideRendering() && !communicatorLoaded(myScriptFile))
+    const scriptHrf = myScriptUrl.href;
+
     if (context.isEditable() || context.isInEditMode())
     {
-        if (context.isDebugActive()) console.debug("CmsCommunicator: Updating document domain");
+        if (context.isDebugActive()) 
+            console.debug("CmsCommunicator: Updating document domain");
+            
         try {
             const myDomain = document.domain.split('.');
             if (myDomain.length > 2) document.domain = myDomain.slice(myDomain.length - 2).join('.');
         } catch (e) {
             if (context.isDebugActive()) console.error("CmsCommunicator: FAILED Updating document domain", e);
         }
-        if (!context.isServerSideRendering() && !communicatorLoaded(myScriptFile)) {
-            if (context.isDebugActive()) console.debug("CmsCommunicator: Injecting script");
-            try {
-                const tag = document.createElement("script");
-                tag.src = myScriptUrl.href;
-                document.body.appendChild(tag);
-            } catch (e) {
-                if (context.isDebugActive()) console.error("CmsCommunicator: FAILED Injecting script", e);
-            }
-        }
     }
+
+    useEffect(() => {
+        if (!shouldLoadScript) 
+            return;
+
+        let scriptTag : HTMLScriptElement | undefined;
+
+        // Script injection function
+        const injectScript = () => {
+            if (document.readyState != "complete")
+                return;
+            scriptTag = document.createElement('script')
+            scriptTag.src = scriptHrf
+            document.body.appendChild(scriptTag)
+        }
+
+        // Start listening for ReadyState changes
+        document.addEventListener('readystatechange', injectScript);
+
+        // Ensure we still inject the script if the ReadyState is already complete when we run the first time
+        if (!scriptTag && document.readyState == 'complete')
+            injectScript();
+
+        // Remove all we did
+        return () => {
+            document.removeEventListener('readystatechange', injectScript);
+            if (scriptTag)
+                document.body.removeChild(scriptTag)
+        }
+    }, [ shouldLoadScript, scriptHrf ])
 
     return null;
 }

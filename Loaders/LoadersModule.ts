@@ -16,7 +16,7 @@ export default class LoadersModule extends BaseInitializableModule implements II
      * 
      * @var { string }
      */
-    protected name : string = "Episerver Type & Component Loaders";
+    protected name = "Episerver Type & Component Loaders";
 
     /**
      * Ensure the configuration object within the service container contains a "*" route. If
