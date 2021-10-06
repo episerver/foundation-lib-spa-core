@@ -7,7 +7,7 @@ export const CmsCommunicator = (props) => {
     const myScriptFile = props.scriptFile || ScriptFile;
     const myScriptPath = props.scriptPath || ScriptPath;
     const myScriptUrl = context.getEpiserverUrl(myScriptPath + myScriptFile);
-    const shouldLoadScript = (context.isEditable() || context.isInEditMode()) && (!context.isServerSideRendering() && !communicatorLoaded(myScriptFile));
+    const shouldLoadScript = (context.isEditable() || context.isInEditMode()) && !context.isServerSideRendering();
     const scriptHrf = myScriptUrl.href;
     if (context.isEditable() || context.isInEditMode()) {
         if (context.isDebugActive())
