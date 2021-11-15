@@ -418,6 +418,16 @@ export class ContentDeliveryAPI {
                         console.info(`ContentDeliveryAPI Error ${response.status}: ${response.statusText}`, requestConfig.method + ' ' + requestConfig.url);
                     throw new Error(`${response.status}: ${response.statusText}`);
                 }
+                if (response && response.data){
+                    var responseData = response.data; 
+                    //redirect support. Experimental since may also fire potentially in other cases
+                    //will need to redefine requirement later
+                    if (responseData.url != null && responseData.url != '/' && 
+                        location.pathname && responseData.url != location.pathname){                      
+                        console.info('Redirecting to ',location.origin + responseData.url);
+                        location.href = location.origin + responseData.url;
+                    }
+                }   
                 const data = response.data || this.createNetworkErrorResponse('Empty response', response);
                 const ctx = {
                     status: response.status,
@@ -455,6 +465,7 @@ export class ContentDeliveryAPI {
         const config = {
             method: "GET",
             baseURL: this.BaseURL,
+            maxRedirects: 2,
             withCredentials: true,
             headers: this.getHeaders(),
             responseType: "json",
