@@ -43,7 +43,7 @@ export class ContentDeliveryAPI {
      * @deprecated
      */
     constructor(pathProvider, config) {
-        this.componentService = '/api/episerver/v2.0/content/';
+        this.componentService = '/api/episerver/v3.0/content/';
         this.websiteService = '/api/episerver/v3/site/';
         this.methodService = '/api/episerver/v3/action/';
         this.debug = false;
@@ -83,7 +83,7 @@ export class ContentDeliveryAPI {
      */
     invokeControllerMethod(content, method, verb, data) {
         return __awaiter(this, void 0, void 0, function* () {
-            let options = this.getRequestSettings(verb);
+            const options = this.getRequestSettings(verb);
             options.data = data;
             return yield this.doRequest(this.getMethodServiceUrl(content, method), options);
         });
@@ -99,7 +99,7 @@ export class ContentDeliveryAPI {
      */
     invokeTypedControllerMethod(content, method, verb, data) {
         return __awaiter(this, void 0, void 0, function* () {
-            let options = this.getRequestSettings(verb);
+            const options = this.getRequestSettings(verb);
             options.data = data;
             return yield this.doRequest(this.getMethodServiceUrl(content, method), options);
         });
@@ -132,7 +132,7 @@ export class ContentDeliveryAPI {
                 }
                 return null;
             }
-            let useGuid = content.guidValue ? this.config.preferGuid || forceGuid : false;
+            const useGuid = content.guidValue ? this.config.preferGuid || forceGuid : false;
             let serviceUrl;
             if (useGuid) {
                 serviceUrl = new URL(this.config.epiBaseUrl + this.componentService + content.guidValue);
@@ -150,9 +150,11 @@ export class ContentDeliveryAPI {
             if (this.config.autoExpandRequests) {
                 serviceUrl.searchParams.append('expand', '*');
             }
-            return this.doRequest(serviceUrl.href).catch((r) => {
+            return this.doRequest(serviceUrl.href)
+                .catch((r) => {
                 return this.buildNetworkError(r);
-            }).then(r => getIContentFromPathResponse(r));
+            })
+                .then((r) => getIContentFromPathResponse(r));
         });
     }
     getContentsByRefs(refs) {
@@ -160,7 +162,7 @@ export class ContentDeliveryAPI {
             if (!refs || refs.length == 0) {
                 return Promise.resolve([]);
             }
-            let serviceUrl = new URL(this.config.epiBaseUrl + this.componentService);
+            const serviceUrl = new URL(this.config.epiBaseUrl + this.componentService);
             serviceUrl.searchParams.append('references', refs.join(','));
             if (this.config.autoExpandRequests) {
                 serviceUrl.searchParams.append('expand', '*');
@@ -172,7 +174,7 @@ export class ContentDeliveryAPI {
     }
     getContentByRef(ref) {
         return __awaiter(this, void 0, void 0, function* () {
-            let serviceUrl = new URL(this.config.epiBaseUrl + this.componentService + ref);
+            const serviceUrl = new URL(this.config.epiBaseUrl + this.componentService + ref);
             if (this.config.autoExpandRequests) {
                 serviceUrl.searchParams.append('expand', '*');
             }
@@ -183,7 +185,7 @@ export class ContentDeliveryAPI {
     }
     getContentByPath(path) {
         return __awaiter(this, void 0, void 0, function* () {
-            let serviceUrl = new URL(this.config.epiBaseUrl + path);
+            const serviceUrl = new URL(this.config.epiBaseUrl + path);
             if (this.config.autoExpandRequests) {
                 serviceUrl.searchParams.append('expand', '*');
             }
@@ -195,8 +197,8 @@ export class ContentDeliveryAPI {
     }
     getContentChildren(id) {
         return __awaiter(this, void 0, void 0, function* () {
-            let itemId = ContentLinkService.createApiId(id);
-            let serviceUrl = new URL(this.config.epiBaseUrl + this.componentService + itemId + '/children');
+            const itemId = ContentLinkService.createApiId(id);
+            const serviceUrl = new URL(this.config.epiBaseUrl + this.componentService + itemId + '/children');
             if (this.config.autoExpandRequests) {
                 serviceUrl.searchParams.append('expand', '*');
             }
@@ -207,8 +209,8 @@ export class ContentDeliveryAPI {
     }
     getContentAncestors(link) {
         return __awaiter(this, void 0, void 0, function* () {
-            let itemId = ContentLinkService.createApiId(link);
-            let serviceUrl = new URL(`${this.config.epiBaseUrl}${this.componentService}${itemId}/ancestors`);
+            const itemId = ContentLinkService.createApiId(link);
+            const serviceUrl = new URL(`${this.config.epiBaseUrl}${this.componentService}${itemId}/ancestors`);
             if (this.config.autoExpandRequests) {
                 serviceUrl.searchParams.append('expand', '*');
             }
@@ -229,7 +231,7 @@ export class ContentDeliveryAPI {
                 return Promise.reject('The Content Delivery API has been disabled');
             }
             if (this.isInEditMode()) {
-                let urlObj = new URL(url);
+                const urlObj = new URL(url);
                 urlObj.searchParams.append('epieditmode', 'True');
                 //Add channel...
                 //Add project...
@@ -265,7 +267,7 @@ export class ContentDeliveryAPI {
      * @param verb The verb for the generated configuration
      */
     getRequestSettings(verb) {
-        let options = {
+        const options = {
             method: verb ? verb : 'get',
             baseURL: this.config.epiBaseUrl,
             withCredentials: true,
@@ -287,7 +289,7 @@ export class ContentDeliveryAPI {
         return options;
     }
     getHeaders(customHeaders) {
-        let defaultHeaders = {
+        const defaultHeaders = {
             Accept: 'application/json',
             'Accept-Language': this.config.defaultLanguage, //@ToDo: Convert to context call, with default
         };

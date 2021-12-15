@@ -12,7 +12,7 @@ export type PathResponse<T = any, C extends IContent = IContent> = C | ActionRes
 
 export type NetworkErrorData<T = any> = IContent & {
   error: Property<T>;
-}
+};
 
 export function PathResponseIsIContent(iContent: PathResponse): iContent is IContent {
   if ((iContent as ActionResponse<any>).actionName) {
@@ -20,15 +20,17 @@ export function PathResponseIsIContent(iContent: PathResponse): iContent is ICon
   }
   return true;
 }
-export function PathResponseIsActionResponse<P extends any = any>(actionResponse: PathResponse): actionResponse is ActionResponse<P>
-{
+export function PathResponseIsActionResponse<P extends any = any>(
+  actionResponse: PathResponse,
+): actionResponse is ActionResponse<P> {
   if ((actionResponse as ActionResponse<P>).actionName) {
     return true;
   }
   return false;
 }
-export function getIContentFromPathResponse<IContentType extends IContent = IContent>(response: PathResponse<any, IContentType>) : IContentType | null
-{
+export function getIContentFromPathResponse<IContentType extends IContent = IContent>(
+  response: PathResponse<any, IContentType>,
+): IContentType | null {
   if (PathResponseIsActionResponse(response)) {
     return response.currentContent;
   }
@@ -40,21 +42,21 @@ export function getIContentFromPathResponse<IContentType extends IContent = ICon
 
 /**
  * ContentDelivery API Wrapper
- * 
+ *
  * @deprecated
  */
 export class ContentDeliveryAPI {
   protected config: AppConfig;
-  protected componentService: string = '/api/episerver/v2.0/content/';
-  protected websiteService: string = '/api/episerver/v3/site/';
-  protected methodService: string = '/api/episerver/v3/action/';
-  protected debug: boolean = false;
+  protected componentService = '/api/episerver/v3.0/content/';
+  protected websiteService = '/api/episerver/v3/site/';
+  protected methodService = '/api/episerver/v3/action/';
+  protected debug = false;
   protected pathProvider: PathProvider;
 
   /**
    * Marker to keep if we're in edit mode
    */
-  protected inEditMode: boolean = false;
+  protected inEditMode = false;
 
   /**
    * Internal cache of the websites retrieved from the ContentDelivery API
@@ -72,7 +74,7 @@ export class ContentDeliveryAPI {
 
   /**
    * ContentDelivery API Wrapper
-   * 
+   *
    * @deprecated
    */
   constructor(pathProvider: PathProvider, config: AppConfig) {
@@ -81,13 +83,11 @@ export class ContentDeliveryAPI {
     this.debug = this.config.enableDebug === true;
   }
 
-  public get currentPathProvider() : PathProvider
-  {
+  public get currentPathProvider(): PathProvider {
     return this.pathProvider;
   }
 
-  public get currentConfig() : AppConfig
-  {
+  public get currentConfig(): AppConfig {
     return this.config;
   }
 
@@ -119,7 +119,7 @@ export class ContentDeliveryAPI {
     verb?: Method,
     data?: object,
   ): Promise<any> {
-    let options = this.getRequestSettings(verb);
+    const options = this.getRequestSettings(verb);
     options.data = data;
     return await this.doRequest<any>(this.getMethodServiceUrl(content, method), options);
   }
@@ -139,7 +139,7 @@ export class ContentDeliveryAPI {
     verb?: Method,
     data?: TypeIn,
   ): Promise<ActionResponse<TypeOut>> {
-    let options = this.getRequestSettings(verb);
+    const options = this.getRequestSettings(verb);
     options.data = data;
     return await this.doRequest<ActionResponse<TypeOut>>(this.getMethodServiceUrl(content, method), options);
   }
@@ -162,14 +162,14 @@ export class ContentDeliveryAPI {
     return list[0];
   }
 
-  public async getContent(content: ContentLink, forceGuid: boolean = false): Promise<IContent | null> {
+  public async getContent(content: ContentLink, forceGuid = false): Promise<IContent | null> {
     if (!(content && (content.guidValue || content.url))) {
       if (this.config.enableDebug) {
         console.warn('Loading content for an empty reference ', content);
       }
       return null;
     }
-    let useGuid = content.guidValue ? this.config.preferGuid || forceGuid : false;
+    const useGuid = content.guidValue ? this.config.preferGuid || forceGuid : false;
     let serviceUrl: URL;
     if (useGuid) {
       serviceUrl = new URL(this.config.epiBaseUrl + this.componentService + content.guidValue);
@@ -187,16 +187,18 @@ export class ContentDeliveryAPI {
     if (this.config.autoExpandRequests) {
       serviceUrl.searchParams.append('expand', '*');
     }
-    return this.doRequest<PathResponse>(serviceUrl.href).catch((r) => {
-      return this.buildNetworkError(r);
-    }).then(r => getIContentFromPathResponse(r));
+    return this.doRequest<PathResponse>(serviceUrl.href)
+      .catch((r) => {
+        return this.buildNetworkError(r);
+      })
+      .then((r) => getIContentFromPathResponse(r));
   }
 
   public async getContentsByRefs(refs: Array<string>): Promise<Array<IContent>> {
     if (!refs || refs.length == 0) {
       return Promise.resolve<Array<IContent>>([]);
     }
-    let serviceUrl: URL = new URL(this.config.epiBaseUrl + this.componentService);
+    const serviceUrl: URL = new URL(this.config.epiBaseUrl + this.componentService);
     serviceUrl.searchParams.append('references', refs.join(','));
     if (this.config.autoExpandRequests) {
       serviceUrl.searchParams.append('expand', '*');
@@ -207,7 +209,7 @@ export class ContentDeliveryAPI {
   }
 
   public async getContentByRef(ref: string): Promise<IContent> {
-    let serviceUrl: URL = new URL(this.config.epiBaseUrl + this.componentService + ref);
+    const serviceUrl: URL = new URL(this.config.epiBaseUrl + this.componentService + ref);
     if (this.config.autoExpandRequests) {
       serviceUrl.searchParams.append('expand', '*');
     }
@@ -217,7 +219,7 @@ export class ContentDeliveryAPI {
   }
 
   public async getContentByPath(path: string): Promise<PathResponse> {
-    let serviceUrl: URL = new URL(this.config.epiBaseUrl + path);
+    const serviceUrl: URL = new URL(this.config.epiBaseUrl + path);
     if (this.config.autoExpandRequests) {
       serviceUrl.searchParams.append('expand', '*');
     }
@@ -228,8 +230,8 @@ export class ContentDeliveryAPI {
   }
 
   public async getContentChildren<T extends IContent>(id: ContentReference): Promise<Array<T>> {
-    let itemId: string = ContentLinkService.createApiId(id);
-    let serviceUrl: URL = new URL(this.config.epiBaseUrl + this.componentService + itemId + '/children');
+    const itemId: string = ContentLinkService.createApiId(id);
+    const serviceUrl: URL = new URL(this.config.epiBaseUrl + this.componentService + itemId + '/children');
     if (this.config.autoExpandRequests) {
       serviceUrl.searchParams.append('expand', '*');
     }
@@ -239,8 +241,8 @@ export class ContentDeliveryAPI {
   }
 
   public async getContentAncestors(link: ContentReference): Promise<Array<IContent>> {
-    let itemId: string = ContentLinkService.createApiId(link);
-    let serviceUrl: URL = new URL(`${this.config.epiBaseUrl}${this.componentService}${itemId}/ancestors`);
+    const itemId: string = ContentLinkService.createApiId(link);
+    const serviceUrl: URL = new URL(`${this.config.epiBaseUrl}${this.componentService}${itemId}/ancestors`);
     if (this.config.autoExpandRequests) {
       serviceUrl.searchParams.append('expand', '*');
     }
@@ -260,7 +262,7 @@ export class ContentDeliveryAPI {
       return Promise.reject('The Content Delivery API has been disabled');
     }
     if (this.isInEditMode()) {
-      let urlObj = new URL(url);
+      const urlObj = new URL(url);
       urlObj.searchParams.append('epieditmode', 'True');
       //Add channel...
       //Add project...
@@ -295,8 +297,7 @@ export class ContentDeliveryAPI {
    * @param verb The verb for the generated configuration
    */
   protected getRequestSettings(verb?: Method): AxiosRequestConfig {
-
-    let options: AxiosRequestConfig = {
+    const options: AxiosRequestConfig = {
       method: verb ? verb : 'get',
       baseURL: this.config.epiBaseUrl,
       withCredentials: true,
@@ -319,7 +320,7 @@ export class ContentDeliveryAPI {
   }
 
   protected getHeaders(customHeaders?: object): object {
-    let defaultHeaders = {
+    const defaultHeaders = {
       Accept: 'application/json',
       'Accept-Language': this.config.defaultLanguage, //@ToDo: Convert to context call, with default
     };
@@ -342,9 +343,9 @@ export class ContentDeliveryAPI {
     return false;
   }
 
-  private counter: number = 0;
+  private counter = 0;
 
-  protected buildNetworkError(reason: any, path: string = ''): NetworkErrorData {
+  protected buildNetworkError(reason: any, path = ''): NetworkErrorData {
     const errorId = ++this.counter;
     return {
       name: {
