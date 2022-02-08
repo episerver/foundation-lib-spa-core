@@ -50,7 +50,9 @@ export class EpiComponent extends Component {
      * @param args The data to send (will be converted to JSON)
      */
     invokeTyped(method, verb, args) {
-        return this.getContext().contentDeliveryApi().invokeTypedControllerMethod(this.getCurrentContentLink(), method, verb, args);
+        return this.getContext()
+            .contentDeliveryApi()
+            .invokeTypedControllerMethod(this.getCurrentContentLink(), method, verb, args);
     }
     /**
      * Invoke a method on the underlying controller for this component
@@ -60,11 +62,13 @@ export class EpiComponent extends Component {
      * @param args The data to send (will be converted to JSON)
      */
     invoke(method, verb, args) {
-        return this.getContext().contentDeliveryApi().invokeControllerMethod(this.getCurrentContentLink(), method, verb, args);
+        return this.getContext()
+            .contentDeliveryApi()
+            .invokeControllerMethod(this.getCurrentContentLink(), method, verb, args);
     }
     htmlObject(htmlValue) {
         return {
-            __html: htmlValue
+            __html: htmlValue,
         };
     }
     navigateTo(toPage) {

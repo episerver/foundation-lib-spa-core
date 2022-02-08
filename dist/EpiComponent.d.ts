@@ -63,6 +63,12 @@ export interface ComponentProps<T extends IContent> {
      * The identifier of the component, if provided
      */
     id?: string;
+    /**
+     * The layout from the layout block
+     *
+     * @default ""
+     */
+    layout?: string;
 }
 /**
  * Type do describe a generic EpiComponent type

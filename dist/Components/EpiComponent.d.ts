@@ -5,7 +5,7 @@ import { ComponentProps } from '../EpiComponent';
 /**
  * The properties for the Episerver CMS Component
  */
-export declare type EpiComponentProps<T extends IContent = IContent> = Omit<ComponentProps<T>, "data" | "context"> & {
+export declare type EpiComponentProps<T extends IContent = IContent> = Omit<ComponentProps<T>, 'data' | 'context'> & {
     /**
      * The data for the component, if it has been fetched before.
      */
@@ -16,6 +16,12 @@ export declare type EpiComponentProps<T extends IContent = IContent> = Omit<Comp
      * @deprecated
      */
     context?: IEpiserverContext;
+    /**
+     * The layout from the layout block
+     *
+     * @default ""
+     */
+    layout?: string;
 };
 declare function EpiComponent<T extends IContent = IContent>(props: EpiComponentProps<T>): React.ReactElement<unknown> | null;
 declare namespace EpiComponent {
@@ -27,6 +33,7 @@ export declare const IContentRenderer: React.FunctionComponent<{
     actionName?: string;
     actionData?: unknown;
     path?: string;
+    layout?: string;
 }>;
 export default EpiComponent;
 /**

@@ -66,6 +66,12 @@ export declare type ContentAreaSiteConfig = {
      * @default "content-area"
      */
     wrapperClass?: string;
+    /**
+     * The layout from the layout block
+     *
+     * @default ""
+     */
+    layout?: string;
 };
 export declare type ContentAreaProps = ContentAreaSiteConfig & {
     /**

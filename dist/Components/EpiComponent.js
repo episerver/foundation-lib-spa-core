@@ -54,22 +54,24 @@ function EpiComponent(props) {
             }
         };
         // Bind listeners and load content
-        repo.addListener("afterPatch", onContentPatched);
-        repo.addListener("afterUpdate", onContentUpdated);
-        repo.load(props.contentLink).then(x => { if (!isCancelled)
-            setIContent(x); });
+        repo.addListener('afterPatch', onContentPatched);
+        repo.addListener('afterUpdate', onContentUpdated);
+        repo.load(props.contentLink).then((x) => {
+            if (!isCancelled)
+                setIContent(x);
+        });
         // Cancel effect and remove listeners
         return () => {
             isCancelled = true;
-            repo.removeListener("afterPatch", onContentPatched);
-            repo.removeListener("afterUpdate", onContentUpdated);
+            repo.removeListener('afterPatch', onContentPatched);
+            repo.removeListener('afterUpdate', onContentUpdated);
         };
     }, [props.contentLink, repo, debug, lang]);
     if (!iContent)
         return React.createElement(Spinner, null);
-    return React.createElement(IContentRenderer, { data: iContent, contentType: props.contentType, actionName: props.actionName, actionData: props.actionData });
+    return (React.createElement(IContentRenderer, { data: iContent, contentType: props.contentType, actionName: props.actionName, actionData: props.actionData, layout: props.layout }));
 }
-EpiComponent.displayName = "Optimizely CMS: ContentLink IContent resolver";
+EpiComponent.displayName = 'Optimizely CMS: ContentLink IContent resolver';
 export const IContentRenderer = (props) => {
     const context = useEpiserver();
     const path = useLocation().pathname;
@@ -81,16 +83,18 @@ export const IContentRenderer = (props) => {
         let isCancelled = false;
         if (!componentLoader.isPreLoaded(componentName)) {
             setComponentAvailable(false);
-            componentLoader.LoadType(componentName).then(component => {
+            componentLoader.LoadType(componentName).then((component) => {
                 if (debug)
-                    console.debug('IContentRenderer.loadType => Loaded component: ', componentName, component ? 'success' : 'failed', (component === null || component === void 0 ? void 0 : component.displayName) || "Unnamed / no component");
+                    console.debug('IContentRenderer.loadType => Loaded component: ', componentName, component ? 'success' : 'failed', (component === null || component === void 0 ? void 0 : component.displayName) || 'Unnamed / no component');
                 if (!isCancelled)
                     setComponentAvailable(component ? true : false);
             });
         }
         else
             setComponentAvailable(true);
-        return () => { isCancelled = true; };
+        return () => {
+            isCancelled = true;
+        };
     }, [componentName, componentLoader, props.data, debug]);
     if (!componentAvailable)
         return React.createElement(Spinner, null);
@@ -99,10 +103,10 @@ export const IContentRenderer = (props) => {
         return React.createElement(Spinner, null);
     if (debug)
         console.debug('IContentRenderer.render => Component & IContent: ', componentName, props.data);
-    return React.createElement(EpiComponentErrorBoundary, { componentName: componentName || "Error resolving component" },
-        React.createElement(IContentComponent, { data: props.data, contentLink: props.data.contentLink, path: path || '', context: context, actionName: props.actionName, actionData: props.actionData }));
+    return (React.createElement(EpiComponentErrorBoundary, { componentName: componentName || 'Error resolving component' },
+        React.createElement(IContentComponent, { data: props.data, contentLink: props.data.contentLink, path: path || '', context: context, actionName: props.actionName, actionData: props.actionData, layout: props.layout })));
 };
-IContentRenderer.displayName = "Optimizely CMS: IContent renderer";
+IContentRenderer.displayName = 'Optimizely CMS: IContent renderer';
 export default EpiComponent;
 //#region Internal methods for the Episerver CMS Component
 /**
@@ -136,13 +140,13 @@ class EpiComponentErrorBoundary extends React.Component {
     render() {
         if (this.state.hasError) {
             // You can render any custom fallback UI
-            return React.createElement("div", { className: "alert alert-danger" },
+            return (React.createElement("div", { className: "alert alert-danger" },
                 "Uncaught error in ",
-                React.createElement("span", null, this.props.componentName));
+                React.createElement("span", null, this.props.componentName)));
         }
         return this.props.children;
     }
 }
-EpiComponentErrorBoundary.displayName = "Optimizely CMS: IContent Error Boundary";
+EpiComponentErrorBoundary.displayName = 'Optimizely CMS: IContent Error Boundary';
 //#endregion
 //# sourceMappingURL=EpiComponent.js.map
