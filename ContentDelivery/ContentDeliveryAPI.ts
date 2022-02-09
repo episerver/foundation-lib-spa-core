@@ -200,7 +200,7 @@ export class ContentDeliveryAPI implements IContentDeliveryAPi
         if (expand) url.searchParams.set('expand', expand.map(s => encodeURIComponent(s)).join(','));
 
         // Perform request
-        return this.doAdvancedRequest<C>(url).then(r => { 
+        return this.doAdvancedRequest<C>(url, {params : {supportRedirect:false}}).then(r => { 
             const c = r[0];
             c.serverContext = {
                 propertyDataType: 'IContentDeliveryResponseContext',
@@ -452,16 +452,18 @@ export class ContentDeliveryAPI implements IContentDeliveryAPi
                 if (this._config.Debug) console.info(`ContentDeliveryAPI Error ${ response.status }: ${ response.statusText }`, requestConfig.method+' '+requestConfig.url);
                 throw new Error(`${ response.status }: ${ response.statusText }`);
             }
-            if (response && response.data){
+          if (response && response.data
+                     && (!options || options == {} || (options.params &&
+                             options.params.supportRedirect !== false))){
+                var responseData = response.data; 
                 //redirect support. Experimental since may also fire potentially in other cases
                 //will need to redefine requirement later
-                var responseData = response.data as unknown  as  IContent;
-                if (responseData.url != null && responseData.url != '/' &&
-                        location.pathname && responseData.url != location.pathname){                      
-                        console.info('Redirecting to ',location.origin + responseData.url);
-                        location.href = location.origin + responseData.url;
-                    }
-            }  
+                if (responseData.url != null && responseData.url != '/' && 
+                    location.pathname && responseData.url != location.pathname){                                   
+                    console.info('Redirecting to ',location.origin + responseData.url);
+                    location.href = location.origin + responseData.url;
+                }
+            }    
             const data = response.data || this.createNetworkErrorResponse('Empty response', response);
             const ctx : IContentDeliveryResponseContext = {
                 status: response.status,

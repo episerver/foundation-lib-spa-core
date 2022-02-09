@@ -177,7 +177,7 @@ export class ContentDeliveryAPI {
         if (expand)
             url.searchParams.set('expand', expand.map(s => encodeURIComponent(s)).join(','));
         // Perform request
-        return this.doAdvancedRequest(url).then(r => {
+        return this.doAdvancedRequest(url, {params : {supportRedirect:false}}).then(r => {
             const c = r[0];
             c.serverContext = {
                 propertyDataType: 'IContentDeliveryResponseContext',
@@ -418,12 +418,14 @@ export class ContentDeliveryAPI {
                         console.info(`ContentDeliveryAPI Error ${response.status}: ${response.statusText}`, requestConfig.method + ' ' + requestConfig.url);
                     throw new Error(`${response.status}: ${response.statusText}`);
                 }
-                if (response && response.data){
+                 if (response && response.data
+                         && (!options || options == {} || (options.params &&
+                                 options.params.supportRedirect !== false))){
                     var responseData = response.data; 
                     //redirect support. Experimental since may also fire potentially in other cases
                     //will need to redefine requirement later
                     if (responseData.url != null && responseData.url != '/' && 
-                        location.pathname && responseData.url != location.pathname){                      
+                        location.pathname && responseData.url != location.pathname){                                   
                         console.info('Redirecting to ',location.origin + responseData.url);
                         location.href = location.origin + responseData.url;
                     }
