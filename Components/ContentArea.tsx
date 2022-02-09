@@ -81,11 +81,11 @@ export type ContentAreaSiteConfig = {
   wrapperClass?: string;
 
   /**
-   * The layout from the layout block
+   * The columns from the layout block
    *
-   * @default ""
+   * @default 12
    */
-  layout?: string;
+  columns?: number;
 };
 
 export type ContentAreaProps = ContentAreaSiteConfig & {
@@ -134,7 +134,7 @@ export const ContentArea: React.FunctionComponent<ContentAreaProps> = (props) =>
         idx={i}
         className={className}
         expandedValue={props.data?.expandedValue ? props.data?.expandedValue[i] : undefined}
-        layout={props.layout}
+        columns={props.columns || 12}
       />,
     );
   });
@@ -252,7 +252,7 @@ type ContentAreaItemProps = {
   expandedValue?: IContent;
   className?: string;
   idx?: number;
-  layout?: string;
+  columns?: number;
 };
 const ContentAreaItem: React.FunctionComponent<ContentAreaItemProps> = (props) => {
   // Context
@@ -266,7 +266,7 @@ const ContentAreaItem: React.FunctionComponent<ContentAreaItemProps> = (props) =
       contentType={componentType}
       key={props.item.contentLink.guidValue}
       expandedValue={props.expandedValue}
-      layout={props.layout}
+      columns={props.columns}
     />
   );
   const blockId = ContentLinkService.createApiId(props.item.contentLink, false, true);

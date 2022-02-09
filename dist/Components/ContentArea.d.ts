@@ -67,11 +67,11 @@ export declare type ContentAreaSiteConfig = {
      */
     wrapperClass?: string;
     /**
-     * The layout from the layout block
+     * The columns from the layout block
      *
-     * @default ""
+     * @default 12
      */
-    layout?: string;
+    columns?: number;
 };
 export declare type ContentAreaProps = ContentAreaSiteConfig & {
     /**

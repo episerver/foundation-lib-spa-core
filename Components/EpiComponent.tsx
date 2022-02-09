@@ -27,11 +27,11 @@ export type EpiComponentProps<T extends IContent = IContent> = Omit<ComponentPro
   context?: IEpiserverContext;
 
   /**
-   * The layout from the layout block
+   * The columns from the layout block
    *
-   * @default ""
+   * @default 0
    */
-  layout?: string;
+  columns?: number;
 };
 
 const safeLanguageId = (ref: ContentReference | null | undefined, branch = '##', def = '', inclWorkId = true) => {
@@ -107,7 +107,7 @@ function EpiComponent<T extends IContent = IContent>(props: EpiComponentProps<T>
       contentType={props.contentType}
       actionName={props.actionName}
       actionData={props.actionData}
-      layout={props.layout}
+      columns={props.columns}
     />
   );
 }
@@ -119,7 +119,7 @@ export const IContentRenderer: React.FunctionComponent<{
   actionName?: string;
   actionData?: unknown;
   path?: string;
-  layout?: string;
+  columns?: number;
 }> = (props) => {
   const context = useEpiserver();
   const path = useLocation().pathname;
@@ -163,7 +163,7 @@ export const IContentRenderer: React.FunctionComponent<{
         context={context}
         actionName={props.actionName}
         actionData={props.actionData}
-        layout={props.layout}
+        columns={props.columns}
       />
     </EpiComponentErrorBoundary>
   );

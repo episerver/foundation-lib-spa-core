@@ -64,11 +64,11 @@ export interface ComponentProps<T extends IContent> {
      */
     id?: string;
     /**
-     * The layout from the layout block
+     * The columns from the layout block
      *
-     * @default ""
+     * @default 0
      */
-    layout?: string;
+    columns?: number;
 }
 /**
  * Type do describe a generic EpiComponent type

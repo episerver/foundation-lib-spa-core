@@ -69,7 +69,7 @@ function EpiComponent(props) {
     }, [props.contentLink, repo, debug, lang]);
     if (!iContent)
         return React.createElement(Spinner, null);
-    return (React.createElement(IContentRenderer, { data: iContent, contentType: props.contentType, actionName: props.actionName, actionData: props.actionData, layout: props.layout }));
+    return (React.createElement(IContentRenderer, { data: iContent, contentType: props.contentType, actionName: props.actionName, actionData: props.actionData, columns: props.columns }));
 }
 EpiComponent.displayName = 'Optimizely CMS: ContentLink IContent resolver';
 export const IContentRenderer = (props) => {
@@ -104,7 +104,7 @@ export const IContentRenderer = (props) => {
     if (debug)
         console.debug('IContentRenderer.render => Component & IContent: ', componentName, props.data);
     return (React.createElement(EpiComponentErrorBoundary, { componentName: componentName || 'Error resolving component' },
-        React.createElement(IContentComponent, { data: props.data, contentLink: props.data.contentLink, path: path || '', context: context, actionName: props.actionName, actionData: props.actionData, layout: props.layout })));
+        React.createElement(IContentComponent, { data: props.data, contentLink: props.data.contentLink, path: path || '', context: context, actionName: props.actionName, actionData: props.actionData, columns: props.columns })));
 };
 IContentRenderer.displayName = 'Optimizely CMS: IContent renderer';
 export default EpiComponent;

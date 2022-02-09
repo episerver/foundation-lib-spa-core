@@ -17,11 +17,11 @@ export declare type EpiComponentProps<T extends IContent = IContent> = Omit<Comp
      */
     context?: IEpiserverContext;
     /**
-     * The layout from the layout block
+     * The columns from the layout block
      *
-     * @default ""
+     * @default 0
      */
-    layout?: string;
+    columns?: number;
 };
 declare function EpiComponent<T extends IContent = IContent>(props: EpiComponentProps<T>): React.ReactElement<unknown> | null;
 declare namespace EpiComponent {
@@ -33,7 +33,7 @@ export declare const IContentRenderer: React.FunctionComponent<{
     actionName?: string;
     actionData?: unknown;
     path?: string;
-    layout?: string;
+    columns?: number;
 }>;
 export default EpiComponent;
 /**
