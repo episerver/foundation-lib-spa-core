@@ -455,7 +455,7 @@ export class ContentDeliveryAPI implements IContentDeliveryAPi
           if (response && response.data
                      && (!options || options == {} || (options.params &&
                              options.params.supportRedirect !== false))){
-                var responseData = response.data; 
+                var responseData = response.data as unknown  as  IContent;
                 //redirect support. Experimental since may also fire potentially in other cases
                 //will need to redefine requirement later
                 if (responseData.url != null && responseData.url != '/' && 
