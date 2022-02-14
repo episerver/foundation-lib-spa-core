@@ -16,7 +16,7 @@ export const ContentArea = (props) => {
     const items = [];
     (((_c = props.data) === null || _c === void 0 ? void 0 : _c.value) || []).forEach((x, i) => {
         var _a, _b;
-        const className = getBlockClasses(x.displayOption, config).join(' ');
+        const className = getBlockClasses(x.displayOption, config, props.columns).join(' ');
         const blockKey = `ContentAreaItem-${ContentLinkService.createApiId(x.contentLink, true, false)}-${i}`;
         items.push(React.createElement(ContentAreaItem, { key: blockKey, item: x, config: config, idx: i, className: className, expandedValue: ((_a = props.data) === null || _a === void 0 ? void 0 : _a.expandedValue) ? (_b = props.data) === null || _b === void 0 ? void 0 : _b.expandedValue[i] : undefined, columns: props.columns || 12 }));
     });
@@ -81,10 +81,17 @@ export default ContentArea;
 function getConfigValue(config, key, defaultValue) {
     return (config[key] || defaultValue);
 }
-function getBlockClasses(displayOption, config) {
+function getBlockColumnClasses(columns) {
+    if (!columns)
+        return 'col-12';
+    const mdCols = columns < 6 ? 6 : columns;
+    return `col-12 col-md-${mdCols} col-lg-${columns}`;
+}
+function getBlockClasses(displayOption, config, columns) {
     const cssClasses = ['block'];
     const displayOptions = getConfigValue(config, 'displayOptions', {});
-    cssClasses.push(displayOptions[displayOption] ? displayOptions[displayOption] : getConfigValue(config, 'defaultBlockClass', 'col'));
+    cssClasses.push(displayOptions[displayOption] ? displayOptions[displayOption] : '');
+    cssClasses.push(getBlockColumnClasses(columns));
     return cssClasses.filter((x) => x);
 }
 const ContentAreaItem = (props) => {

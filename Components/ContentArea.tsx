@@ -124,7 +124,7 @@ export const ContentArea: React.FunctionComponent<ContentAreaProps> = (props) =>
   // Render the items
   const items: React.ReactElement<ContentAreaItemProps>[] = [];
   (props.data?.value || []).forEach((x, i) => {
-    const className = getBlockClasses(x.displayOption, config).join(' ');
+    const className = getBlockClasses(x.displayOption, config, props.columns).join(' ');
     const blockKey = `ContentAreaItem-${ContentLinkService.createApiId(x.contentLink, true, false)}-${i}`;
     items.push(
       <ContentAreaItem
@@ -236,12 +236,18 @@ function getConfigValue<T extends ContentAreaSiteConfig, K extends keyof T, D ex
   return (config[key] || defaultValue) as D extends undefined ? T[K] : Required<T>[K];
 }
 
-function getBlockClasses(displayOption: string, config: ContentAreaSiteConfig): string[] {
+function getBlockColumnClasses(columns: number) {
+  if (!columns) return 'col-12';
+
+  const mdCols = columns < 6 ? 6 : columns;
+  return `col-12 col-md-${mdCols} col-lg-${columns}`;
+}
+
+function getBlockClasses(displayOption: string, config: ContentAreaSiteConfig, columns: number): string[] {
   const cssClasses: string[] = ['block'];
   const displayOptions = getConfigValue(config, 'displayOptions', {});
-  cssClasses.push(
-    displayOptions[displayOption] ? displayOptions[displayOption] : getConfigValue(config, 'defaultBlockClass', 'col'),
-  );
+  cssClasses.push(displayOptions[displayOption] ? displayOptions[displayOption] : '');
+  cssClasses.push(getBlockColumnClasses(columns));
   return cssClasses.filter((x) => x);
 }
 
