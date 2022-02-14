@@ -124,7 +124,7 @@ export const ContentArea: React.FunctionComponent<ContentAreaProps> = (props) =>
   // Render the items
   const items: React.ReactElement<ContentAreaItemProps>[] = [];
   (props.data?.value || []).forEach((x, i) => {
-    const className = getBlockClasses(x.displayOption, config, props.columns).join(' ');
+    const className = getBlockClasses(x.displayOption, config).join(' ');
     const blockKey = `ContentAreaItem-${ContentLinkService.createApiId(x.contentLink, true, false)}-${i}`;
     items.push(
       <ContentAreaItem
@@ -236,18 +236,12 @@ function getConfigValue<T extends ContentAreaSiteConfig, K extends keyof T, D ex
   return (config[key] || defaultValue) as D extends undefined ? T[K] : Required<T>[K];
 }
 
-function getBlockColumnClasses(columns: number) {
-  if (!columns) return 'col-12';
-
-  const mdCols = columns < 6 ? 6 : columns;
-  return `col-12 col-md-${mdCols} col-lg-${columns}`;
-}
-
-function getBlockClasses(displayOption: string, config: ContentAreaSiteConfig, columns: number): string[] {
+function getBlockClasses(displayOption: string, config: ContentAreaSiteConfig): string[] {
   const cssClasses: string[] = ['block'];
   const displayOptions = getConfigValue(config, 'displayOptions', {});
-  cssClasses.push(displayOptions[displayOption] ? displayOptions[displayOption] : '');
-  cssClasses.push(getBlockColumnClasses(columns));
+  cssClasses.push(
+    displayOptions[displayOption] ? displayOptions[displayOption] : getConfigValue(config, 'defaultBlockClass', 'col'),
+  );
   return cssClasses.filter((x) => x);
 }
 
@@ -266,6 +260,7 @@ const ContentAreaItem: React.FunctionComponent<ContentAreaItemProps> = (props) =
 
   // Build component
   const componentType = getConfigValue(props.config, 'itemContentType', 'Block');
+  const blockId = ContentLinkService.createApiId(props.item.contentLink, false, true);
   const component = (
     <EpiComponent
       contentLink={props.item.contentLink}
@@ -273,9 +268,9 @@ const ContentAreaItem: React.FunctionComponent<ContentAreaItemProps> = (props) =
       key={props.item.contentLink.guidValue}
       expandedValue={props.expandedValue}
       columns={props.columns}
+      id={blockId}
     />
   );
-  const blockId = ContentLinkService.createApiId(props.item.contentLink, false, true);
 
   // Return if no wrapping
   if (getConfigValue(props.config, 'noWrap', false) === true)
@@ -290,7 +285,7 @@ const ContentAreaItem: React.FunctionComponent<ContentAreaItemProps> = (props) =
     children: component,
   };
   if (ctx.isEditable()) wrapperProps['data-epi-block-id'] = blockId;
-  return <div {...wrapperProps} />;
+  return component;
 };
 ContentAreaItem.displayName = 'Optimizely CMS: Content Area Item';
 

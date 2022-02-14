@@ -16,7 +16,7 @@ export const ContentArea = (props) => {
     const items = [];
     (((_c = props.data) === null || _c === void 0 ? void 0 : _c.value) || []).forEach((x, i) => {
         var _a, _b;
-        const className = getBlockClasses(x.displayOption, config, props.columns).join(' ');
+        const className = getBlockClasses(x.displayOption, config).join(' ');
         const blockKey = `ContentAreaItem-${ContentLinkService.createApiId(x.contentLink, true, false)}-${i}`;
         items.push(React.createElement(ContentAreaItem, { key: blockKey, item: x, config: config, idx: i, className: className, expandedValue: ((_a = props.data) === null || _a === void 0 ? void 0 : _a.expandedValue) ? (_b = props.data) === null || _b === void 0 ? void 0 : _b.expandedValue[i] : undefined, columns: props.columns || 12 }));
     });
@@ -81,17 +81,10 @@ export default ContentArea;
 function getConfigValue(config, key, defaultValue) {
     return (config[key] || defaultValue);
 }
-function getBlockColumnClasses(columns) {
-    if (!columns)
-        return 'col-12';
-    const mdCols = columns < 6 ? 6 : columns;
-    return `col-12 col-md-${mdCols} col-lg-${columns}`;
-}
-function getBlockClasses(displayOption, config, columns) {
+function getBlockClasses(displayOption, config) {
     const cssClasses = ['block'];
     const displayOptions = getConfigValue(config, 'displayOptions', {});
-    cssClasses.push(displayOptions[displayOption] ? displayOptions[displayOption] : '');
-    cssClasses.push(getBlockColumnClasses(columns));
+    cssClasses.push(displayOptions[displayOption] ? displayOptions[displayOption] : getConfigValue(config, 'defaultBlockClass', 'col'));
     return cssClasses.filter((x) => x);
 }
 const ContentAreaItem = (props) => {
@@ -99,8 +92,8 @@ const ContentAreaItem = (props) => {
     const ctx = useEpiserver();
     // Build component
     const componentType = getConfigValue(props.config, 'itemContentType', 'Block');
-    const component = (React.createElement(EpiComponent, { contentLink: props.item.contentLink, contentType: componentType, key: props.item.contentLink.guidValue, expandedValue: props.expandedValue, columns: props.columns }));
     const blockId = ContentLinkService.createApiId(props.item.contentLink, false, true);
+    const component = (React.createElement(EpiComponent, { contentLink: props.item.contentLink, contentType: componentType, key: props.item.contentLink.guidValue, expandedValue: props.expandedValue, columns: props.columns, id: blockId }));
     // Return if no wrapping
     if (getConfigValue(props.config, 'noWrap', false) === true)
         return ctx.isEditable() ? React.createElement("div", { "data-epi-block-id": blockId }, component) : component;
@@ -114,7 +107,7 @@ const ContentAreaItem = (props) => {
     };
     if (ctx.isEditable())
         wrapperProps['data-epi-block-id'] = blockId;
-    return React.createElement("div", Object.assign({}, wrapperProps));
+    return component;
 };
 ContentAreaItem.displayName = 'Optimizely CMS: Content Area Item';
 /**
