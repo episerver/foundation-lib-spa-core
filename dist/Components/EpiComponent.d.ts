@@ -22,6 +22,12 @@ export declare type EpiComponentProps<T extends IContent = IContent> = Omit<Comp
      * @default 0
      */
     columns?: number;
+    /**
+     * The block ID for On page editing
+     *
+     * @default null
+     */
+    epiBlockId?: string | null;
 };
 declare function EpiComponent<T extends IContent = IContent>(props: EpiComponentProps<T>): React.ReactElement<unknown> | null;
 declare namespace EpiComponent {
@@ -34,6 +40,7 @@ export declare const IContentRenderer: React.FunctionComponent<{
     actionData?: unknown;
     path?: string;
     columns?: number;
+    epiBlockId?: string | null;
 }>;
 export default EpiComponent;
 /**

@@ -32,6 +32,13 @@ export type EpiComponentProps<T extends IContent = IContent> = Omit<ComponentPro
    * @default 0
    */
   columns?: number;
+
+  /**
+   * The block ID for On page editing
+   *
+   * @default null
+   */
+  epiBlockId?: string | null;
 };
 
 const safeLanguageId = (ref: ContentReference | null | undefined, branch = '##', def = '', inclWorkId = true) => {
@@ -108,6 +115,7 @@ function EpiComponent<T extends IContent = IContent>(props: EpiComponentProps<T>
       actionName={props.actionName}
       actionData={props.actionData}
       columns={props.columns}
+      epiBlockId={props.epiBlockId}
     />
   );
 }
@@ -120,6 +128,7 @@ export const IContentRenderer: React.FunctionComponent<{
   actionData?: unknown;
   path?: string;
   columns?: number;
+  epiBlockId?: string | null;
 }> = (props) => {
   const context = useEpiserver();
   const path = useLocation().pathname;
@@ -164,6 +173,7 @@ export const IContentRenderer: React.FunctionComponent<{
         actionName={props.actionName}
         actionData={props.actionData}
         columns={props.columns}
+        epiBlockId={props.epiBlockId}
       />
     </EpiComponentErrorBoundary>
   );

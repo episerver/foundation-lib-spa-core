@@ -31,21 +31,21 @@ export interface IContentData extends IContent {
     [name: string]: GenericProperty;
 }
 export declare abstract class BaseIContent<T extends IContent = IContent> implements IContent {
-    get contentLink(): T["contentLink"];
-    get name(): T["name"];
-    get language(): T["language"];
-    get existingLanguages(): T["existingLanguages"];
-    get masterLanguage(): T["masterLanguage"];
-    get contentType(): T["contentType"];
-    get parentLink(): T["parentLink"];
-    get routeSegment(): T["routeSegment"];
-    get url(): T["url"];
-    get changed(): T["changed"];
-    get created(): T["created"];
-    get startPublish(): T["startPublish"];
-    get stopPublish(): T["stopPublish"];
-    get saved(): T["saved"];
-    get status(): T["status"];
+    get contentLink(): T['contentLink'];
+    get name(): T['name'];
+    get language(): T['language'];
+    get existingLanguages(): T['existingLanguages'];
+    get masterLanguage(): T['masterLanguage'];
+    get contentType(): T['contentType'];
+    get parentLink(): T['parentLink'];
+    get routeSegment(): T['routeSegment'];
+    get url(): T['url'];
+    get changed(): T['changed'];
+    get created(): T['created'];
+    get startPublish(): T['startPublish'];
+    get stopPublish(): T['stopPublish'];
+    get saved(): T['saved'];
+    get status(): T['status'];
     protected abstract _typeName: string;
     protected abstract _propertyMap: {
         [propName: string]: string;

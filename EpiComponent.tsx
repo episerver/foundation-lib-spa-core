@@ -84,6 +84,13 @@ export interface ComponentProps<T extends IContent> {
    * @default 0
    */
   columns?: number;
+
+  /**
+   * The block ID for on page editing
+   *
+   * @default null
+   */
+  epiBlockId?: string | null;
 }
 
 /**

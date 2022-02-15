@@ -268,7 +268,7 @@ const ContentAreaItem: React.FunctionComponent<ContentAreaItemProps> = (props) =
       key={props.item.contentLink.guidValue}
       expandedValue={props.expandedValue}
       columns={props.columns}
-      id={blockId}
+      epiBlockId={blockId}
     />
   );
 

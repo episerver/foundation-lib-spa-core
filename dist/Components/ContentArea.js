@@ -93,7 +93,7 @@ const ContentAreaItem = (props) => {
     // Build component
     const componentType = getConfigValue(props.config, 'itemContentType', 'Block');
     const blockId = ContentLinkService.createApiId(props.item.contentLink, false, true);
-    const component = (React.createElement(EpiComponent, { contentLink: props.item.contentLink, contentType: componentType, key: props.item.contentLink.guidValue, expandedValue: props.expandedValue, columns: props.columns, id: blockId }));
+    const component = (React.createElement(EpiComponent, { contentLink: props.item.contentLink, contentType: componentType, key: props.item.contentLink.guidValue, expandedValue: props.expandedValue, columns: props.columns, epiBlockId: blockId }));
     // Return if no wrapping
     if (getConfigValue(props.config, 'noWrap', false) === true)
         return ctx.isEditable() ? React.createElement("div", { "data-epi-block-id": blockId }, component) : component;
