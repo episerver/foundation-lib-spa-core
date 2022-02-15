@@ -260,6 +260,7 @@ const ContentAreaItem: React.FunctionComponent<ContentAreaItemProps> = (props) =
 
   // Build component
   const componentType = getConfigValue(props.config, 'itemContentType', 'Block');
+  const blockId = ContentLinkService.createApiId(props.item.contentLink, false, true);
   const component = (
     <EpiComponent
       contentLink={props.item.contentLink}
@@ -267,9 +268,9 @@ const ContentAreaItem: React.FunctionComponent<ContentAreaItemProps> = (props) =
       key={props.item.contentLink.guidValue}
       expandedValue={props.expandedValue}
       columns={props.columns}
+      epiBlockId={blockId}
     />
   );
-  const blockId = ContentLinkService.createApiId(props.item.contentLink, false, true);
 
   // Return if no wrapping
   if (getConfigValue(props.config, 'noWrap', false) === true)
