@@ -142,7 +142,7 @@ export const ContentArea: React.FunctionComponent<ContentAreaProps> = (props) =>
   // Return if no wrapping
   if (getConfigValue(config, 'noWrap', false) === true)
     return ctx.isEditable() ? (
-      <div className={wrapperClass} data-epi-block-id={props.propertyName}>
+      <div className={wrapperClass} data-epi-edit={props.propertyName}>
         {items}
       </div>
     ) : (
