@@ -23,6 +23,18 @@ export declare type EpiComponentProps<T extends IContent = IContent> = Omit<Comp
      */
     columns?: number;
     /**
+     * The width from BE, convertable to Widths enum
+     *
+     * @default empty
+     */
+    layoutWidth?: string;
+    /**
+     * In layout block
+     *
+     * @default false
+     */
+    inLayoutBlock?: boolean;
+    /**
      * The block ID for On page editing
      *
      * @default null
@@ -40,6 +52,8 @@ export declare const IContentRenderer: React.FunctionComponent<{
     actionData?: unknown;
     path?: string;
     columns?: number;
+    layoutWidth?: string;
+    inLayoutBlock?: boolean;
     epiBlockId?: string | null;
 }>;
 export default EpiComponent;

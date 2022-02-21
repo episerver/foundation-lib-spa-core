@@ -75,6 +75,18 @@ export interface ComponentProps<T extends IContent> {
      * @default null
      */
     epiBlockId?: string | null;
+    /**
+     * The width from BE, convertable to Widths enum
+     *
+     * @default empty
+     */
+    layoutWidth?: string;
+    /**
+     * In layout block
+     *
+     * @default false
+     */
+    inLayoutBlock?: boolean;
 }
 /**
  * Type do describe a generic EpiComponent type

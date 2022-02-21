@@ -34,6 +34,20 @@ export type EpiComponentProps<T extends IContent = IContent> = Omit<ComponentPro
   columns?: number;
 
   /**
+   * The width from BE, convertable to Widths enum
+   *
+   * @default empty
+   */
+  layoutWidth?: string;
+
+  /**
+   * In layout block
+   *
+   * @default false
+   */
+  inLayoutBlock?: boolean;
+
+  /**
    * The block ID for On page editing
    *
    * @default null
@@ -128,6 +142,8 @@ export const IContentRenderer: React.FunctionComponent<{
   actionData?: unknown;
   path?: string;
   columns?: number;
+  layoutWidth?: string;
+  inLayoutBlock?: boolean;
   epiBlockId?: string | null;
 }> = (props) => {
   const context = useEpiserver();
@@ -173,6 +189,8 @@ export const IContentRenderer: React.FunctionComponent<{
         actionName={props.actionName}
         actionData={props.actionData}
         columns={props.columns}
+        layoutWidth={props.layoutWidth}
+        inLayoutBlock={props.inLayoutBlock}
         epiBlockId={props.epiBlockId}
       />
     </EpiComponentErrorBoundary>

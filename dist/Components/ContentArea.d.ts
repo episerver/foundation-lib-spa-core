@@ -72,6 +72,18 @@ export declare type ContentAreaSiteConfig = {
      * @default 12
      */
     columns?: number;
+    /**
+     * The width from BE, convertable to Widths enum
+     *
+     * @default empty
+     */
+    layoutWidth?: string;
+    /**
+     * In layout block
+     *
+     * @default false
+     */
+    inLayoutBlock?: boolean;
 };
 export declare type ContentAreaProps = ContentAreaSiteConfig & {
     /**

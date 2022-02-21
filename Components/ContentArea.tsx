@@ -86,6 +86,20 @@ export type ContentAreaSiteConfig = {
    * @default 12
    */
   columns?: number;
+
+  /**
+   * The width from BE, convertable to Widths enum
+   *
+   * @default empty
+   */
+  layoutWidth?: string;
+
+  /**
+   * In layout block
+   *
+   * @default false
+   */
+  inLayoutBlock?: boolean;
 };
 
 export type ContentAreaProps = ContentAreaSiteConfig & {
@@ -135,6 +149,8 @@ export const ContentArea: React.FunctionComponent<ContentAreaProps> = (props) =>
         className={className}
         expandedValue={props.data?.expandedValue ? props.data?.expandedValue[i] : undefined}
         columns={props.columns || 12}
+        layoutWidth={props.layoutWidth}
+        inLayoutBlock={props.inLayoutBlock}
       />,
     );
   });
@@ -253,6 +269,8 @@ type ContentAreaItemProps = {
   className?: string;
   idx?: number;
   columns?: number;
+  layoutWidth?: string;
+  inLayoutBlock?: boolean;
 };
 const ContentAreaItem: React.FunctionComponent<ContentAreaItemProps> = (props) => {
   // Context
@@ -268,6 +286,8 @@ const ContentAreaItem: React.FunctionComponent<ContentAreaItemProps> = (props) =
       key={props.item.contentLink.guidValue}
       expandedValue={props.expandedValue}
       columns={props.columns}
+      layoutWidth={props.layoutWidth}
+      inLayoutBlock={props.inLayoutBlock}
       epiBlockId={blockId}
     />
   );

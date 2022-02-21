@@ -104,7 +104,7 @@ export const IContentRenderer = (props) => {
     if (debug)
         console.debug('IContentRenderer.render => Component & IContent: ', componentName, props.data);
     return (React.createElement(EpiComponentErrorBoundary, { componentName: componentName || 'Error resolving component' },
-        React.createElement(IContentComponent, { data: props.data, contentLink: props.data.contentLink, path: path || '', context: context, actionName: props.actionName, actionData: props.actionData, columns: props.columns, epiBlockId: props.epiBlockId })));
+        React.createElement(IContentComponent, { data: props.data, contentLink: props.data.contentLink, path: path || '', context: context, actionName: props.actionName, actionData: props.actionData, columns: props.columns, layoutWidth: props.layoutWidth, inLayoutBlock: props.inLayoutBlock, epiBlockId: props.epiBlockId })));
 };
 IContentRenderer.displayName = 'Optimizely CMS: IContent renderer';
 export default EpiComponent;

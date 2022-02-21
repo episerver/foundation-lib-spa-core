@@ -18,7 +18,7 @@ export const ContentArea = (props) => {
         var _a, _b;
         const className = getBlockClasses(x.displayOption, config).join(' ');
         const blockKey = `ContentAreaItem-${ContentLinkService.createApiId(x.contentLink, true, false)}-${i}`;
-        items.push(React.createElement(ContentAreaItem, { key: blockKey, item: x, config: config, idx: i, className: className, expandedValue: ((_a = props.data) === null || _a === void 0 ? void 0 : _a.expandedValue) ? (_b = props.data) === null || _b === void 0 ? void 0 : _b.expandedValue[i] : undefined, columns: props.columns || 12 }));
+        items.push(React.createElement(ContentAreaItem, { key: blockKey, item: x, config: config, idx: i, className: className, expandedValue: ((_a = props.data) === null || _a === void 0 ? void 0 : _a.expandedValue) ? (_b = props.data) === null || _b === void 0 ? void 0 : _b.expandedValue[i] : undefined, columns: props.columns || 12, layoutWidth: props.layoutWidth, inLayoutBlock: props.inLayoutBlock }));
     });
     // Return if no wrapping
     if (getConfigValue(config, 'noWrap', false) === true)
@@ -93,7 +93,7 @@ const ContentAreaItem = (props) => {
     // Build component
     const componentType = getConfigValue(props.config, 'itemContentType', 'Block');
     const blockId = ContentLinkService.createApiId(props.item.contentLink, false, true);
-    const component = (React.createElement(EpiComponent, { contentLink: props.item.contentLink, contentType: componentType, key: props.item.contentLink.guidValue, expandedValue: props.expandedValue, columns: props.columns, epiBlockId: blockId }));
+    const component = (React.createElement(EpiComponent, { contentLink: props.item.contentLink, contentType: componentType, key: props.item.contentLink.guidValue, expandedValue: props.expandedValue, columns: props.columns, layoutWidth: props.layoutWidth, inLayoutBlock: props.inLayoutBlock, epiBlockId: blockId }));
     // Return if no wrapping
     if (getConfigValue(props.config, 'noWrap', false) === true)
         return ctx.isEditable() ? React.createElement("div", { "data-epi-block-id": blockId }, component) : component;
