@@ -69,7 +69,7 @@ function EpiComponent(props) {
     }, [props.contentLink, repo, debug, lang]);
     if (!iContent)
         return React.createElement(Spinner, null);
-    return (React.createElement(IContentRenderer, { data: iContent, contentType: props.contentType, actionName: props.actionName, actionData: props.actionData, columns: props.columns, epiBlockId: props.epiBlockId }));
+    return (React.createElement(IContentRenderer, { data: iContent, contentType: props.contentType, actionName: props.actionName, actionData: props.actionData, columns: props.columns, layoutWidth: props.layoutWidth, inLayoutBlock: props.inLayoutBlock, epiBlockId: props.epiBlockId }));
 }
 EpiComponent.displayName = 'Optimizely CMS: ContentLink IContent resolver';
 export const IContentRenderer = (props) => {

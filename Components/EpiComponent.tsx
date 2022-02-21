@@ -129,6 +129,8 @@ function EpiComponent<T extends IContent = IContent>(props: EpiComponentProps<T>
       actionName={props.actionName}
       actionData={props.actionData}
       columns={props.columns}
+      layoutWidth={props.layoutWidth}
+      inLayoutBlock={props.inLayoutBlock}
       epiBlockId={props.epiBlockId}
     />
   );
