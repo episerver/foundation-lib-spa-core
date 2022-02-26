@@ -51,7 +51,7 @@ const ElementNavigation : React.FunctionComponent = (props) : React.ReactElement
             const target: HTMLElement = (event.target as any) as HTMLElement;
             const currentUrl: URL = new URL(window.location.href);
             let newPath = '';
-
+            let hash = null;
             // Loop parents till we find the link
             let link = target;
             while (link.parentElement && link.tagName.toLowerCase() !== 'a') link = link.parentElement;
@@ -62,13 +62,22 @@ const ElementNavigation : React.FunctionComponent = (props) : React.ReactElement
 
                 // Only act if we remain on the same domain
                 if (targetUrl.origin === currentUrl.origin) {
-                    newPath = targetUrl.pathname + targetUrl.hash;
+                    newPath = targetUrl.pathname;
+                    hash = targetUrl.hash;
                 }
             }
 
             // Do not navigate to the same page
             if (newPath === location.pathname) {
                 if (config.enableDebug) console.info('ElementNavigation: Ignoring navigation to same path');
+                if (document && hash){
+                    let localHash = hash.slice(1);
+                    window.location.hash = localHash;
+                    const element = document.getElementById(localHash);
+                    if (element) {
+                        element.scrollIntoView();
+                    }
+                }
                 event.preventDefault();
                 return false;
             }
