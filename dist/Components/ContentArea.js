@@ -22,11 +22,11 @@ export const ContentArea = (props) => {
     });
     // Return if no wrapping
     if (getConfigValue(config, 'noWrap', false) === true)
-        return ctx.isEditable() ? (React.createElement("div", { className: wrapperClass, "data-epi-edit": props.propertyName }, items)) : (React.createElement(React.Fragment, null, items));
+        return React.createElement(React.Fragment, null, items);
     // If there's no container, just output the row
     const rowClass = getConfigValue(config, 'defaultRowClass', 'row');
     if (!getConfigValue(config, 'addContainer', false))
-        return ctx.isEditable() ? (React.createElement("div", { className: `${wrapperClass} ${rowClass}`, "data-epi-edit": props.propertyName }, items)) : (React.createElement("div", { className: rowClass }, items));
+        return React.createElement("div", { className: rowClass }, items);
     // Prepare rendering the container
     const containerBreakBlockClass = getConfigValue(config, 'containerBreakBlockClass');
     const containerClass = getConfigValue(config, 'defaultContainerClass', 'container');
@@ -96,7 +96,7 @@ const ContentAreaItem = (props) => {
     const component = (React.createElement(EpiComponent, { contentLink: props.item.contentLink, contentType: componentType, key: props.item.contentLink.guidValue, expandedValue: props.expandedValue, columns: props.columns, layoutWidth: props.layoutWidth, inLayoutBlock: props.inLayoutBlock, epiBlockId: blockId }));
     // Return if no wrapping
     if (getConfigValue(props.config, 'noWrap', false) === true)
-        return ctx.isEditable() ? React.createElement("div", { "data-epi-block-id": blockId }, component) : component;
+        return component;
     // Build wrapper element
     const displayOption = props.item.displayOption || 'default';
     const wrapperProps = {

@@ -156,25 +156,11 @@ export const ContentArea: React.FunctionComponent<ContentAreaProps> = (props) =>
   });
 
   // Return if no wrapping
-  if (getConfigValue(config, 'noWrap', false) === true)
-    return ctx.isEditable() ? (
-      <div className={wrapperClass} data-epi-edit={props.propertyName}>
-        {items}
-      </div>
-    ) : (
-      <React.Fragment>{items}</React.Fragment>
-    );
+  if (getConfigValue(config, 'noWrap', false) === true) return <React.Fragment>{items}</React.Fragment>;
 
   // If there's no container, just output the row
   const rowClass = getConfigValue(config, 'defaultRowClass', 'row');
-  if (!getConfigValue(config, 'addContainer', false))
-    return ctx.isEditable() ? (
-      <div className={`${wrapperClass} ${rowClass}`} data-epi-edit={props.propertyName}>
-        {items}
-      </div>
-    ) : (
-      <div className={rowClass}>{items}</div>
-    );
+  if (!getConfigValue(config, 'addContainer', false)) return <div className={rowClass}>{items}</div>;
 
   // Prepare rendering the container
   const containerBreakBlockClass = getConfigValue(config, 'containerBreakBlockClass');
@@ -293,8 +279,7 @@ const ContentAreaItem: React.FunctionComponent<ContentAreaItemProps> = (props) =
   );
 
   // Return if no wrapping
-  if (getConfigValue(props.config, 'noWrap', false) === true)
-    return ctx.isEditable() ? <div data-epi-block-id={blockId}>{component}</div> : component;
+  if (getConfigValue(props.config, 'noWrap', false) === true) return component;
 
   // Build wrapper element
   const displayOption: string = props.item.displayOption || 'default';
