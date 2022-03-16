@@ -12,13 +12,16 @@ export const getGlobal = () => {
         try {
             ctx = window;
         }
-        catch (e) { /* Ignore */ }
+        catch (e) {
+            /* Ignore */
+        }
     if (!ctx)
         try {
             ctx = global;
         }
-        catch (e) { /* Ignore */ }
-    ;
+        catch (e) {
+            /* Ignore */
+        }
     ctx = ctx || fallback;
     return ctx;
 };

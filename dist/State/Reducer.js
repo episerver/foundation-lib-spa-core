@@ -1,21 +1,21 @@
-export const StateKey = "OptiContentCloud";
+export const StateKey = 'OptiContentCloud';
 export const CmsStateReducerInfo = {
     stateKey: StateKey,
     reducer: (state, action) => {
         let newState = {};
         switch (action.type) {
-            case "@@EPI/INIT":
+            case '@@EPI/INIT':
                 newState = loadInitialState();
                 break;
-            case "OptiContentCloud/SetState":
+            case 'OptiContentCloud/SetState':
                 const toMerge = {};
-                cpyAttr("currentLanguage", action, toMerge);
+                cpyAttr('currentLanguage', action, toMerge);
                 newState = Object.assign(Object.assign({}, state), toMerge);
                 storeState(newState);
                 break;
         }
         return newState;
-    }
+    },
 };
 function cpyAttr(key, from, to) {
     if (from[key])

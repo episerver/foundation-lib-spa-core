@@ -6,23 +6,23 @@ import IServiceContainer from './Core/IServiceContainer';
 declare let global: any;
 declare let window: any;
 
-const fallback : any = {};
+const fallback: any = {};
 
 /**
  * The global variable scope, as defined by the Episerver SPA
  */
 export type GlobalContext = {
-    __INITIAL__DATA__ ?: ServerContext
-    EpiserverSpa ?: {
-        Context: IEpiserverContext
-        serviceContainer: IServiceContainer
-    }
-    PreLoad ?: LoadedModuleList
-    addEventListener ?: (event: string, handler: any, context: boolean) => void
-    epi ?: {
-        isServerSideRendering ?: boolean 
-    }
-}
+  __INITIAL__DATA__?: ServerContext;
+  EpiserverSpa?: {
+    Context: IEpiserverContext;
+    serviceContainer: IServiceContainer;
+  };
+  PreLoad?: LoadedModuleList;
+  addEventListener?: (event: string, handler: any, context: boolean) => void;
+  epi?: {
+    isServerSideRendering?: boolean;
+  };
+};
 
 /**
  * Get the global variable for the current environment, this method will
@@ -31,13 +31,22 @@ export type GlobalContext = {
  * - When running in a Browser the window variable
  * - If unknown: a fallback object
  */
-export const getGlobal : <T extends unknown = GlobalContext>() => T = () =>
-{
-    let ctx: any = null;
-    if (!ctx) try { ctx = window; } catch (e) { /* Ignore */ } 
-    if (!ctx) try { ctx = global; } catch (e) { /* Ignore */ };
-    ctx = ctx || fallback;
+export const getGlobal: <T extends unknown = GlobalContext>() => T = () => {
+  let ctx: any = null;
+  if (!ctx)
+    try {
+      ctx = window;
+    } catch (e) {
+      /* Ignore */
+    }
+  if (!ctx)
+    try {
+      ctx = global;
+    } catch (e) {
+      /* Ignore */
+    }
+  ctx = ctx || fallback;
 
-    return ctx;
-}
+  return ctx;
+};
 export default getGlobal;

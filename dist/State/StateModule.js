@@ -5,7 +5,7 @@ import * as Tools from './Tools';
 export class StateModule extends BaseInitializableModule {
     constructor() {
         super(...arguments);
-        this.name = "Core State Engine";
+        this.name = 'Core State Engine';
         this.SortOrder = 40;
         /**
          * Return the standard state reducer for the CMS Status
@@ -27,8 +27,8 @@ export class StateModule extends BaseInitializableModule {
         const language = (_a = state === null || state === void 0 ? void 0 : state.OptiContentCloud) === null || _a === void 0 ? void 0 : _a.currentLanguage;
         if (!language)
             store.dispatch({
-                type: "OptiContentCloud/SetState",
-                currentLanguage: cfg.defaultLanguage
+                type: 'OptiContentCloud/SetState',
+                currentLanguage: cfg.defaultLanguage,
             });
         else
             cdAPI.Language = language || cfg.defaultLanguage;
