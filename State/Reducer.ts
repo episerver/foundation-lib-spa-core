@@ -30,6 +30,8 @@ export const CmsStateReducerInfo: IStateReducerInfo<CmsState, CmsStateActionType
       case 'OptiContentCloud/SetState':
         const toMerge: Partial<CmsState> = {};
         cpyAttr<CmsState>('currentLanguage', action, toMerge);
+        cpyAttr<CmsState>('iContent', action, toMerge);
+        cpyAttr<CmsState>('initialState', action, toMerge);
         newState = { ...state, ...toMerge };
         storeState(newState);
         break;
