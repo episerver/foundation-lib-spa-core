@@ -2,7 +2,7 @@
 import React, { useEffect } from 'react';
 import { Helmet } from 'react-helmet';
 import { Provider as ReduxProvider } from 'react-redux';
-import EpiserverContext, { useEpiserver } from '../Hooks/Context';
+import EpiserverContext from '../Hooks/Context';
 // Import Episerver Taxonomy
 import Layout from './Layout';
 // Import Episerver Components
@@ -14,7 +14,7 @@ export const EpiserverWebsite = (props) => {
     const SiteLayout = getLayout(props.context);
     const ssr = props.context.serviceContainer.getService(DefaultServices.ServerContext);
     const location = (props.context.isServerSideRendering() ? ssr.Path : window.location.pathname) || undefined;
-    const epi = useEpiserver().getStore();
+    const epi = props.context.getStore();
     const global = getGlobal();
     useEffect(() => {
         if (!epi || !(global === null || global === void 0 ? void 0 : global.__INITIAL__DATA__))
