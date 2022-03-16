@@ -64,5 +64,5 @@
     "watch": "npx tsc --watch --pretty tsconfig.json",
     "lint": "npx eslint . --ext .ts --color"
   },
-  "version": "0.1.17"
+  "version": "0.1.18"
 }
