@@ -30,7 +30,7 @@ export const EpiserverWebsite: React.FunctionComponent<CmsSiteProps> = (props) =
   const SiteLayout = getLayout(props.context);
   const ssr = props.context.serviceContainer.getService<IServerContextAccessor>(DefaultServices.ServerContext);
   const location = (props.context.isServerSideRendering() ? ssr.Path : window.location.pathname) || undefined;
-  const epi = useEpiserver().getStore();
+  const epi = props.context.getStore();
   const global = getGlobal();
 
   useEffect(() => {
