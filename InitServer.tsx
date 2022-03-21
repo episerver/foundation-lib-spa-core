@@ -13,7 +13,12 @@ import DefaultServiceContainer from './Core/DefaultServiceContainer';
 import EpiSpaContext from './Spa';
 import CmsSite from './Components/CmsSite';
 import AppConfig from './AppConfig';
+import {
+    StylesProvider,
+    ServerStyleSheets,createGenerateClassName
+  } from "@material-ui/core/styles";
 
+  
 // Episerver SPA/PWA Server Side Rendering libs
 import SSRResponse from './ServerSideRendering/Response';
 
@@ -30,9 +35,16 @@ export default function RenderServerSide(config: AppConfig, serviceContainer?: I
     config.noAjax = true;
     config.enableDebug = true;
     EpiSpaContext.init(config, serviceContainer, true);
+    const classPrefix = "MO";
+    const generateClassName = () => createGenerateClassName({
+        productionPrefix: classPrefix
+    });
 
     const staticContext : StaticRouterContext = {};
-    const body = ReactDOMServer.renderToString(<CmsSite context={ EpiSpaContext } staticContext={ staticContext } />);
+    const sheets = new ServerStyleSheets({
+        serverGenerateClassName: generateClassName()
+    });
+    const body = ReactDOMServer.renderToString(sheets.collect(<CmsSite context={ EpiSpaContext } staticContext={ staticContext } />));
     const meta = Helmet.renderStatic();
 
     return {
@@ -42,7 +54,7 @@ export default function RenderServerSide(config: AppConfig, serviceContainer?: I
         Meta: meta.meta.toString(),
         Link: meta.link.toString(),
         Script: meta.script.toString(),
-        Style: meta.style.toString(),
+        Style: sheets.toString(),
         BodyAttributes: meta.bodyAttributes.toString()
     };
 }

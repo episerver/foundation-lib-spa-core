@@ -4,6 +4,7 @@ import CmsSite from './Components/CmsSite';
 import EpiContext from './Spa';
 import ComponentPreLoader from "./Loaders/ComponentPreLoader";
 import DefaultServiceContainer from './Core/DefaultServiceContainer';
+import { StylesProvider, createGenerateClassName, } from "@material-ui/core/styles";
 export function InitBrowser(config, containerId, serviceContainer) {
     try {
         if ((__INITIAL_DATA__ === null || __INITIAL_DATA__ === void 0 ? void 0 : __INITIAL_DATA__.status) === 'loading') {
@@ -17,6 +18,10 @@ export function InitBrowser(config, containerId, serviceContainer) {
     return _doInitBrowser(config, containerId, serviceContainer);
 }
 function _doInitBrowser(config, containerId, serviceContainer) {
+    const generateClassName = createGenerateClassName({
+        productionPrefix: "MO"
+        //disableGlobal: true
+    });
     EpiContext.init(config, serviceContainer || new DefaultServiceContainer());
     const container = document.getElementById(containerId ? containerId : "epi-page-container");
     if (container && container.childElementCount > 0) {
@@ -27,7 +32,8 @@ function _doInitBrowser(config, containerId, serviceContainer) {
         ComponentPreLoader.load(components, loader).finally(() => {
             if (EpiContext.isDebugActive())
                 console.info('Hydrating existing render, Stage 2. Hydration ...');
-            ReactDOM.hydrate(React.createElement(CmsSite, { context: EpiContext }), container);
+            ReactDOM.hydrate(React.createElement(StylesProvider, { generateClassName: generateClassName },
+                React.createElement(CmsSite, { context: EpiContext })), container);
         });
     }
     else {

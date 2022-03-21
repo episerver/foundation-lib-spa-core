@@ -7,6 +7,7 @@ import React from 'react';
 import DefaultServiceContainer from './Core/DefaultServiceContainer';
 import EpiSpaContext from './Spa';
 import CmsSite from './Components/CmsSite';
+import { ServerStyleSheets, createGenerateClassName } from "@material-ui/core/styles";
 export default function RenderServerSide(config, serviceContainer) {
     // Update context
     const ctx = getGlobal();
@@ -18,8 +19,15 @@ export default function RenderServerSide(config, serviceContainer) {
     config.noAjax = true;
     config.enableDebug = true;
     EpiSpaContext.init(config, serviceContainer, true);
+    const classPrefix = "MO";
+    const generateClassName = () => createGenerateClassName({
+        productionPrefix: classPrefix
+    });
     const staticContext = {};
-    const body = ReactDOMServer.renderToString(React.createElement(CmsSite, { context: EpiSpaContext, staticContext: staticContext }));
+    const sheets = new ServerStyleSheets({
+        serverGenerateClassName: generateClassName()
+    });
+    const body = ReactDOMServer.renderToString(sheets.collect(React.createElement(CmsSite, { context: EpiSpaContext, staticContext: staticContext })));
     const meta = Helmet.renderStatic();
     return {
         Body: body,
@@ -28,7 +36,7 @@ export default function RenderServerSide(config, serviceContainer) {
         Meta: meta.meta.toString(),
         Link: meta.link.toString(),
         Script: meta.script.toString(),
-        Style: meta.style.toString(),
+        Style: sheets.toString(),
         BodyAttributes: meta.bodyAttributes.toString()
     };
 }
