@@ -157,7 +157,10 @@ export class ContentDeliveryAPI {
                 url.searchParams.set('select', select.map(s => encodeURIComponent(s)).join(','));
             if (expand)
                 url.searchParams.set('expand', expand.map(s => encodeURIComponent(s)).join(','));
-            return this.doRequest(url); // .catch(e => this.createNetworkErrorResponse(e));
+            return this.doRequest(url).catch(e => {
+                console.log('404 redrect fired', window.location.href);
+                return this.doRequest(this.BaseURL + '404');
+            });
         });
     }
     /**
@@ -177,7 +180,7 @@ export class ContentDeliveryAPI {
         if (expand)
             url.searchParams.set('expand', expand.map(s => encodeURIComponent(s)).join(','));
         // Perform request
-        return this.doAdvancedRequest(url, {params : {supportRedirect:false}}).then(r => {
+        return this.doAdvancedRequest(url, { params: { supportRedirect: false } }).then(r => {
             const c = r[0];
             c.serverContext = {
                 propertyDataType: 'IContentDeliveryResponseContext',
@@ -418,18 +421,18 @@ export class ContentDeliveryAPI {
                         console.info(`ContentDeliveryAPI Error ${response.status}: ${response.statusText}`, requestConfig.method + ' ' + requestConfig.url);
                     throw new Error(`${response.status}: ${response.statusText}`);
                 }
-                 if (response && response.data
-                         && (!options || options == {} || (options.params &&
-                                 options.params.supportRedirect !== false))){
-                    var responseData = response.data; 
+                if (response && response.data
+                    && (!options || options == {} || (options.params &&
+                        options.params.supportRedirect !== false))) {
+                    var responseData = response.data;
                     //redirect support. Experimental since may also fire potentially in other cases
                     //will need to redefine requirement later
-                    if (responseData.url != null && responseData.url != '/' && 
-                        location.pathname && responseData.url != location.pathname){                                   
-                        console.info('Redirecting to ',location.origin + responseData.url);
+                    if (responseData.url != null && responseData.url != '/' &&
+                        location.pathname && responseData.url != location.pathname) {
+                        console.info('Redirecting to ', location.origin + responseData.url);
                         location.href = location.origin + responseData.url;
                     }
-                }   
+                }
                 const data = response.data || this.createNetworkErrorResponse('Empty response', response);
                 const ctx = {
                     status: response.status,
@@ -467,8 +470,8 @@ export class ContentDeliveryAPI {
         const config = {
             method: "GET",
             baseURL: this.BaseURL,
-            maxRedirects: 2,
             withCredentials: true,
+            maxRedirects: 2,
             headers: this.getHeaders(),
             responseType: "json",
         };

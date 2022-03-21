@@ -14,7 +14,6 @@ import EpiSpaContext from './Spa';
 import CmsSite from './Components/CmsSite';
 import AppConfig from './AppConfig';
 import {
-    StylesProvider,
     ServerStyleSheets,createGenerateClassName
   } from "@material-ui/core/styles";
 

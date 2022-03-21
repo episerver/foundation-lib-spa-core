@@ -1,4 +1,5 @@
 import LanguageList from './LanguageList';
+import Language from './Language';
 import ContentRootList from './ContentRootList';
 export declare type HostDefinition = {
     /**
@@ -12,7 +13,7 @@ export declare type HostDefinition = {
     /**
      * The default language for the host
      */
-    language: null | string;
+    language: null | Language;
 };
 /**
  * Episerver Website Model, as returned by the ContentDelivery API.
