@@ -25,7 +25,7 @@ export class StateModule extends BaseInitializableModule {
         });
         // Make sure the current language is applied
         const language = (_a = state === null || state === void 0 ? void 0 : state.OptiContentCloud) === null || _a === void 0 ? void 0 : _a.currentLanguage;
-        if (!language)
+        if (!language || language != cfg.defaultLanguage)
             store.dispatch({
                 type: 'OptiContentCloud/SetState',
                 currentLanguage: cfg.defaultLanguage,

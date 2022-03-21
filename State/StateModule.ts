@@ -31,7 +31,7 @@ export class StateModule extends BaseInitializableModule implements IInitializab
 
     // Make sure the current language is applied
     const language = state?.OptiContentCloud?.currentLanguage;
-    if (!language)
+    if (!language || language != cfg.defaultLanguage)
       store.dispatch({
         type: 'OptiContentCloud/SetState',
         currentLanguage: cfg.defaultLanguage,
