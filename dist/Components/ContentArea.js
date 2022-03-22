@@ -1,10 +1,11 @@
 import React from 'react';
-import { useEpiserver } from '../Hooks/Context';
+import { useCmsState, useEpiserver } from '../Hooks/Context';
 import { ContentLinkService } from '../Models/ContentLink';
 import EpiComponent from './EpiComponent';
 export const ContentArea = (props) => {
     var _a, _b, _c;
     const ctx = useEpiserver();
+    const state = useCmsState();
     // Check if the areay is empty
     if (!((_a = props.data) === null || _a === void 0 ? void 0 : _a.value))
         return props.children ? React.createElement("div", null, props.children) : React.createElement(DefaultEmptyContentArea, { propertyName: props.propertyName });
@@ -16,16 +17,17 @@ export const ContentArea = (props) => {
     const items = [];
     (((_c = props.data) === null || _c === void 0 ? void 0 : _c.value) || []).forEach((x, i) => {
         var _a, _b;
-        // Do not allow parent to be linked in childs content area. Otherwise we'll get a redux infinite loop re-render.
-        if (props.parent) {
-            if (x.contentLink.guidValue === props.parent.guidValue || x.contentLink.id === props.parent.id) {
+        const blockKey = `ContentAreaItem-${ContentLinkService.createApiId(x.contentLink, true, false)}-${i}`;
+        // Do not allow parent (current state iContent) to be linked in childs content area. Otherwise we'll get a redux infinite loop re-render.
+        if (state === null || state === void 0 ? void 0 : state.iContent) {
+            if (x.contentLink.guidValue === state.iContent.contentLink.guidValue ||
+                x.contentLink.id === state.iContent.contentLink.id) {
                 console.error('Parent is not allowed as a child in a content area');
-                items.push(React.createElement(React.Fragment, null, "Parent is not allowed as child"));
+                items.push(React.createElement("div", { key: blockKey }, "Parent is not allowed as child"));
                 return;
             }
         }
         const className = getBlockClasses(x.displayOption, config).join(' ');
-        const blockKey = `ContentAreaItem-${ContentLinkService.createApiId(x.contentLink, true, false)}-${i}`;
         items.push(React.createElement(ContentAreaItem, { key: blockKey, item: x, config: config, idx: i, className: className, expandedValue: ((_a = props.data) === null || _a === void 0 ? void 0 : _a.expandedValue) ? (_b = props.data) === null || _b === void 0 ? void 0 : _b.expandedValue[i] : undefined, columns: props.columns || 12, layoutWidth: props.layoutWidth, inLayoutBlock: props.inLayoutBlock }));
     });
     // Return if no wrapping

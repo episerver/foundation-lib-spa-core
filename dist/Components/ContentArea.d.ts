@@ -1,6 +1,5 @@
 import React from 'react';
 import IEpiserverContext from '../Core/IEpiserverContext';
-import ContentLink from '../Models/ContentLink';
 import { ContentAreaProperty } from '../Property';
 export declare type ContentAreaSiteConfig = {
     /**
@@ -85,12 +84,6 @@ export declare type ContentAreaSiteConfig = {
      * @default false
      */
     inLayoutBlock?: boolean;
-    /**
-     * Parent for the content area. If we have the parent in the content area (page) we will ignore it.
-     *
-     * @default null
-     */
-    parent?: ContentLink;
 };
 export declare type ContentAreaProps = ContentAreaSiteConfig & {
     /**

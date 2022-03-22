@@ -1,6 +1,6 @@
 import React from 'react';
 import IEpiserverContext from '../Core/IEpiserverContext';
-import { useEpiserver } from '../Hooks/Context';
+import { useCmsState, useEpiserver } from '../Hooks/Context';
 import ContentLink, { ContentLinkService } from '../Models/ContentLink';
 import IContent from '../Models/IContent';
 import { ContentAreaProperty, ContentAreaPropertyItem } from '../Property';
@@ -100,13 +100,6 @@ export type ContentAreaSiteConfig = {
    * @default false
    */
   inLayoutBlock?: boolean;
-
-  /**
-   * Parent for the content area. If we have the parent in the content area (page) we will ignore it.
-   *
-   * @default null
-   */
-  parent?: ContentLink;
 };
 
 export type ContentAreaProps = ContentAreaSiteConfig & {
@@ -132,6 +125,7 @@ export type ContentAreaProps = ContentAreaSiteConfig & {
 
 export const ContentArea: React.FunctionComponent<ContentAreaProps> = (props) => {
   const ctx = useEpiserver();
+  const state = useCmsState();
 
   // Check if the areay is empty
   if (!props.data?.value)
@@ -145,17 +139,21 @@ export const ContentArea: React.FunctionComponent<ContentAreaProps> = (props) =>
   // Render the items
   const items: React.ReactElement<ContentAreaItemProps>[] = [];
   (props.data?.value || []).forEach((x, i) => {
-    // Do not allow parent to be linked in childs content area. Otherwise we'll get a redux infinite loop re-render.
-    if (props.parent) {
-      if (x.contentLink.guidValue === props.parent.guidValue || x.contentLink.id === props.parent.id) {
+    const blockKey = `ContentAreaItem-${ContentLinkService.createApiId(x.contentLink, true, false)}-${i}`;
+
+    // Do not allow parent (current state iContent) to be linked in childs content area. Otherwise we'll get a redux infinite loop re-render.
+    if (state?.iContent) {
+      if (
+        x.contentLink.guidValue === state.iContent.contentLink.guidValue ||
+        x.contentLink.id === state.iContent.contentLink.id
+      ) {
         console.error('Parent is not allowed as a child in a content area');
-        items.push(<>Parent is not allowed as child</>);
+        items.push(<div key={blockKey}>Parent is not allowed as child</div>);
         return;
       }
     }
 
     const className = getBlockClasses(x.displayOption, config).join(' ');
-    const blockKey = `ContentAreaItem-${ContentLinkService.createApiId(x.contentLink, true, false)}-${i}`;
     items.push(
       <ContentAreaItem
         key={blockKey}
