@@ -1,7 +1,7 @@
 import React from 'react';
 import IEpiserverContext from '../Core/IEpiserverContext';
 import { useEpiserver } from '../Hooks/Context';
-import { ContentLinkService } from '../Models/ContentLink';
+import ContentLink, { ContentLinkService } from '../Models/ContentLink';
 import IContent from '../Models/IContent';
 import { ContentAreaProperty, ContentAreaPropertyItem } from '../Property';
 import EpiComponent from './EpiComponent';
@@ -100,6 +100,13 @@ export type ContentAreaSiteConfig = {
    * @default false
    */
   inLayoutBlock?: boolean;
+
+  /**
+   * Parent for the content area. If we have the parent in the content area (page) we will ignore it.
+   *
+   * @default null
+   */
+  parent?: ContentLink;
 };
 
 export type ContentAreaProps = ContentAreaSiteConfig & {
@@ -138,6 +145,15 @@ export const ContentArea: React.FunctionComponent<ContentAreaProps> = (props) =>
   // Render the items
   const items: React.ReactElement<ContentAreaItemProps>[] = [];
   (props.data?.value || []).forEach((x, i) => {
+    // Do not allow parent to be linked in childs content area. Otherwise we'll get a redux infinite loop re-render.
+    if (props.parent) {
+      if (x.contentLink.guidValue === props.parent.guidValue || x.contentLink.id === props.parent.id) {
+        console.error('Parent is not allowed as a child in a content area');
+        items.push(<>Parent is not allowed as child</>);
+        return;
+      }
+    }
+
     const className = getBlockClasses(x.displayOption, config).join(' ');
     const blockKey = `ContentAreaItem-${ContentLinkService.createApiId(x.contentLink, true, false)}-${i}`;
     items.push(
