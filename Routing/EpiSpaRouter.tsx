@@ -88,6 +88,9 @@ const ElementNavigation : React.FunctionComponent = (props) : React.ReactElement
                     newPath = newPath.substr(config.basePath.length);
                     if (newPath.substr(0, 1) !== '/') newPath = '/' + newPath; // Ensure we've an absolute path
                 }
+                if (newPath.indexOf('#') < 0 && hash){
+                    newPath = newPath+hash;
+                }
                 history.push(newPath);
                 event.preventDefault();
 
