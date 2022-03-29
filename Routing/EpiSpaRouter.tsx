@@ -64,6 +64,12 @@ const ElementNavigation : React.FunctionComponent = (props) : React.ReactElement
                 if (targetUrl.origin === currentUrl.origin) {
                     newPath = targetUrl.pathname;
                     hash = targetUrl.hash;
+                    let linkElement = (link as HTMLAnchorElement);
+                     //support links with _blank on same domain
+                     if (linkElement.target && linkElement.target == "_blank"){                        
+                        window.open(newPath+hash, "_blank");
+                        return false;
+                    }
                 }
             }
 

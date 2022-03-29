@@ -56,6 +56,12 @@ const ElementNavigation = (props) => {
                 if (targetUrl.origin === currentUrl.origin) {
                     newPath = targetUrl.pathname;
                     hash = targetUrl.hash;
+                    let linkElement = link;
+                    //support links with _blank on same domain
+                    if (linkElement.target && linkElement.target == "_blank") {
+                        window.open(newPath + hash, "_blank");
+                        return false;
+                    }
                 }
             }
             // Do not navigate to the same page
