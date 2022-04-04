@@ -115,14 +115,21 @@ export class EpiserverSpaContext {
         }
     }
     getInitialState() {
-        var _a, _b, _c, _d, _e;
+        var _a, _b, _c, _d;
         const state = {};
+        console.warn('Creating prelaoded state', JSON.stringify(state));
         if (state.OptiContentCloud == undefined) {
             state.OptiContentCloud = {};
         }
-        state.OptiContentCloud.currentLanguage = (_b = (_a = ctx === null || ctx === void 0 ? void 0 : ctx.__INITIAL__DATA__) === null || _a === void 0 ? void 0 : _a.Language) !== null && _b !== void 0 ? _b : undefined;
-        state.OptiContentCloud.iContent = (_d = (_c = ctx === null || ctx === void 0 ? void 0 : ctx.__INITIAL__DATA__) === null || _c === void 0 ? void 0 : _c.IContent) !== null && _d !== void 0 ? _d : undefined;
-        state.OptiContentCloud.initialState = (_e = ctx === null || ctx === void 0 ? void 0 : ctx.__INITIAL__DATA__) !== null && _e !== void 0 ? _e : undefined;
+        const tmpState = getGlobal();
+        console.warn('Creating prelaoded state > after if ', JSON.stringify(state));
+        if (tmpState) {
+            state.OptiContentCloud.currentLanguage = (_b = (_a = tmpState === null || tmpState === void 0 ? void 0 : tmpState.__INITIAL__DATA__) === null || _a === void 0 ? void 0 : _a.Language) !== null && _b !== void 0 ? _b : '';
+            state.OptiContentCloud.iContent = (_d = (_c = tmpState === null || tmpState === void 0 ? void 0 : tmpState.__INITIAL__DATA__) === null || _c === void 0 ? void 0 : _c.IContent) !== null && _d !== void 0 ? _d : undefined;
+            state.OptiContentCloud.initialState = tmpState === null || tmpState === void 0 ? void 0 : tmpState.__INITIAL__DATA__;
+        }
+        console.warn('Creating prelaoded state > after filling ', JSON.stringify(state));
+        console.warn('tmp state', JSON.stringify(tmpState));
         return state;
     }
     _initRedux(hydrate = false) {

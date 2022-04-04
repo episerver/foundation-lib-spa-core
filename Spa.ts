@@ -149,13 +149,20 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
 
   private getInitialState(): ContentAppState {
     const state: ContentAppState = {};
+    console.warn('Creating prelaoded state', JSON.stringify(state));
     if (state.OptiContentCloud == undefined) {
       state.OptiContentCloud = {};
     }
-    state.OptiContentCloud.currentLanguage = ctx?.__INITIAL__DATA__?.Language ?? undefined;
-    state.OptiContentCloud.iContent = ctx?.__INITIAL__DATA__?.IContent ?? undefined;
-    state.OptiContentCloud.initialState = ctx?.__INITIAL__DATA__ ?? undefined;
+    const tmpState = getGlobal();
+    console.warn('Creating prelaoded state > after if ', JSON.stringify(state));
+    if (tmpState) {
+      state.OptiContentCloud.currentLanguage = (tmpState?.__INITIAL__DATA__?.Language as string) ?? '';
+      state.OptiContentCloud.iContent = (tmpState?.__INITIAL__DATA__?.IContent as IContent) ?? undefined;
+      state.OptiContentCloud.initialState = tmpState?.__INITIAL__DATA__;
+    }
 
+    console.warn('Creating prelaoded state > after filling ', JSON.stringify(state));
+    console.warn('tmp state', JSON.stringify(tmpState));
     return state;
   }
 
