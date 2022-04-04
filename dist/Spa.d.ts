@@ -34,6 +34,7 @@ export declare class EpiserverSpaContext implements IEpiserverContext, PathProvi
     get contentStorage(): ContentDeliveryAPI;
     get Language(): string;
     init(config: AppConfig, serviceContainer: IServiceContainer, isServerSideRendering?: boolean): void;
+    private getInitialState;
     private _initRedux;
     private _initEditMode;
     isInitialized(): boolean;

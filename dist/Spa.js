@@ -96,13 +96,7 @@ export class EpiserverSpaContext {
         this._modules.forEach((x) => x.ConfigureContainer(this._serviceContainer));
         this._initialized = InitStatus.ContainerReady;
         // Redux init
-        if (executionContext.isServerSideRendering) {
-            console.warn('Preloading init state');
-            this._initRedux(ctx === null || ctx === void 0 ? void 0 : ctx.__INITIAL__DATA__);
-        }
-        else {
-            this._initRedux();
-        }
+        this._initRedux();
         // EpiEditMode init
         this._initEditMode();
         // Run module startup logic
@@ -115,7 +109,18 @@ export class EpiserverSpaContext {
             ctx.EpiserverSpa.eventEngine = eventEngine;
         }
     }
-    _initRedux(data) {
+    getInitialState() {
+        var _a, _b, _c, _d, _e;
+        const state = {};
+        if (state.OptiContentCloud == undefined) {
+            state.OptiContentCloud = {};
+        }
+        state.OptiContentCloud.currentLanguage = (_b = (_a = ctx === null || ctx === void 0 ? void 0 : ctx.__INITIAL__DATA__) === null || _a === void 0 ? void 0 : _a.Language) !== null && _b !== void 0 ? _b : undefined;
+        state.OptiContentCloud.iContent = (_d = (_c = ctx === null || ctx === void 0 ? void 0 : ctx.__INITIAL__DATA__) === null || _c === void 0 ? void 0 : _c.IContent) !== null && _d !== void 0 ? _d : undefined;
+        state.OptiContentCloud.initialState = (_e = ctx === null || ctx === void 0 ? void 0 : ctx.__INITIAL__DATA__) !== null && _e !== void 0 ? _e : undefined;
+        return state;
+    }
+    _initRedux() {
         const reducers = {};
         this._modules.forEach((x) => {
             const ri = x.GetStateReducer();
@@ -123,9 +128,10 @@ export class EpiserverSpaContext {
                 reducers[ri.stateKey] = ri.reducer;
             }
         });
-        if (data) {
+        if (ctx.isServerSideRendering) {
             console.warn('Preloading store');
-            this._state = configureStore({ reducer: reducers, preloadedState: data });
+            console.warn('state', JSON.stringify(this.getInitialState()));
+            this._state = configureStore({ reducer: reducers, preloadedState: this.getInitialState() });
         }
         else {
             this._state = configureStore({ reducer: reducers });

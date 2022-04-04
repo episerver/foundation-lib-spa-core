@@ -31,6 +31,7 @@ import IInitializableModule from './Core/IInitializableModule';
 import IIContentRepositoryV2 from './Repository/IIContentRepository';
 import IContentDeliveryApiV2 from './ContentDelivery/IContentDeliveryAPI';
 import ServerContext from './ServerSideRendering/ServerContext';
+import { ContentAppState } from './State/Reducer';
 
 // Create context
 const ctx: any = getGlobal();
@@ -124,12 +125,7 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
     this._initialized = InitStatus.ContainerReady;
 
     // Redux init
-    if (executionContext.isServerSideRendering) {
-      console.warn('Preloading init state');
-      this._initRedux(ctx?.__INITIAL__DATA__);
-    } else {
-      this._initRedux();
-    }
+    this._initRedux();
 
     // EpiEditMode init
     this._initEditMode();
@@ -147,7 +143,19 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
     }
   }
 
-  private _initRedux(data?: ServerContext): void {
+  private getInitialState(): ContentAppState {
+    const state: ContentAppState = {};
+    if (state.OptiContentCloud == undefined) {
+      state.OptiContentCloud = {};
+    }
+    state.OptiContentCloud.currentLanguage = ctx?.__INITIAL__DATA__?.Language ?? undefined;
+    state.OptiContentCloud.iContent = ctx?.__INITIAL__DATA__?.IContent ?? undefined;
+    state.OptiContentCloud.initialState = ctx?.__INITIAL__DATA__ ?? undefined;
+
+    return state;
+  }
+
+  private _initRedux(): void {
     const reducers: { [key: string]: Reducer<any, Action> } = {};
     this._modules.forEach((x) => {
       const ri = x.GetStateReducer();
@@ -155,9 +163,10 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
         reducers[ri.stateKey] = ri.reducer;
       }
     });
-    if (data) {
+    if (ctx.isServerSideRendering) {
       console.warn('Preloading store');
-      this._state = configureStore({ reducer: reducers, preloadedState: data });
+      console.warn('state', JSON.stringify(this.getInitialState()));
+      this._state = configureStore({ reducer: reducers, preloadedState: this.getInitialState() });
     } else {
       this._state = configureStore({ reducer: reducers });
     }
