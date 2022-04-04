@@ -96,7 +96,12 @@ export class EpiserverSpaContext {
         this._modules.forEach((x) => x.ConfigureContainer(this._serviceContainer));
         this._initialized = InitStatus.ContainerReady;
         // Redux init
-        this._initRedux();
+        if (executionContext.isServerSideRendering) {
+            this._initRedux(true);
+        }
+        else {
+            this._initRedux();
+        }
         // EpiEditMode init
         this._initEditMode();
         // Run module startup logic
@@ -120,7 +125,7 @@ export class EpiserverSpaContext {
         state.OptiContentCloud.initialState = (_e = ctx === null || ctx === void 0 ? void 0 : ctx.__INITIAL__DATA__) !== null && _e !== void 0 ? _e : undefined;
         return state;
     }
-    _initRedux() {
+    _initRedux(hydrate = false) {
         const reducers = {};
         this._modules.forEach((x) => {
             const ri = x.GetStateReducer();
@@ -128,7 +133,7 @@ export class EpiserverSpaContext {
                 reducers[ri.stateKey] = ri.reducer;
             }
         });
-        if (ctx.isServerSideRendering) {
+        if (hydrate) {
             console.warn('Preloading store');
             console.warn('state', JSON.stringify(this.getInitialState()));
             this._state = configureStore({ reducer: reducers, preloadedState: this.getInitialState() });

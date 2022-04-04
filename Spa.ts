@@ -125,7 +125,11 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
     this._initialized = InitStatus.ContainerReady;
 
     // Redux init
-    this._initRedux();
+    if (executionContext.isServerSideRendering) {
+      this._initRedux(true);
+    } else {
+      this._initRedux();
+    }
 
     // EpiEditMode init
     this._initEditMode();
@@ -155,7 +159,7 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
     return state;
   }
 
-  private _initRedux(): void {
+  private _initRedux(hydrate = false): void {
     const reducers: { [key: string]: Reducer<any, Action> } = {};
     this._modules.forEach((x) => {
       const ri = x.GetStateReducer();
@@ -163,7 +167,7 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
         reducers[ri.stateKey] = ri.reducer;
       }
     });
-    if (ctx.isServerSideRendering) {
+    if (hydrate) {
       console.warn('Preloading store');
       console.warn('state', JSON.stringify(this.getInitialState()));
       this._state = configureStore({ reducer: reducers, preloadedState: this.getInitialState() });
