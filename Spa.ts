@@ -30,6 +30,7 @@ import IInitializableModule from './Core/IInitializableModule';
 // Content Delivery V2
 import IIContentRepositoryV2 from './Repository/IIContentRepository';
 import IContentDeliveryApiV2 from './ContentDelivery/IContentDeliveryAPI';
+import ServerContext from './ServerSideRendering/ServerContext';
 
 // Create context
 const ctx: any = getGlobal();
@@ -123,7 +124,12 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
     this._initialized = InitStatus.ContainerReady;
 
     // Redux init
-    this._initRedux();
+    if (executionContext.isServerSideRendering) {
+      console.warn('Preloading init state');
+      this._initRedux(ctx?.__INITIAL__DATA__);
+    } else {
+      this._initRedux();
+    }
 
     // EpiEditMode init
     this._initEditMode();
@@ -141,7 +147,7 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
     }
   }
 
-  private _initRedux(): void {
+  private _initRedux(data?: ServerContext): void {
     const reducers: { [key: string]: Reducer<any, Action> } = {};
     this._modules.forEach((x) => {
       const ri = x.GetStateReducer();
@@ -149,7 +155,12 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
         reducers[ri.stateKey] = ri.reducer;
       }
     });
-    this._state = configureStore({ reducer: reducers });
+    if (data) {
+      console.warn('Preloading store');
+      this._state = configureStore({ reducer: reducers, preloadedState: data });
+    } else {
+      this._state = configureStore({ reducer: reducers });
+    }
     this._state.dispatch({ type: '@@EPI/INIT' });
   }
 

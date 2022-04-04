@@ -96,7 +96,13 @@ export class EpiserverSpaContext {
         this._modules.forEach((x) => x.ConfigureContainer(this._serviceContainer));
         this._initialized = InitStatus.ContainerReady;
         // Redux init
-        this._initRedux();
+        if (executionContext.isServerSideRendering) {
+            console.warn('Preloading init state');
+            this._initRedux(ctx === null || ctx === void 0 ? void 0 : ctx.__INITIAL__DATA__);
+        }
+        else {
+            this._initRedux();
+        }
         // EpiEditMode init
         this._initEditMode();
         // Run module startup logic
@@ -109,7 +115,7 @@ export class EpiserverSpaContext {
             ctx.EpiserverSpa.eventEngine = eventEngine;
         }
     }
-    _initRedux() {
+    _initRedux(data) {
         const reducers = {};
         this._modules.forEach((x) => {
             const ri = x.GetStateReducer();
@@ -117,7 +123,13 @@ export class EpiserverSpaContext {
                 reducers[ri.stateKey] = ri.reducer;
             }
         });
-        this._state = configureStore({ reducer: reducers });
+        if (data) {
+            console.warn('Preloading store');
+            this._state = configureStore({ reducer: reducers, preloadedState: data });
+        }
+        else {
+            this._state = configureStore({ reducer: reducers });
+        }
         this._state.dispatch({ type: '@@EPI/INIT' });
     }
     _initEditMode() {
