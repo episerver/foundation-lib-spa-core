@@ -162,7 +162,7 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
     }
 
     console.warn('Creating prelaoded state > after filling ', JSON.stringify(state));
-    console.warn('tmp state', JSON.stringify(tmpState));
+    console.warn('tmp state', JSON.stringify(tmpState?.__INITIAL__DATA__));
     return state;
   }
 

@@ -129,7 +129,7 @@ export class EpiserverSpaContext {
             state.OptiContentCloud.initialState = tmpState === null || tmpState === void 0 ? void 0 : tmpState.__INITIAL__DATA__;
         }
         console.warn('Creating prelaoded state > after filling ', JSON.stringify(state));
-        console.warn('tmp state', JSON.stringify(tmpState));
+        console.warn('tmp state', JSON.stringify(tmpState === null || tmpState === void 0 ? void 0 : tmpState.__INITIAL__DATA__));
         return state;
     }
     _initRedux(hydrate = false) {
