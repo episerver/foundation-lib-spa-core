@@ -21,6 +21,7 @@ export default function RenderServerSide(config, serviceContainer) {
     const staticContext = {};
     const body = ReactDOMServer.renderToString(React.createElement(CmsSite, { context: EpiSpaContext, staticContext: staticContext }));
     const meta = Helmet.renderStatic();
+    console.log(body);
     return {
         Body: body,
         HtmlAttributes: meta.htmlAttributes.toString(),
@@ -29,7 +30,7 @@ export default function RenderServerSide(config, serviceContainer) {
         Link: meta.link.toString(),
         Script: meta.script.toString(),
         Style: meta.style.toString(),
-        BodyAttributes: meta.bodyAttributes.toString()
+        BodyAttributes: meta.bodyAttributes.toString(),
     };
 }
 //# sourceMappingURL=InitServer.js.map
