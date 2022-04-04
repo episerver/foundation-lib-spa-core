@@ -13,15 +13,15 @@ import getGlobal from '../AppGlobal';
 export const EpiserverWebsite = (props) => {
     const SiteLayout = getLayout(props.context);
     const ssr = props.context.serviceContainer.getService(DefaultServices.ServerContext);
-    console.log('ssr', ssr);
+    console.warn('ssr', ssr);
     const location = (props.context.isServerSideRendering() ? ssr.Path : window.location.pathname) || undefined;
     const epi = props.context.getStore();
     const global = getGlobal();
-    console.log('global', global);
+    console.warn('global', global);
     useEffect(() => {
         if (!epi || !(global === null || global === void 0 ? void 0 : global.__INITIAL__DATA__))
             return;
-        console.log('dispatch');
+        console.warn('dispatch');
         epi.dispatch({
             type: 'OptiContentCloud/SetState',
             initialState: global.__INITIAL__DATA__,

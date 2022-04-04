@@ -21,7 +21,7 @@ export default function RenderServerSide(config, serviceContainer) {
     const staticContext = {};
     const body = ReactDOMServer.renderToString(React.createElement(CmsSite, { context: EpiSpaContext, staticContext: staticContext }));
     const meta = Helmet.renderStatic();
-    console.log(body);
+    console.warn('Body', body);
     return {
         Body: body,
         HtmlAttributes: meta.htmlAttributes.toString(),

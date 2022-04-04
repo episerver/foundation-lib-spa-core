@@ -51,8 +51,8 @@ export class EpiserverSpaContext {
     }
     get Language() {
         var _a;
-        return ((_a = this.serviceContainer.getService(DefaultServices.ContentDeliveryAPI_V2)) === null || _a === void 0 ? void 0 : _a.Language) ||
-            this.config().defaultLanguage;
+        return (((_a = this.serviceContainer.getService(DefaultServices.ContentDeliveryAPI_V2)) === null || _a === void 0 ? void 0 : _a.Language) ||
+            this.config().defaultLanguage);
     }
     init(config, serviceContainer, isServerSideRendering = false) {
         // Generic init
@@ -62,13 +62,13 @@ export class EpiserverSpaContext {
         const executionContext = {
             isServerSideRendering: (() => {
                 try {
-                    return isServerSideRendering || (ctx.epi.isServerSideRendering === true);
+                    return isServerSideRendering || ctx.epi.isServerSideRendering === true;
                 }
                 catch (e) {
                     return false;
                 }
             })(),
-            isDebugActive: typeof (config.enableDebug) === 'boolean' ? config.enableDebug : false,
+            isDebugActive: typeof config.enableDebug === 'boolean' ? config.enableDebug : false,
             isEditable: this.initialEditMode(),
             isInEditMode: this.initialEditMode(),
         };
@@ -93,14 +93,14 @@ export class EpiserverSpaContext {
         this._serviceContainer.addService(DefaultServices.EventEngine, eventEngine);
         this._initialized = InitStatus.CoreServicesReady;
         // Have modules add services of their own
-        this._modules.forEach(x => x.ConfigureContainer(this._serviceContainer));
+        this._modules.forEach((x) => x.ConfigureContainer(this._serviceContainer));
         this._initialized = InitStatus.ContainerReady;
         // Redux init
         this._initRedux();
         // EpiEditMode init
         this._initEditMode();
         // Run module startup logic
-        this._modules.forEach(x => x.StartModule(this));
+        this._modules.forEach((x) => x.StartModule(this));
         // Mark SPA as initialized & and make some info available in the global context
         this._initialized = InitStatus.Initialized;
         if (executionContext.isDebugActive) {
@@ -111,9 +111,12 @@ export class EpiserverSpaContext {
     }
     _initRedux() {
         const reducers = {};
-        this._modules.forEach(x => { const ri = x.GetStateReducer(); if (ri) {
-            reducers[ri.stateKey] = ri.reducer;
-        } });
+        this._modules.forEach((x) => {
+            const ri = x.GetStateReducer();
+            if (ri) {
+                reducers[ri.stateKey] = ri.reducer;
+            }
+        });
         this._state = configureStore({ reducer: reducers });
         this._state.dispatch({ type: '@@EPI/INIT' });
     }
@@ -174,8 +177,11 @@ export class EpiserverSpaContext {
     loadContentByGuid(id) {
         this.enforceInitialized();
         const repo = this._serviceContainer.getService(DefaultServices.IContentRepository_V2);
-        return repo.load(id).then(iContent => { if (!iContent)
-            throw new Error('Content not resolved!'); return iContent; });
+        return repo.load(id).then((iContent) => {
+            if (!iContent)
+                throw new Error('Content not resolved!');
+            return iContent;
+        });
     }
     getContentById() {
         throw new Error('Synchronous content loading is no longer supported');
@@ -183,8 +189,11 @@ export class EpiserverSpaContext {
     loadContentById(id) {
         this.enforceInitialized();
         const repo = this._serviceContainer.getService(DefaultServices.IContentRepository_V2);
-        return repo.load(id).then(iContent => { if (!iContent)
-            throw new Error('Content not resolved!'); return iContent; });
+        return repo.load(id).then((iContent) => {
+            if (!iContent)
+                throw new Error('Content not resolved!');
+            return iContent;
+        });
     }
     getContentByRef() {
         throw new Error('Synchronous content loading is no longer supported');
@@ -192,8 +201,11 @@ export class EpiserverSpaContext {
     loadContentByRef(ref) {
         this.enforceInitialized();
         const repo = this._serviceContainer.getService(DefaultServices.IContentRepository_V2);
-        return repo.getByReference(ref).then(iContent => { if (!iContent)
-            throw new Error('Content not resolved!'); return iContent; });
+        return repo.getByReference(ref).then((iContent) => {
+            if (!iContent)
+                throw new Error('Content not resolved!');
+            return iContent;
+        });
     }
     getContentByPath() {
         throw new Error('Synchronous content loading is no longer supported');
@@ -201,8 +213,11 @@ export class EpiserverSpaContext {
     loadContentByPath(path) {
         this.enforceInitialized();
         const repo = this._serviceContainer.getService(DefaultServices.IContentRepository_V2);
-        return repo.getByRoute(path).then(iContent => { if (!iContent)
-            throw new Error('Content not resolved!'); return iContent; });
+        return repo.getByRoute(path).then((iContent) => {
+            if (!iContent)
+                throw new Error('Content not resolved!');
+            return iContent;
+        });
     }
     injectContent() {
         // Ignore on purpose, will be removed
@@ -231,7 +246,8 @@ export class EpiserverSpaContext {
         }
         try {
             if (this._cachedEditModeUrl === undefined) {
-                this._cachedEditModeUrl = (new URLSearchParams(window.location.search.toLowerCase())).get('epieditmode') === 'true';
+                this._cachedEditModeUrl =
+                    new URLSearchParams(window.location.search.toLowerCase()).get('epieditmode') === 'true';
             }
             return this._cachedEditModeUrl;
         }
@@ -288,7 +304,7 @@ export class EpiserverSpaContext {
      * @param content   The content item load, by path, content link or IContent
      * @param action    The action to invoke on the content controller
      */
-    buildPath(content, action = "") {
+    buildPath(content, action = '') {
         let newPath = '';
         if (ContentLinkService.referenceIsString(content)) {
             newPath = content;
@@ -305,7 +321,7 @@ export class EpiserverSpaContext {
             newPath = '/';
         }
         if (action) {
-            newPath = newPath.substr(-1, 1) === "/" ? newPath + action + "/" : newPath + "/" + action + "/";
+            newPath = newPath.substr(-1, 1) === '/' ? newPath + action + '/' : newPath + '/' + action + '/';
         }
         return newPath;
     }
@@ -346,7 +362,8 @@ export class EpiserverSpaContext {
             const website = yield repo.getWebsite(domain);
             if (!website)
                 throw new Error('Current website not loadable');
-            this.serviceContainer.getService(DefaultServices.ContentDeliveryAPI_V2).CurrentWebsite = website;
+            this.serviceContainer.getService(DefaultServices.ContentDeliveryAPI_V2).CurrentWebsite =
+                website;
             return website;
         });
     }

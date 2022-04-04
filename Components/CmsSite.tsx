@@ -29,17 +29,17 @@ export interface CmsSiteProps {
 export const EpiserverWebsite: React.FunctionComponent<CmsSiteProps> = (props) => {
   const SiteLayout = getLayout(props.context);
   const ssr = props.context.serviceContainer.getService<IServerContextAccessor>(DefaultServices.ServerContext);
-  console.log('ssr', ssr);
+  console.warn('ssr', ssr);
 
   const location = (props.context.isServerSideRendering() ? ssr.Path : window.location.pathname) || undefined;
   const epi = props.context.getStore();
   const global = getGlobal();
-  console.log('global', global);
+  console.warn('global', global);
 
   useEffect(() => {
     if (!epi || !global?.__INITIAL__DATA__) return;
 
-    console.log('dispatch');
+    console.warn('dispatch');
 
     epi.dispatch({
       type: 'OptiContentCloud/SetState',
