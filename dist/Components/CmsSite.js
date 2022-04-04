@@ -13,11 +13,11 @@ import getGlobal from '../AppGlobal';
 export const EpiserverWebsite = (props) => {
     const SiteLayout = getLayout(props.context);
     const ssr = props.context.serviceContainer.getService(DefaultServices.ServerContext);
-    console.warn('ssr', ssr);
+    console.warn('ssr', JSON.stringify(ssr));
     const location = (props.context.isServerSideRendering() ? ssr.Path : window.location.pathname) || undefined;
     const epi = props.context.getStore();
     const global = getGlobal();
-    console.warn('global', global);
+    console.warn('global', JSON.stringify(global));
     useEffect(() => {
         if (!epi || !(global === null || global === void 0 ? void 0 : global.__INITIAL__DATA__))
             return;
