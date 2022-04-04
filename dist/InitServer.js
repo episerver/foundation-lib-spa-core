@@ -9,6 +9,10 @@ import EpiSpaContext from './Spa';
 import CmsSite from './Components/CmsSite';
 export default function RenderServerSide(config, serviceContainer) {
     // Update context
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    const INITIAL__DATA__ = __INITIAL__DATA__ || {};
+    console.warn(INITIAL__DATA__);
     const ctx = getGlobal();
     ctx.epi = ctx.epi || {};
     ctx.epi.isServerSideRendering = true;

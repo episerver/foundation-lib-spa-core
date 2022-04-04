@@ -19,6 +19,13 @@ import SSRResponse from './ServerSideRendering/Response';
 
 export default function RenderServerSide(config: AppConfig, serviceContainer?: IServiceContainer): SSRResponse {
   // Update context
+
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  const INITIAL__DATA__ = __INITIAL__DATA__ || {};
+
+  console.warn(INITIAL__DATA__);
+
   const ctx = getGlobal();
   ctx.epi = ctx.epi || {};
   ctx.epi.isServerSideRendering = true;
