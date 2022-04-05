@@ -157,14 +157,12 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
     if (state.OptiContentCloud == undefined) {
       state.OptiContentCloud = {};
     }
-    console.warn('Creating preloaded state > after if ', JSON.stringify(state));
+
     if (hydrateData) {
       state.OptiContentCloud.currentLanguage = (hydrateData?.Language as string) ?? '';
       state.OptiContentCloud.iContent = (hydrateData?.IContent as IContent) ?? undefined;
       state.OptiContentCloud.initialState = hydrateData;
     }
-
-    console.warn('Creating preloaded state > after filling ', JSON.stringify(state.OptiContentCloud.currentLanguage));
     return state;
   }
 
@@ -176,18 +174,20 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
         reducers[ri.stateKey] = ri.reducer;
       }
     });
-    if (hydrateData) {
-      console.warn('Preloading store');
-      console.warn('reducers', reducers);
 
-      this._state = configureStore({
-        reducer: reducers,
-        preloadedState: { OptiContentCloud: { value: this.getInitialState(hydrateData) } },
+    this._state = configureStore({ reducer: reducers });
+
+    if (hydrateData) {
+      const state = this.getInitialState(hydrateData);
+      this._state.dispatch({
+        type: 'OptiContentCloud/SetState',
+        language: state.OptiContentCloud?.currentLanguage,
+        iContent: state.OptiContentCloud?.iContent,
+        initialState: state.OptiContentCloud?.initialState,
       });
     } else {
-      this._state = configureStore({ reducer: reducers });
+      this._state.dispatch({ type: '@@EPI/INIT' });
     }
-    this._state.dispatch({ type: '@@EPI/INIT' });
   }
 
   private _initEditMode(): void {

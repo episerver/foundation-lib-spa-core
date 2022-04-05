@@ -120,16 +120,15 @@ export class EpiserverSpaContext {
         if (state.OptiContentCloud == undefined) {
             state.OptiContentCloud = {};
         }
-        console.warn('Creating preloaded state > after if ', JSON.stringify(state));
         if (hydrateData) {
             state.OptiContentCloud.currentLanguage = (_a = hydrateData === null || hydrateData === void 0 ? void 0 : hydrateData.Language) !== null && _a !== void 0 ? _a : '';
             state.OptiContentCloud.iContent = (_b = hydrateData === null || hydrateData === void 0 ? void 0 : hydrateData.IContent) !== null && _b !== void 0 ? _b : undefined;
             state.OptiContentCloud.initialState = hydrateData;
         }
-        console.warn('Creating preloaded state > after filling ', JSON.stringify(state.OptiContentCloud.currentLanguage));
         return state;
     }
     _initRedux(hydrateData) {
+        var _a, _b, _c;
         const reducers = {};
         this._modules.forEach((x) => {
             const ri = x.GetStateReducer();
@@ -137,18 +136,19 @@ export class EpiserverSpaContext {
                 reducers[ri.stateKey] = ri.reducer;
             }
         });
+        this._state = configureStore({ reducer: reducers });
         if (hydrateData) {
-            console.warn('Preloading store');
-            console.warn('reducers', reducers);
-            this._state = configureStore({
-                reducer: reducers,
-                preloadedState: { OptiContentCloud: { value: this.getInitialState(hydrateData) } },
+            const state = this.getInitialState(hydrateData);
+            this._state.dispatch({
+                type: 'OptiContentCloud/SetState',
+                language: (_a = state.OptiContentCloud) === null || _a === void 0 ? void 0 : _a.currentLanguage,
+                iContent: (_b = state.OptiContentCloud) === null || _b === void 0 ? void 0 : _b.iContent,
+                initialState: (_c = state.OptiContentCloud) === null || _c === void 0 ? void 0 : _c.initialState,
             });
         }
         else {
-            this._state = configureStore({ reducer: reducers });
+            this._state.dispatch({ type: '@@EPI/INIT' });
         }
-        this._state.dispatch({ type: '@@EPI/INIT' });
     }
     _initEditMode() {
         if (this.isDebugActive())

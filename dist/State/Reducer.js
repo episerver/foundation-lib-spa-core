@@ -5,8 +5,6 @@ export const CmsStateReducerInfo = {
         let newState = {};
         switch (action.type) {
             case '@@EPI/INIT':
-                console.warn('REDUX EPI INIT!');
-                console.warn('epi init state', state === null || state === void 0 ? void 0 : state.currentLanguage);
                 newState = state !== null && state !== void 0 ? state : loadInitialState();
                 break;
             case 'OptiContentCloud/SetState':
