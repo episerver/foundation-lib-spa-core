@@ -13,6 +13,7 @@ export const CmsStateReducerInfo = {
                 cpyAttr('iContent', action, toMerge);
                 cpyAttr('initialState', action, toMerge);
                 newState = Object.assign(Object.assign({}, state), toMerge);
+                console.warn('newState', JSON.stringify(newState));
                 storeState(newState);
                 break;
         }
