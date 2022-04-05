@@ -34,8 +34,6 @@ export const CmsStateReducerInfo: IStateReducerInfo<CmsState, CmsStateActionType
         cpyAttr<CmsState>('initialState', action, toMerge);
         newState = { ...state, ...toMerge };
 
-        console.warn('newState', JSON.stringify(newState));
-
         storeState(newState);
         break;
     }

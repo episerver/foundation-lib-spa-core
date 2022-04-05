@@ -5,7 +5,7 @@ import RoutedComponent from '../Components/RoutedComponent';
 export default class RoutingModule extends BaseInitializableModule {
     constructor() {
         super(...arguments);
-        this.name = "Episerver CMS Routing";
+        this.name = 'Episerver CMS Routing';
         this.SortOrder = 20;
     }
     /**
@@ -19,11 +19,11 @@ export default class RoutingModule extends BaseInitializableModule {
         const config = container.getService(DefaultServices.Config);
         let haveStar = false;
         config.routes = config.routes || [];
-        config.routes.forEach(c => haveStar = haveStar || c.path === "*");
+        config.routes.forEach((c) => (haveStar = haveStar || c.path === '*'));
         if (!haveStar)
             config.routes.push({
-                path: "*",
-                component: RoutedComponent
+                path: '*',
+                component: RoutedComponent,
             });
     }
 }

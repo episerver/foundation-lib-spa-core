@@ -145,9 +145,7 @@ function createRouteNode(
   createdRoute =
     createdRoute + '/' + (route.path ? (route.path.substr(0, 1) === '/' ? route.path.substr(1) : route.path) : '');
 
-  //   if (ctx?.isDebugActive())
-  console.warn('Generating Route Virtual DOM Node', createdRoute, route, key);
-  console.warn('Generating Route Virtual DOM Node', createdRoute, route?.component?.displayName, key);
+  if (ctx?.isDebugActive()) console.warn('Generating Route Virtual DOM Node', createdRoute, route, key);
 
   const newRouteProps: RouteProps = {
     children: route.children,

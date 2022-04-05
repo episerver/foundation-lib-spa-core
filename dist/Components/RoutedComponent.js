@@ -12,8 +12,6 @@ export const RoutedComponent = (props) => {
     const tmpState = useCmsState();
     let ssrData = null;
     if (ssr.IsServerSideRendering) {
-        console.warn('Routed component ssr');
-        console.warn('Routed component state data', tmpState === null || tmpState === void 0 ? void 0 : tmpState.currentLanguage);
         ssrData = (_a = tmpState === null || tmpState === void 0 ? void 0 : tmpState.iContent) !== null && _a !== void 0 ? _a : ssr.getIContentByPath(path);
     }
     const [iContent, setIContent] = useState(ssrData);
