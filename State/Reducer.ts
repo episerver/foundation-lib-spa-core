@@ -25,7 +25,10 @@ export const CmsStateReducerInfo: IStateReducerInfo<CmsState, CmsStateActionType
 
     switch (action.type) {
       case '@@EPI/INIT':
-        newState = loadInitialState();
+        console.warn('REDUX EPI INIT!');
+        console.warn('epi init state', state?.currentLanguage);
+
+        newState = state ?? loadInitialState();
         break;
       case 'OptiContentCloud/SetState':
         const toMerge: Partial<CmsState> = {};
