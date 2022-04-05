@@ -178,7 +178,10 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
     });
     if (hydrateData) {
       console.warn('Preloading store');
-      this._state = configureStore({ reducer: reducers, preloadedState: this.getInitialState(hydrateData) });
+      this._state = configureStore({
+        reducer: reducers,
+        preloadedState: { OptiContentCloud: this.getInitialState(hydrateData) },
+      });
     } else {
       this._state = configureStore({ reducer: reducers });
     }
