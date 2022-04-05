@@ -4,6 +4,7 @@ import { RouteComponentProps } from 'react-router';
 import { useEpiserver, useIContentRepository, useServerSideRendering } from '../Hooks/Context';
 import { ContentReference, ContentLinkService } from '../Models/ContentLink';
 import IContent from '../Models/IContent';
+import { ContentAppState } from '../State/Reducer';
 import { IContentRenderer } from './EpiComponent';
 import { Spinner } from './Spinner';
 
@@ -12,7 +13,15 @@ export const RoutedComponent: FunctionComponent<RouteComponentProps> = (props: R
   const repo = useIContentRepository();
   const ssr = useServerSideRendering();
   const path = props.location.pathname;
-  const [iContent, setIContent] = useState<IContent | null>(ssr.getIContentByPath(path));
+  let ssrData: IContent | null = null;
+  if (ssr.IsServerSideRendering) {
+    console.warn('Routed component ssr');
+    const tmpState = epi.getStore().getState() as ContentAppState;
+
+    console.warn('Routed component state data', tmpState?.OptiContentCloud?.currentLanguage);
+    ssrData = tmpState?.OptiContentCloud?.iContent ?? ssr.getIContentByPath(path);
+  }
+  const [iContent, setIContent] = useState<IContent | null>(ssrData);
   const debug = epi.isDebugActive();
   const lang = epi.Language;
 

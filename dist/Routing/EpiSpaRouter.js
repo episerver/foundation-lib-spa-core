@@ -101,11 +101,13 @@ export const RoutedContent = (props) => {
 };
 RoutedContent.displayName = 'Optimizely CMS: Route container';
 function createRouteNode(route, basePath = '', key, ctx) {
+    var _a;
     let createdRoute = basePath ? (basePath.substr(-1) === '/' ? basePath.substr(0, -1) : basePath) : '';
     createdRoute =
         createdRoute + '/' + (route.path ? (route.path.substr(0, 1) === '/' ? route.path.substr(1) : route.path) : '');
     //   if (ctx?.isDebugActive())
     console.warn('Generating Route Virtual DOM Node', createdRoute, route, key);
+    console.warn('Generating Route Virtual DOM Node', createdRoute, (_a = route === null || route === void 0 ? void 0 : route.component) === null || _a === void 0 ? void 0 : _a.displayName, key);
     const newRouteProps = {
         children: route.children,
         exact: route.exact,

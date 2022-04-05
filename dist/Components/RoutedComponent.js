@@ -4,11 +4,19 @@ import { ContentLinkService } from '../Models/ContentLink';
 import { IContentRenderer } from './EpiComponent';
 import { Spinner } from './Spinner';
 export const RoutedComponent = (props) => {
+    var _a, _b, _c;
     const epi = useEpiserver();
     const repo = useIContentRepository();
     const ssr = useServerSideRendering();
     const path = props.location.pathname;
-    const [iContent, setIContent] = useState(ssr.getIContentByPath(path));
+    let ssrData = null;
+    if (ssr.IsServerSideRendering) {
+        console.warn('Routed component ssr');
+        const tmpState = epi.getStore().getState();
+        console.warn('Routed component state data', (_a = tmpState === null || tmpState === void 0 ? void 0 : tmpState.OptiContentCloud) === null || _a === void 0 ? void 0 : _a.currentLanguage);
+        ssrData = (_c = (_b = tmpState === null || tmpState === void 0 ? void 0 : tmpState.OptiContentCloud) === null || _b === void 0 ? void 0 : _b.iContent) !== null && _c !== void 0 ? _c : ssr.getIContentByPath(path);
+    }
+    const [iContent, setIContent] = useState(ssrData);
     const debug = epi.isDebugActive();
     const lang = epi.Language;
     const store = epi.getStore();
