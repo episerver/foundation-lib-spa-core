@@ -16,15 +16,14 @@ import AppConfig from './AppConfig';
 
 // Episerver SPA/PWA Server Side Rendering libs
 import SSRResponse from './ServerSideRendering/Response';
+import ServerContext from './ServerSideRendering/ServerContext';
 
-export default function RenderServerSide(config: AppConfig, serviceContainer?: IServiceContainer): SSRResponse {
+export default function RenderServerSide(
+  config: AppConfig,
+  serviceContainer?: IServiceContainer,
+  hydrateData?: ServerContext,
+): SSRResponse {
   // Update context
-
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  const INITIAL__DATA__ = __INITIAL__DATA__ || {};
-
-  console.warn(INITIAL__DATA__);
 
   const ctx = getGlobal();
   ctx.epi = ctx.epi || {};
@@ -35,7 +34,7 @@ export default function RenderServerSide(config: AppConfig, serviceContainer?: I
   config.enableSpinner = false;
   config.noAjax = true;
   config.enableDebug = true;
-  EpiSpaContext.init(config, serviceContainer, true);
+  EpiSpaContext.init(config, serviceContainer, true, hydrateData);
 
   const staticContext: StaticRouterContext = {};
   const body = ReactDOMServer.renderToString(<CmsSite context={EpiSpaContext} staticContext={staticContext} />);

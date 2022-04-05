@@ -7,12 +7,8 @@ import React from 'react';
 import DefaultServiceContainer from './Core/DefaultServiceContainer';
 import EpiSpaContext from './Spa';
 import CmsSite from './Components/CmsSite';
-export default function RenderServerSide(config, serviceContainer) {
+export default function RenderServerSide(config, serviceContainer, hydrateData) {
     // Update context
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    const INITIAL__DATA__ = __INITIAL__DATA__ || {};
-    console.warn(INITIAL__DATA__);
     const ctx = getGlobal();
     ctx.epi = ctx.epi || {};
     ctx.epi.isServerSideRendering = true;
@@ -21,7 +17,7 @@ export default function RenderServerSide(config, serviceContainer) {
     config.enableSpinner = false;
     config.noAjax = true;
     config.enableDebug = true;
-    EpiSpaContext.init(config, serviceContainer, true);
+    EpiSpaContext.init(config, serviceContainer, true, hydrateData);
     const staticContext = {};
     const body = ReactDOMServer.renderToString(React.createElement(CmsSite, { context: EpiSpaContext, staticContext: staticContext }));
     const meta = Helmet.renderStatic();

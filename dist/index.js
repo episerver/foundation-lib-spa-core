@@ -27,10 +27,10 @@ export * as State from './Library/State';
  * @param   {boolean}           ssr                 Marker to hint Server Side rendering
  * @returns {ServerSideRendering.Response|void}  The result of the initialization method invoked
  */
-export function init(config, serviceContainer, containerElementId, ssr) {
+export function init(config, serviceContainer, containerElementId, ssr, hydrateData) {
     serviceContainer = serviceContainer || new Core.DefaultServiceContainer();
     if (ssr) {
-        return initServer(config, serviceContainer);
+        return initServer(config, serviceContainer, hydrateData);
     }
     else {
         return initBrowser(config, containerElementId, serviceContainer);

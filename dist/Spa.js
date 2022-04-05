@@ -54,7 +54,7 @@ export class EpiserverSpaContext {
         return (((_a = this.serviceContainer.getService(DefaultServices.ContentDeliveryAPI_V2)) === null || _a === void 0 ? void 0 : _a.Language) ||
             this.config().defaultLanguage);
     }
-    init(config, serviceContainer, isServerSideRendering = false) {
+    init(config, serviceContainer, isServerSideRendering = false, hydrateDate) {
         // Generic init
         this._initialized = InitStatus.Initializing;
         this._serviceContainer = serviceContainer;
@@ -96,8 +96,8 @@ export class EpiserverSpaContext {
         this._modules.forEach((x) => x.ConfigureContainer(this._serviceContainer));
         this._initialized = InitStatus.ContainerReady;
         // Redux init
-        if (executionContext.isServerSideRendering) {
-            this._initRedux(true);
+        if (executionContext.isServerSideRendering && hydrateDate) {
+            this._initRedux(hydrateDate);
         }
         else {
             this._initRedux();
@@ -114,25 +114,22 @@ export class EpiserverSpaContext {
             ctx.EpiserverSpa.eventEngine = eventEngine;
         }
     }
-    getInitialState() {
-        var _a, _b, _c, _d;
+    getInitialState(hydrateData) {
+        var _a, _b;
         const state = {};
-        console.warn('Creating prelaoded state', JSON.stringify(state));
         if (state.OptiContentCloud == undefined) {
             state.OptiContentCloud = {};
         }
-        const tmpState = getGlobal();
-        console.warn('Creating prelaoded state > after if ', JSON.stringify(state));
-        if (tmpState) {
-            state.OptiContentCloud.currentLanguage = (_b = (_a = tmpState === null || tmpState === void 0 ? void 0 : tmpState.__INITIAL__DATA__) === null || _a === void 0 ? void 0 : _a.Language) !== null && _b !== void 0 ? _b : '';
-            state.OptiContentCloud.iContent = (_d = (_c = tmpState === null || tmpState === void 0 ? void 0 : tmpState.__INITIAL__DATA__) === null || _c === void 0 ? void 0 : _c.IContent) !== null && _d !== void 0 ? _d : undefined;
-            state.OptiContentCloud.initialState = tmpState === null || tmpState === void 0 ? void 0 : tmpState.__INITIAL__DATA__;
+        console.warn('Creating preloaded state > after if ', JSON.stringify(state));
+        if (hydrateData) {
+            state.OptiContentCloud.currentLanguage = (_a = hydrateData === null || hydrateData === void 0 ? void 0 : hydrateData.Language) !== null && _a !== void 0 ? _a : '';
+            state.OptiContentCloud.iContent = (_b = hydrateData === null || hydrateData === void 0 ? void 0 : hydrateData.IContent) !== null && _b !== void 0 ? _b : undefined;
+            state.OptiContentCloud.initialState = hydrateData;
         }
-        console.warn('Creating prelaoded state > after filling ', JSON.stringify(state));
-        console.warn('tmp state', JSON.stringify(tmpState === null || tmpState === void 0 ? void 0 : tmpState.__INITIAL__DATA__));
+        console.warn('Creating preloaded state > after filling ', JSON.stringify(state.OptiContentCloud.currentLanguage));
         return state;
     }
-    _initRedux(hydrate = false) {
+    _initRedux(hydrateData) {
         const reducers = {};
         this._modules.forEach((x) => {
             const ri = x.GetStateReducer();
@@ -140,10 +137,9 @@ export class EpiserverSpaContext {
                 reducers[ri.stateKey] = ri.reducer;
             }
         });
-        if (hydrate) {
+        if (hydrateData) {
             console.warn('Preloading store');
-            console.warn('state', JSON.stringify(this.getInitialState()));
-            this._state = configureStore({ reducer: reducers, preloadedState: this.getInitialState() });
+            this._state = configureStore({ reducer: reducers, preloadedState: this.getInitialState(hydrateData) });
         }
         else {
             this._state = configureStore({ reducer: reducers });

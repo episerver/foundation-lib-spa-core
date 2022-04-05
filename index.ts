@@ -3,6 +3,7 @@ import * as Core from './Library/Core';
 import * as ServerSideRendering from './Library/ServerSideRendering';
 import initServer from './InitServer';
 import initBrowser from './InitBrowser';
+import ServerContext from './ServerSideRendering/ServerContext';
 
 // Namespace exports
 export * as Core from './Library/Core';
@@ -21,7 +22,7 @@ export * as State from './Library/State';
 
 /**
  * Generic initialization function, usable for both Browser & Server side rendering
- * 
+ *
  * @see     InitServer
  * @see     InitBrowser
  * @param   {Core.IConfig}         config              The main configuration object
@@ -30,14 +31,21 @@ export * as State from './Library/State';
  * @param   {boolean}           ssr                 Marker to hint Server Side rendering
  * @returns {ServerSideRendering.Response|void}  The result of the initialization method invoked
  */
-export function init<B extends boolean> (config: Core.IConfig, serviceContainer?: Core.IServiceContainer, containerElementId?: string, ssr?: B) : B extends true ? ServerSideRendering.Response : void
-{
-    serviceContainer = serviceContainer || new Core.DefaultServiceContainer();
-    if (ssr) {
-        return initServer(config, serviceContainer) as B extends true ? ServerSideRendering.Response : void;
-    } else {
-        return initBrowser(config, containerElementId, serviceContainer) as B extends true ? ServerSideRendering.Response : void;
-    }
+export function init<B extends boolean>(
+  config: Core.IConfig,
+  serviceContainer?: Core.IServiceContainer,
+  containerElementId?: string,
+  ssr?: B,
+  hydrateData?: ServerContext,
+): B extends true ? ServerSideRendering.Response : void {
+  serviceContainer = serviceContainer || new Core.DefaultServiceContainer();
+  if (ssr) {
+    return initServer(config, serviceContainer, hydrateData) as B extends true ? ServerSideRendering.Response : void;
+  } else {
+    return initBrowser(config, containerElementId, serviceContainer) as B extends true
+      ? ServerSideRendering.Response
+      : void;
+  }
 }
 
 /**

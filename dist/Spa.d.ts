@@ -10,6 +10,7 @@ import PathProvider from './PathProvider';
 import IContent from './Models/IContent';
 import Website from './Models/Website';
 import IInitializableModule from './Core/IInitializableModule';
+import ServerContext from './ServerSideRendering/ServerContext';
 export declare enum InitStatus {
     NotInitialized = 0,
     Initializing = 1,
@@ -33,7 +34,7 @@ export declare class EpiserverSpaContext implements IEpiserverContext, PathProvi
      */
     get contentStorage(): ContentDeliveryAPI;
     get Language(): string;
-    init(config: AppConfig, serviceContainer: IServiceContainer, isServerSideRendering?: boolean): void;
+    init(config: AppConfig, serviceContainer: IServiceContainer, isServerSideRendering?: boolean, hydrateDate?: ServerContext): void;
     private getInitialState;
     private _initRedux;
     private _initEditMode;

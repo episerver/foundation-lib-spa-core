@@ -1,5 +1,6 @@
 import * as Core from './Library/Core';
 import * as ServerSideRendering from './Library/ServerSideRendering';
+import ServerContext from './ServerSideRendering/ServerContext';
 export * as Core from './Library/Core';
 export * as ContentDelivery from './Library/ContentDelivery';
 export * as Layout from './Library/Layout';
@@ -24,7 +25,7 @@ export * as State from './Library/State';
  * @param   {boolean}           ssr                 Marker to hint Server Side rendering
  * @returns {ServerSideRendering.Response|void}  The result of the initialization method invoked
  */
-export declare function init<B extends boolean>(config: Core.IConfig, serviceContainer?: Core.IServiceContainer, containerElementId?: string, ssr?: B): B extends true ? ServerSideRendering.Response : void;
+export declare function init<B extends boolean>(config: Core.IConfig, serviceContainer?: Core.IServiceContainer, containerElementId?: string, ssr?: B, hydrateData?: ServerContext): B extends true ? ServerSideRendering.Response : void;
 /**
  * Export all hooks in the global scope
  */

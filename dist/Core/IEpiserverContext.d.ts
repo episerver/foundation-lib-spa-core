@@ -7,6 +7,7 @@ import { ContentReference, ContentApiId } from '../Models/ContentLink';
 import ComponentLoader from '../Loaders/ComponentLoader';
 import IContent from '../Models/IContent';
 import Website from '../Models/Website';
+import ServerContext from '../ServerSideRendering/ServerContext';
 /**
  * The context for an Episerver SPA, enabling access to the core logic of the SPA.
  */
@@ -26,7 +27,7 @@ export default interface IEpiserverContext {
      *
      * @param config
      */
-    init(config: EpiConfig, serviceContainer: IServiceContainer, isServerSideRendering?: boolean): void;
+    init(config: EpiConfig, serviceContainer: IServiceContainer, isServerSideRendering?: boolean, hydrateData?: ServerContext): void;
     /**
      * Check if the debug mode is active
      */

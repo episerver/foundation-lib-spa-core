@@ -76,7 +76,12 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
     );
   }
 
-  public init(config: AppConfig, serviceContainer: IServiceContainer, isServerSideRendering = false): void {
+  public init(
+    config: AppConfig,
+    serviceContainer: IServiceContainer,
+    isServerSideRendering = false,
+    hydrateDate?: ServerContext,
+  ): void {
     // Generic init
     this._initialized = InitStatus.Initializing;
     this._serviceContainer = serviceContainer;
@@ -125,8 +130,8 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
     this._initialized = InitStatus.ContainerReady;
 
     // Redux init
-    if (executionContext.isServerSideRendering) {
-      this._initRedux(true);
+    if (executionContext.isServerSideRendering && hydrateDate) {
+      this._initRedux(hydrateDate);
     } else {
       this._initRedux();
     }
@@ -147,26 +152,23 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
     }
   }
 
-  private getInitialState(): ContentAppState {
+  private getInitialState(hydrateData: ServerContext): ContentAppState {
     const state: ContentAppState = {};
-    console.warn('Creating prelaoded state', JSON.stringify(state));
     if (state.OptiContentCloud == undefined) {
       state.OptiContentCloud = {};
     }
-    const tmpState = getGlobal();
-    console.warn('Creating prelaoded state > after if ', JSON.stringify(state));
-    if (tmpState) {
-      state.OptiContentCloud.currentLanguage = (tmpState?.__INITIAL__DATA__?.Language as string) ?? '';
-      state.OptiContentCloud.iContent = (tmpState?.__INITIAL__DATA__?.IContent as IContent) ?? undefined;
-      state.OptiContentCloud.initialState = tmpState?.__INITIAL__DATA__;
+    console.warn('Creating preloaded state > after if ', JSON.stringify(state));
+    if (hydrateData) {
+      state.OptiContentCloud.currentLanguage = (hydrateData?.Language as string) ?? '';
+      state.OptiContentCloud.iContent = (hydrateData?.IContent as IContent) ?? undefined;
+      state.OptiContentCloud.initialState = hydrateData;
     }
 
-    console.warn('Creating prelaoded state > after filling ', JSON.stringify(state));
-    console.warn('tmp state', JSON.stringify(tmpState?.__INITIAL__DATA__));
+    console.warn('Creating preloaded state > after filling ', JSON.stringify(state.OptiContentCloud.currentLanguage));
     return state;
   }
 
-  private _initRedux(hydrate = false): void {
+  private _initRedux(hydrateData?: ServerContext): void {
     const reducers: { [key: string]: Reducer<any, Action> } = {};
     this._modules.forEach((x) => {
       const ri = x.GetStateReducer();
@@ -174,10 +176,9 @@ export class EpiserverSpaContext implements IEpiserverContext, PathProvider {
         reducers[ri.stateKey] = ri.reducer;
       }
     });
-    if (hydrate) {
+    if (hydrateData) {
       console.warn('Preloading store');
-      console.warn('state', JSON.stringify(this.getInitialState()));
-      this._state = configureStore({ reducer: reducers, preloadedState: this.getInitialState() });
+      this._state = configureStore({ reducer: reducers, preloadedState: this.getInitialState(hydrateData) });
     } else {
       this._state = configureStore({ reducer: reducers });
     }
