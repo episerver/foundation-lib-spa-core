@@ -139,9 +139,10 @@ export class EpiserverSpaContext {
         });
         if (hydrateData) {
             console.warn('Preloading store');
+            console.warn('reducers', reducers);
             this._state = configureStore({
                 reducer: reducers,
-                preloadedState: { OptiContentCloud: this.getInitialState(hydrateData) },
+                preloadedState: { OptiContentCloud: { value: this.getInitialState(hydrateData) } },
             });
         }
         else {
