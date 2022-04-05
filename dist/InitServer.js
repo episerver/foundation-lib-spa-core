@@ -1,5 +1,6 @@
 // Set SSR
 import getGlobal from './AppGlobal';
+import { ServerStyleSheet } from 'styled-components';
 // Global Libraries && Poly-fills
 import ReactDOMServer from 'react-dom/server';
 import { Helmet } from 'react-helmet';
@@ -18,18 +19,31 @@ export default function RenderServerSide(config, serviceContainer, hydrateData) 
     config.noAjax = true;
     config.enableDebug = true;
     EpiSpaContext.init(config, serviceContainer, true, hydrateData);
+    const sheet = new ServerStyleSheet();
     const staticContext = {};
-    const body = ReactDOMServer.renderToString(React.createElement(CmsSite, { context: EpiSpaContext, staticContext: staticContext }));
+    let html = '';
+    let styles = '';
+    try {
+        html = ReactDOMServer.renderToString(sheet.collectStyles(React.createElement(CmsSite, { context: EpiSpaContext, staticContext: staticContext })));
+        styles = sheet.getStyleTags(); // or sheet.getStyleElement();
+    }
+    catch (error) {
+        // handle error
+        console.error(error);
+    }
+    finally {
+        sheet.seal();
+    }
     const meta = Helmet.renderStatic();
-    console.warn('Body', body);
+    console.warn('Body', sheet);
     return {
-        Body: body,
+        Body: html,
         HtmlAttributes: meta.htmlAttributes.toString(),
         Title: meta.title.toString(),
         Meta: meta.meta.toString(),
         Link: meta.link.toString(),
         Script: meta.script.toString(),
-        Style: meta.style.toString(),
+        Style: styles,
         BodyAttributes: meta.bodyAttributes.toString(),
     };
 }
