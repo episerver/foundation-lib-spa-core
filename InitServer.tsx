@@ -55,9 +55,6 @@ export default function RenderServerSide(
   }
 
   const meta = Helmet.renderStatic();
-
-  console.warn('Body', sheet);
-
   return {
     Body: html,
     HtmlAttributes: meta.htmlAttributes.toString(),

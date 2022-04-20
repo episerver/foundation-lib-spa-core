@@ -35,7 +35,6 @@ export default function RenderServerSide(config, serviceContainer, hydrateData) 
         sheet.seal();
     }
     const meta = Helmet.renderStatic();
-    console.warn('Body', sheet);
     return {
         Body: html,
         HtmlAttributes: meta.htmlAttributes.toString(),
