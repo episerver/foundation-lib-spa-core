@@ -69,8 +69,8 @@ const ElementNavigation = (props) => {
                 if (config.enableDebug)
                     console.info('ElementNavigation: Ignoring navigation to same path');
                 if (document && hash) {
+                    window.location.replace(hash);
                     let localHash = hash.slice(1);
-                    window.location.hash = localHash;
                     const element = document.getElementById(localHash);
                     if (element) {
                         element.scrollIntoView();
