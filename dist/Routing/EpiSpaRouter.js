@@ -65,7 +65,7 @@ const ElementNavigation = (props) => {
             }
             // Navigate to the new path
             if (newPath) {
-                if (link.hasAttribute('forceReload')) {
+                if (link.hasAttribute('data-force-reload')) {
                     // Follow link without intercepting event
                     return true;
                 }
