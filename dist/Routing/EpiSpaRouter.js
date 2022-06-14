@@ -65,6 +65,10 @@ const ElementNavigation = (props) => {
             }
             // Navigate to the new path
             if (newPath) {
+                if (link.hasAttribute('forceReload')) {
+                    // Follow link without intercepting event
+                    return true;
+                }
                 if (config.basePath && newPath.substr(0, config.basePath.length) === config.basePath) {
                     newPath = newPath.substr(config.basePath.length);
                     if (newPath.substr(0, 1) !== '/')
