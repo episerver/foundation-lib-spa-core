@@ -12,6 +12,8 @@ export class BrowserServerContextAccessor {
         this.IsServerSideRendering = false;
         this._context = execContext;
         this._config = config;
+        let decryptedData = JSON.parse(atob(__INITIAL_ENCRYPTED_DATA__));
+        __INITIAL__DATA__ = Object.assign({}, decryptedData);
     }
     get IsAvailable() {
         let available = false;

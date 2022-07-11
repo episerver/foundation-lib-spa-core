@@ -8,7 +8,8 @@ import IServerContextAccessor from './IServerContextAccessor';
 import IExecutionContext from '../Core/IExecutionContext';
 import IAppConfig from '../AppConfig';
 
-declare const __INITIAL__DATA__ : ServerContext<SerializedServerContext>;
+declare var __INITIAL__DATA__ : ServerContext<SerializedServerContext>;
+declare var __INITIAL_ENCRYPTED_DATA__ :  string;
 
 /**
  * Simple accessor to quickly and conveniently access the context created by the
@@ -25,6 +26,8 @@ export class BrowserServerContextAccessor implements IServerContextAccessor
     {
         this._context = execContext;
         this._config = config;
+        let decryptedData = JSON.parse(atob(__INITIAL_ENCRYPTED_DATA__));
+        __INITIAL__DATA__ = Object.assign({}, decryptedData);
     }
 
     public get IsAvailable() : boolean
