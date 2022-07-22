@@ -91,7 +91,7 @@ export default class RepositoryModule extends BaseInitializableModule implements
 
         // Build New ContentDeliveryAPI Connector
         const newApiClassicConfig : Partial<IContentDeliveryConfig> = {
-            Adapter: config.networkAdapter || isFetchApiAvailable() ? FetchAdapter : undefined,
+            Adapter: config.networkAdapter || (isFetchApiAvailable() ? FetchAdapter : undefined),
             BaseURL: config.epiBaseUrl,
             AutoExpandAll: config.autoExpandRequests,
             Debug: config.enableDebug,
