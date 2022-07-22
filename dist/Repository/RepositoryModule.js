@@ -45,7 +45,7 @@ export default class RepositoryModule extends BaseInitializableModule {
         const context = container.getService(DefaultServices.ExecutionContext);
         // Build New ContentDeliveryAPI Connector
         const newApiClassicConfig = {
-            Adapter: config.networkAdapter || isFetchApiAvailable() ? FetchAdapter : undefined,
+            Adapter: config.networkAdapter || (isFetchApiAvailable() ? FetchAdapter : undefined),
             BaseURL: config.epiBaseUrl,
             AutoExpandAll: config.autoExpandRequests,
             Debug: config.enableDebug,
