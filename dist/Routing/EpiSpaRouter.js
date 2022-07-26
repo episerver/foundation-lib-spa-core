@@ -53,11 +53,11 @@ const ElementNavigation = (props) => {
                 const targetUrl = new URL(link.href, currentUrl);
                 // Only act if we remain on the same domain
                 if (targetUrl.origin === currentUrl.origin) {
-                    newPath = targetUrl.pathname;
+                    newPath = targetUrl.pathname + targetUrl.search;
                 }
             }
             // Do not navigate to the same page
-            if (newPath === location.pathname) {
+            if (newPath === location.pathname + location.search) {
                 if (config.enableDebug)
                     console.info('ElementNavigation: Ignoring navigation to same path');
                 event.preventDefault();
