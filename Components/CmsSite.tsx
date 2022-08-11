@@ -3,6 +3,8 @@ import React, { useEffect } from 'react';
 import { Helmet } from 'react-helmet';
 import { Provider as ReduxProvider } from 'react-redux';
 import { StaticRouterContext } from 'react-router';
+import axios from 'axios';
+import NProgress from 'nprogress';
 
 // Import Episerver Core CMS
 import IEpiserverContext from '../Core/IEpiserverContext';
@@ -26,6 +28,39 @@ export interface CmsSiteProps {
   context: IEpiserverContext;
 }
 
+let numberOfAjaxCAllPending = 0;
+
+// Add a request interceptor
+axios.interceptors.request.use(
+  function (config) {
+    numberOfAjaxCAllPending++;
+    return config;
+  },
+  function (error) {
+    return Promise.reject(error);
+  },
+);
+
+// Add a response interceptor
+axios.interceptors.response.use(
+  function (response) {
+    numberOfAjaxCAllPending--;
+    if (numberOfAjaxCAllPending === 0) {
+      // hide loader
+      NProgress.done();
+    }
+    return response;
+  },
+  function (error) {
+    numberOfAjaxCAllPending--;
+    if (numberOfAjaxCAllPending === 0) {
+      // hide loader
+      NProgress.done();
+    }
+    return Promise.reject(error);
+  },
+);
+
 export const EpiserverWebsite: React.FunctionComponent<CmsSiteProps> = (props) => {
   const SiteLayout = getLayout(props.context);
   const ssr = props.context.serviceContainer.getService<IServerContextAccessor>(DefaultServices.ServerContext);
@@ -41,6 +76,10 @@ export const EpiserverWebsite: React.FunctionComponent<CmsSiteProps> = (props) =
       initialState: global.__INITIAL__DATA__,
     });
   }, [epi, global?.__INITIAL__DATA__]);
+
+  useEffect(() => {
+    NProgress.start();
+  }, [location]);
 
   return (
     <ReduxProvider store={props.context.getStore()}>

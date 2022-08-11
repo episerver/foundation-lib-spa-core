@@ -2,6 +2,8 @@
 import React, { useEffect } from 'react';
 import { Helmet } from 'react-helmet';
 import { Provider as ReduxProvider } from 'react-redux';
+import axios from 'axios';
+import NProgress from 'nprogress';
 import EpiserverContext from '../Hooks/Context';
 // Import Episerver Taxonomy
 import Layout from './Layout';
@@ -10,6 +12,30 @@ import EpiRouter, { RoutedContent } from '../Routing/EpiSpaRouter';
 import { DefaultServices } from '../Core/IServiceContainer';
 import CmsCommunicator from './CmsCommunicator';
 import getGlobal from '../AppGlobal';
+let numberOfAjaxCAllPending = 0;
+// Add a request interceptor
+axios.interceptors.request.use(function (config) {
+    numberOfAjaxCAllPending++;
+    return config;
+}, function (error) {
+    return Promise.reject(error);
+});
+// Add a response interceptor
+axios.interceptors.response.use(function (response) {
+    numberOfAjaxCAllPending--;
+    if (numberOfAjaxCAllPending === 0) {
+        // hide loader
+        NProgress.done();
+    }
+    return response;
+}, function (error) {
+    numberOfAjaxCAllPending--;
+    if (numberOfAjaxCAllPending === 0) {
+        // hide loader
+        NProgress.done();
+    }
+    return Promise.reject(error);
+});
 export const EpiserverWebsite = (props) => {
     const SiteLayout = getLayout(props.context);
     const ssr = props.context.serviceContainer.getService(DefaultServices.ServerContext);
@@ -24,6 +50,9 @@ export const EpiserverWebsite = (props) => {
             initialState: global.__INITIAL__DATA__,
         });
     }, [epi, global === null || global === void 0 ? void 0 : global.__INITIAL__DATA__]);
+    useEffect(() => {
+        NProgress.start();
+    }, [location]);
     return (React.createElement(ReduxProvider, { store: props.context.getStore() },
         React.createElement(EpiserverContext.Provider, { value: props.context },
             React.createElement(Helmet, null),

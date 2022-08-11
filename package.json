@@ -58,7 +58,8 @@
     "react-router": "^5.2.0",
     "react-router-dom": "^5.2.0",
     "redux": "^4.0.5",
-    "uuid": "^8.3.2"
+    "uuid": "^8.3.2",
+    "nprogress": "^0.2.0"
   },
   "private": true,
   "scripts": {
@@ -66,5 +67,5 @@
     "watch": "npx tsc --watch --pretty tsconfig.json",
     "lint": "npx eslint . --ext .ts --color"
   },
-  "version": "0.2.4"
+  "version": "0.2.5"
 }
