@@ -1,5 +1,4 @@
 import { EnhancedStore } from '@reduxjs/toolkit';
-import React from 'react';
 import IContentDeliveryAPI from '../ContentDelivery/IContentDeliveryAPI';
 import IEpiserverContext from '../Core/IEpiserverContext';
 import IEventEngine from '../Core/IEventEngine';
@@ -12,7 +11,7 @@ import CmsState from '../State/CmsState';
  *
  * @constant { React.Context<IEpiserverContext | undefined> } Episerver
  */
-export declare const Episerver: React.Context<IEpiserverContext | undefined>;
+export declare const Episerver: any;
 export default Episerver;
 /**
  * React Hook (for functional components) to retrieve the Episerver Context from
@@ -41,7 +40,7 @@ export declare function useContentDeliveryAPI(): IContentDeliveryAPI;
 /**
  * create your forceUpdate hook
  */
-export declare function useForceUpdate(): () => void;
+export declare function useForceUpdate(): () => any;
 export declare function useServerSideRendering(): IServerContextAccessor;
 export declare function useEvents(): IEventEngine;
 export declare function useStore(): EnhancedStore;

@@ -29,6 +29,6 @@ export declare class StringUtils {
     static TrimLeft: (char: string, subject: string) => string;
 }
 export declare const SafeModelName: (modelName: string) => string;
-export declare const TrimRight: (char: string, subject?: string | undefined) => string;
+export declare const TrimRight: (char: string, subject?: string) => string;
 export declare const TrimLeft: (char: string, subject: string) => string;
 export default StringUtils;

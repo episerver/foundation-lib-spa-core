@@ -12,15 +12,18 @@ export class BrowserServerContextAccessor {
         this.IsServerSideRendering = false;
         this._context = execContext;
         this._config = config;
-        let decryptedData = JSON.parse(atob(__INITIAL_ENCRYPTED_DATA__));
-        __INITIAL__DATA__ = Object.assign({}, decryptedData);
+        if (typeof __INITIAL_ENCRYPTED_DATA__ !== 'undefined') {
+            const decryptedData = decodeURIComponent(escape(window.atob(__INITIAL_ENCRYPTED_DATA__)));
+            const data = JSON.parse(decryptedData);
+            __INITIAL__DATA__ = Object.assign({}, data);
+        }
     }
     get IsAvailable() {
         let available = false;
         try {
-            const dataType = typeof (__INITIAL__DATA__);
+            const dataType = typeof __INITIAL__DATA__;
             const initData = __INITIAL__DATA__;
-            available = dataType === "object" && initData !== null;
+            available = dataType === 'object' && initData !== null;
         }
         catch (e) {
             // Ignored on purpose
@@ -56,7 +59,7 @@ export class BrowserServerContextAccessor {
         var _a;
         if (!this.IsAvailable)
             return [];
-        return ((_a = this.get('contents')) === null || _a === void 0 ? void 0 : _a.map(x => isSerializedIContent(x) ? JSON.parse(x) : x)) || [];
+        return ((_a = this.get('contents')) === null || _a === void 0 ? void 0 : _a.map((x) => (isSerializedIContent(x) ? JSON.parse(x) : x))) || [];
     }
     /**
      * Get an IContent for a path on the current website, null if not found
@@ -66,13 +69,13 @@ export class BrowserServerContextAccessor {
     getIContentByPath(path) {
         var _a;
         const baseUrl = new URL(this._config.basePath, this._config.spaBaseUrl || this._config.epiBaseUrl);
-        const contentPath = this.IContent ? (new URL(this.IContent.url || '', baseUrl)).pathname : undefined;
+        const contentPath = this.IContent ? new URL(this.IContent.url || '', baseUrl).pathname : undefined;
         // First see if the given content matches the route
         if (StringUtils.TrimRight('/', path) === StringUtils.TrimRight('/', contentPath))
             return this.IContent;
         // Then, if no match, see if we're rendering the homepage
         if (path === '/') {
-            const startPageLink = ((_a = this.Website) === null || _a === void 0 ? void 0 : _a.contentRoots) ? this.Website.contentRoots["startPage"] : undefined;
+            const startPageLink = ((_a = this.Website) === null || _a === void 0 ? void 0 : _a.contentRoots) ? this.Website.contentRoots['startPage'] : undefined;
             if (startPageLink && this.IContent) {
                 const iContentId = ContentLinkService.createApiId(this.IContent);
                 const startPageId = ContentLinkService.createApiId(startPageLink);
@@ -86,14 +89,16 @@ export class BrowserServerContextAccessor {
         return null;
     }
     getIContent(ref) {
-        // Build the identifier of the requested content    
+        // Build the identifier of the requested content
         const refId = ContentLinkService.createApiId(ref || 'args.ref', false, true);
         // See if we're requesting the main content item
         if (ContentLinkService.createApiId(this.IContent || 'this.icontent', false, true) === refId)
             return this.IContent;
         let serverItem = null;
-        this.Contents.forEach(x => {
-            serverItem = serverItem || (ContentLinkService.createApiId(x || 'this.Contents', false, true) === refId ? x : serverItem);
+        this.Contents.forEach((x) => {
+            serverItem =
+                serverItem ||
+                    (ContentLinkService.createApiId(x || 'this.Contents', false, true) === refId ? x : serverItem);
         });
         return serverItem;
     }
