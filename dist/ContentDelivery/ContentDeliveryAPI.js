@@ -440,8 +440,8 @@ export class ContentDeliveryAPI {
                 }
                 if (response.status == 301 || response.status == 302) {
                     // REDIRECT
-                    console.info(response);
-                    console.info(response.data);
+                    console.error(response);
+                    console.error(response.data);
                 }
                 const data = response.data || this.createNetworkErrorResponse('Empty response', response);
                 const ctx = {

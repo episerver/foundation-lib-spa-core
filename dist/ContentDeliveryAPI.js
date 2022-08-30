@@ -250,6 +250,7 @@ export class ContentDeliveryAPI {
             })
                 .catch((reason) => {
                 if (reason.IsAxiosError()) {
+                    console.error(reason);
                     if (reason.response.status == 302 || reason.response.status == 301) {
                         window.location.href = reason.response.request.responseURL;
                     }
