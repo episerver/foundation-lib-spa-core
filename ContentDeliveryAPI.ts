@@ -1,4 +1,4 @@
-import Axios, { AxiosRequestConfig, Method, AxiosResponse, AxiosAdapter, AxiosPromise } from 'axios';
+import Axios, { AxiosRequestConfig, Method, AxiosResponse, AxiosAdapter, AxiosPromise, AxiosError } from 'axios';
 import AppConfig from './AppConfig';
 import IContent from './Models/IContent';
 import ContentLink, { ContentReference, ContentLinkService } from './Models/ContentLink';
@@ -189,6 +189,7 @@ export class ContentDeliveryAPI {
     }
     return this.doRequest<PathResponse>(serviceUrl.href)
       .catch((r) => {
+        
         return this.buildNetworkError(r);
       })
       .then((r) => getIContentFromPathResponse(r));
@@ -278,7 +279,12 @@ export class ContentDeliveryAPI {
         if (this.debug) console.debug(`Response from ${url}:`, response.data);
         return response.data;
       })
-      .catch((reason) => {
+      .catch((reason: Error | AxiosError) => {
+        if (reason.IsAxiosError()) {
+          if (reason.response.status == 302 || reason.response.status == 301) {
+            window.location.href = reason.response.request.responseURL
+          }
+        }
         if (this.debug) console.error(`Response from ${url}: HTTP Fetch error `, reason);
         throw reason;
       });

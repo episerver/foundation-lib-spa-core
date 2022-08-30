@@ -65,7 +65,7 @@ const ElementNavigation = (props) => {
             }
             // Navigate to the new path
             if (newPath) {
-                if (link.hasAttribute('data-force-reload') || link.getAttribute('target') === '_blank') {
+                if (link.hasAttribute('data-force-reload') || link.getAttribute('target') === '_blank' || newPath.includes('/globalassets/')) {
                     // Follow link without intercepting event
                     return true;
                 }

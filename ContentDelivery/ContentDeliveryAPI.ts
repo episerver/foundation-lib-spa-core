@@ -512,6 +512,12 @@ export class ContentDeliveryAPI implements IContentDeliveryAPi {
           );
         throw new Error(`${response.status}: ${response.statusText}`);
       }
+      if (response.status == 301 || response.status == 302) {
+        // REDIRECT
+        console.info(response);
+        console.info(response.data);
+
+      }
       const data = response.data || this.createNetworkErrorResponse('Empty response', response);
       const ctx: IContentDeliveryResponseContext = {
         status: response.status,

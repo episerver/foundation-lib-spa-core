@@ -249,6 +249,11 @@ export class ContentDeliveryAPI {
                 return response.data;
             })
                 .catch((reason) => {
+                if (reason.IsAxiosError()) {
+                    if (reason.response.status == 302 || reason.response.status == 301) {
+                        window.location.href = reason.response.request.responseURL;
+                    }
+                }
                 if (this.debug)
                     console.error(`Response from ${url}: HTTP Fetch error `, reason);
                 throw reason;
