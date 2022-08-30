@@ -7,7 +7,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import { useHistory } from 'react-router';
 /**
  * Check if the browser cache for Fetch Requests/Responses is available
  *
@@ -30,7 +29,6 @@ const isCachesAvailable = cachesAvailable();
  * @returns { Promise<AxiosResponse> }      The response of the Fetch API Call
  */
 export const FetchAdapter = (config) => __awaiter(void 0, void 0, void 0, function* () {
-    const history = useHistory();
     const userAgent = 'Axios-Fetch-Adapter/0.0.1';
     const requestUrl = new URL(config.url || '', config.baseURL);
     if (config.auth) {
@@ -83,6 +81,9 @@ export const FetchAdapter = (config) => __awaiter(void 0, void 0, void 0, functi
     }
     const responseHeaders = {};
     r.headers.forEach((value, name) => responseHeaders[name] = value);
+    if (r.url != requestUrl.href && requestConfig.method === "get") {
+        responseHeaders["redirectUrl"] = r.url;
+    }
     const response = {
         config,
         request,
@@ -92,7 +93,7 @@ export const FetchAdapter = (config) => __awaiter(void 0, void 0, void 0, functi
         data: undefined
     };
     if (r.url != requestUrl.href && requestConfig.method === "get") {
-        history.push(r.url);
+        response.status = 301;
     }
     switch (config.responseType) {
         case 'json':

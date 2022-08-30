@@ -438,6 +438,9 @@ export class ContentDeliveryAPI {
                         console.info(`ContentDeliveryAPI Error ${response.status}: ${response.statusText}`, requestConfig.method + ' ' + requestConfig.url);
                     throw new Error(`${response.status}: ${response.statusText}`);
                 }
+                if (response.status == 301 || response.status == 302) {
+                    window.location.href = response.headers["redirectUrl"];
+                }
                 const data = response.data || this.createNetworkErrorResponse('Empty response', response);
                 const ctx = {
                     status: response.status,
