@@ -1,4 +1,5 @@
 import { AxiosResponse, AxiosAdapter, AxiosRequestConfig } from 'axios';
+import { useHistory } from 'react-router';
 
 export type CachingFetchAdapter = AxiosAdapter & {
     isCachable ?: ((request: Readonly<Request>) => boolean)[]
@@ -29,6 +30,7 @@ const isCachesAvailable = cachesAvailable();
  */
 export const FetchAdapter : CachingFetchAdapter = async (config: AxiosRequestConfig) : Promise<AxiosResponse> => 
 {
+    const history = useHistory();
     const userAgent = 'Axios-Fetch-Adapter/0.0.1';
     const requestUrl : URL = new URL(config.url || '', config.baseURL);
     if (config.auth) {
@@ -49,6 +51,8 @@ export const FetchAdapter : CachingFetchAdapter = async (config: AxiosRequestCon
     if (!headers['User-Agent'] && !headers['user-agent']) {
       headers['User-Agent'] = userAgent;
     }
+
+    config.maxRedirects = 3;
 
     const requestConfig : RequestInit = {
         headers: new Headers(headers),
@@ -91,6 +95,11 @@ export const FetchAdapter : CachingFetchAdapter = async (config: AxiosRequestCon
         headers: responseHeaders,
         data: undefined
     };
+
+    if (r.url != requestUrl.href && requestConfig.method === "get") {
+        history.push(r.url);
+    }
+    
     switch (config.responseType) {
         case 'json':
             response.data = await r.json().catch(_ => undefined);
