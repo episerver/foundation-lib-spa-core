@@ -62,8 +62,8 @@ export const EpiserverWebsite = (props) => {
             React.createElement(EpiRouter, { location: location, context: props.staticContext },
                 React.createElement(SiteLayout, { context: props.context },
                     React.createElement(RoutedContent, { config: props.context.config().routes || [], keyPrefix: "CmsSite-RoutedContent" }),
-                    props.children),
-                React.createElement(Route, { component: NotFoundComponent })))));
+                    React.createElement(Route, { component: NotFoundComponent }),
+                    props.children)))));
 };
 function getLayout(context) {
     return context.config().layout || Layout;
