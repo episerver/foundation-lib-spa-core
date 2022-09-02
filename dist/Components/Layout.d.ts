@@ -10,4 +10,5 @@ export declare type LayoutComponent<P extends LayoutProps = LayoutProps> = Compo
  * @param   props   The properties of this layout
  */
 export declare const Layout: FunctionComponent<LayoutProps>;
+export declare const NotFoundComponent: FunctionComponent;
 export default Layout;

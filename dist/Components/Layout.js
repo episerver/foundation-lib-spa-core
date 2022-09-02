@@ -7,5 +7,8 @@ import React from 'react';
 export const Layout = (props) => {
     return React.createElement("div", { className: "site-layout" }, props.children);
 };
+export const NotFoundComponent = (props) => {
+    return React.createElement("div", { className: "not-found-component" }, props.children);
+};
 export default Layout;
 //# sourceMappingURL=Layout.js.map

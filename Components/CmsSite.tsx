@@ -1,8 +1,8 @@
 // Import libraries
-import React, { useEffect } from 'react';
+import React, { FunctionComponent, useEffect } from 'react';
 import { Helmet } from 'react-helmet';
 import { Provider as ReduxProvider } from 'react-redux';
-import { StaticRouterContext } from 'react-router';
+import { Route, StaticRouterContext } from 'react-router';
 import axios from 'axios';
 import NProgress from 'nprogress';
 
@@ -11,7 +11,7 @@ import IEpiserverContext from '../Core/IEpiserverContext';
 import EpiserverContext, { useEpiserver } from '../Hooks/Context';
 
 // Import Episerver Taxonomy
-import Layout, { LayoutComponent } from './Layout';
+import Layout, { LayoutComponent, NotFoundComponent } from './Layout';
 
 // Import Episerver Components
 import EpiRouter, { RoutedContent } from '../Routing/EpiSpaRouter';
@@ -63,6 +63,7 @@ axios.interceptors.response.use(
 
 export const EpiserverWebsite: React.FunctionComponent<CmsSiteProps> = (props) => {
   const SiteLayout = getLayout(props.context);
+  const NotFoundComponent = getNotFound(props.context);
   const ssr = props.context.serviceContainer.getService<IServerContextAccessor>(DefaultServices.ServerContext);
   const location = (props.context.isServerSideRendering() ? ssr.Path : window.location.pathname) || undefined;
   const epi = props.context.getStore();
@@ -91,6 +92,7 @@ export const EpiserverWebsite: React.FunctionComponent<CmsSiteProps> = (props) =
             <RoutedContent config={props.context.config().routes || []} keyPrefix="CmsSite-RoutedContent" />
             {props.children}
           </SiteLayout>
+          <Route component={NotFoundComponent} />
         </EpiRouter>
       </EpiserverContext.Provider>
     </ReduxProvider>
@@ -99,6 +101,10 @@ export const EpiserverWebsite: React.FunctionComponent<CmsSiteProps> = (props) =
 
 function getLayout(context: IEpiserverContext): LayoutComponent {
   return context.config().layout || Layout;
+}
+
+function getNotFound(context: IEpiserverContext): FunctionComponent {
+  return context.config().notFoundComponent || NotFoundComponent;
 }
 
 EpiserverWebsite.displayName = 'Optimizely CMS: Website';

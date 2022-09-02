@@ -9,6 +9,7 @@ import { IRepositoryConfig } from './Repository/IRepository';
 import { IComponentLoaderConfig } from './Loaders/ComponentLoader'
 import IContentDeliveryConfig from './ContentDelivery/Config';
 import { TypeMapperType } from './Loaders/BaseTypeMapper';
+import { FunctionComponent } from 'react';
 
 export type AppConfig = {
   /**
@@ -74,6 +75,12 @@ export type AppConfig = {
    * content.
    */
   layout?: LayoutComponent;
+
+  /**
+   * The layout to apply to the website, this is the "frame" around the routed
+   * content.
+   */
+  notFoundComponent?: FunctionComponent;
 
   /**
    * Content Area configuration

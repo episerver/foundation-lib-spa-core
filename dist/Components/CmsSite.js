@@ -2,11 +2,12 @@
 import React, { useEffect } from 'react';
 import { Helmet } from 'react-helmet';
 import { Provider as ReduxProvider } from 'react-redux';
+import { Route } from 'react-router';
 import axios from 'axios';
 import NProgress from 'nprogress';
 import EpiserverContext from '../Hooks/Context';
 // Import Episerver Taxonomy
-import Layout from './Layout';
+import Layout, { NotFoundComponent } from './Layout';
 // Import Episerver Components
 import EpiRouter, { RoutedContent } from '../Routing/EpiSpaRouter';
 import { DefaultServices } from '../Core/IServiceContainer';
@@ -38,6 +39,7 @@ axios.interceptors.response.use(function (response) {
 });
 export const EpiserverWebsite = (props) => {
     const SiteLayout = getLayout(props.context);
+    const NotFoundComponent = getNotFound(props.context);
     const ssr = props.context.serviceContainer.getService(DefaultServices.ServerContext);
     const location = (props.context.isServerSideRendering() ? ssr.Path : window.location.pathname) || undefined;
     const epi = props.context.getStore();
@@ -60,10 +62,14 @@ export const EpiserverWebsite = (props) => {
             React.createElement(EpiRouter, { location: location, context: props.staticContext },
                 React.createElement(SiteLayout, { context: props.context },
                     React.createElement(RoutedContent, { config: props.context.config().routes || [], keyPrefix: "CmsSite-RoutedContent" }),
-                    props.children)))));
+                    props.children),
+                React.createElement(Route, { component: NotFoundComponent })))));
 };
 function getLayout(context) {
     return context.config().layout || Layout;
+}
+function getNotFound(context) {
+    return context.config().notFoundComponent || NotFoundComponent;
 }
 EpiserverWebsite.displayName = 'Optimizely CMS: Website';
 export default EpiserverWebsite;
