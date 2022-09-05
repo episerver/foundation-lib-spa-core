@@ -30,12 +30,16 @@ export const RoutedComponent: FunctionComponent<RouteComponentProps> = (props: R
   useEffect(() => {
     let isCancelled = false;
     setIsLoading(true);
-    repo.getByRoute(path).then((c) => {
-      setIsLoading(false);
-      if (isCancelled) return;
-      epi.setRoutedContent(c || undefined);
-      setIContent(c);
-    });
+    repo
+      .getByRoute(path)
+      .then((c) => {
+        if (isCancelled) return;
+        epi.setRoutedContent(c || undefined);
+        setIContent(c);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
     return () => {
       isCancelled = true;
       epi.setRoutedContent();
@@ -51,9 +55,6 @@ export const RoutedComponent: FunctionComponent<RouteComponentProps> = (props: R
         isCancelled = true;
       };
     }
-
-    setIsLoading(true);
-
     const linkId = ContentLinkService.createLanguageId(iContent, lang, true);
 
     const afterPatch: (link: Readonly<ContentReference>, oldValue: Readonly<IContent>, newValue: IContent) => void = (
@@ -61,6 +62,7 @@ export const RoutedComponent: FunctionComponent<RouteComponentProps> = (props: R
       oldValue,
       newValue,
     ) => {
+      setIsLoading(true);
       const itemApiId = ContentLinkService.createLanguageId(link, lang, true);
       if (debug)
         console.debug('RoutedComponent.onContentPatched => Checking content ids (link, received)', linkId, itemApiId);
@@ -71,6 +73,7 @@ export const RoutedComponent: FunctionComponent<RouteComponentProps> = (props: R
       }
     };
     const afterUpdate: (item: IContent | null) => void = (item: IContent | null) => {
+      setIsLoading(true);
       if (!item) {
         setIsLoading(false);
         return;
