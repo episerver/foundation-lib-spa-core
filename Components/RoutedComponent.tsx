@@ -47,7 +47,6 @@ export const RoutedComponent: FunctionComponent<RouteComponentProps> = (props: R
   useEffect(() => {
     let isCancelled = false;
     if (!iContent) {
-      setIsLoading(false);
       return () => {
         isCancelled = true;
       };
@@ -102,11 +101,9 @@ export const RoutedComponent: FunctionComponent<RouteComponentProps> = (props: R
 
   if (iContent === null) {
     if (!isLoading || (ssr.IsServerSideRendering && ssrData === null)) {
-      console.log('404');
       return <NotFound />;
     }
 
-    console.log('spinner');
     return <Spinner />;
   }
 

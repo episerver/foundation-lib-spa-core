@@ -42,7 +42,6 @@ export const RoutedComponent = (props) => {
     useEffect(() => {
         let isCancelled = false;
         if (!iContent) {
-            setIsLoading(false);
             return () => {
                 isCancelled = true;
             };
