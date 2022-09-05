@@ -87,11 +87,11 @@ export const RoutedComponent = (props) => {
             repo.removeListener('afterUpdate', afterUpdate);
         };
     }, [repo, debug, lang, iContent]);
-    if (!isLoading && iContent === null && ssr.IsServerSideRendering && ssrData !== null) {
-        console.log('404');
-        return React.createElement(NotFound, null);
-    }
     if (iContent === null) {
+        if (!isLoading || (ssr.IsServerSideRendering && ssrData === null)) {
+            console.log('404');
+            return React.createElement(NotFound, null);
+        }
         console.log('spinner');
         return React.createElement(Spinner, null);
     }

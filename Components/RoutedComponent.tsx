@@ -100,15 +100,13 @@ export const RoutedComponent: FunctionComponent<RouteComponentProps> = (props: R
     };
   }, [repo, debug, lang, iContent]);
 
-  if (!isLoading && iContent === null && ssr.IsServerSideRendering && ssrData !== null) {
-    console.log('404');
-
-    return <NotFound />;
-  }
-
   if (iContent === null) {
-    console.log('spinner');
+    if (!isLoading || (ssr.IsServerSideRendering && ssrData === null)) {
+      console.log('404');
+      return <NotFound />;
+    }
 
+    console.log('spinner');
     return <Spinner />;
   }
 
