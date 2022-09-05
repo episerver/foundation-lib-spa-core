@@ -9,5 +9,6 @@ export declare type RoutedContentProps = SwitchProps & {
     keyPrefix?: string;
     config?: IRouteConfig;
     basePath?: string;
+    NotFoundCmponent?: React.FunctionComponent;
 };
 export declare const RoutedContent: React.FunctionComponent<RoutedContentProps>;

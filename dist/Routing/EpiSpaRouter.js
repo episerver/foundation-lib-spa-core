@@ -65,7 +65,9 @@ const ElementNavigation = (props) => {
             }
             // Navigate to the new path
             if (newPath) {
-                if (link.hasAttribute('data-force-reload') || link.getAttribute('target') === '_blank' || newPath.includes('/globalassets/')) {
+                if (link.hasAttribute('data-force-reload') ||
+                    link.getAttribute('target') === '_blank' ||
+                    newPath.includes('/globalassets/')) {
                     // Follow link without intercepting event
                     return true;
                 }
@@ -101,7 +103,8 @@ export const RoutedContent = (props) => {
     const switchProps = { location: props.location };
     return (React.createElement(Switch, Object.assign({}, switchProps),
         props.children,
-        (props.config || []).map((item, idx) => createRouteNode(item, props.basePath, `${props.keyPrefix}-route-${idx}`, ctx))));
+        (props.config || []).map((item, idx) => createRouteNode(item, props.basePath, `${props.keyPrefix}-route-${idx}`, ctx)),
+        React.createElement(Route, { component: props.NotFoundCmponent })));
 };
 RoutedContent.displayName = 'Optimizely CMS: Route container';
 function createRouteNode(route, basePath = '', key, ctx) {

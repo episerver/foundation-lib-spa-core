@@ -90,7 +90,6 @@ export const EpiserverWebsite: React.FunctionComponent<CmsSiteProps> = (props) =
         <EpiRouter location={location} context={props.staticContext}>
           <SiteLayout context={props.context}>
             <RoutedContent config={props.context.config().routes || []} keyPrefix="CmsSite-RoutedContent" />
-            <Route component={NotFoundComponent} />
             {props.children}
           </SiteLayout>
         </EpiRouter>

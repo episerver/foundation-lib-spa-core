@@ -2,7 +2,6 @@
 import React, { useEffect } from 'react';
 import { Helmet } from 'react-helmet';
 import { Provider as ReduxProvider } from 'react-redux';
-import { Route } from 'react-router';
 import axios from 'axios';
 import NProgress from 'nprogress';
 import EpiserverContext from '../Hooks/Context';
@@ -62,7 +61,6 @@ export const EpiserverWebsite = (props) => {
             React.createElement(EpiRouter, { location: location, context: props.staticContext },
                 React.createElement(SiteLayout, { context: props.context },
                     React.createElement(RoutedContent, { config: props.context.config().routes || [], keyPrefix: "CmsSite-RoutedContent" }),
-                    React.createElement(Route, { component: NotFoundComponent }),
                     props.children)))));
 };
 function getLayout(context) {

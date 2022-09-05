@@ -88,7 +88,11 @@ const ElementNavigation: React.FunctionComponent = (props): React.ReactElement =
 
       // Navigate to the new path
       if (newPath) {
-        if (link.hasAttribute('data-force-reload') || link.getAttribute('target') === '_blank' || newPath.includes('/globalassets/')) {
+        if (
+          link.hasAttribute('data-force-reload') ||
+          link.getAttribute('target') === '_blank' ||
+          newPath.includes('/globalassets/')
+        ) {
           // Follow link without intercepting event
           return true;
         }
@@ -124,6 +128,7 @@ export type RoutedContentProps = SwitchProps & {
   keyPrefix?: string;
   config?: IRouteConfig;
   basePath?: string;
+  NotFoundCmponent?: React.FunctionComponent;
 };
 
 export const RoutedContent: React.FunctionComponent<RoutedContentProps> = (props) => {
@@ -135,6 +140,7 @@ export const RoutedContent: React.FunctionComponent<RoutedContentProps> = (props
       {(props.config || []).map((item, idx) =>
         createRouteNode(item, props.basePath, `${props.keyPrefix}-route-${idx}`, ctx),
       )}
+      <Route component={props.NotFoundCmponent} />
     </Switch>
   );
 };
