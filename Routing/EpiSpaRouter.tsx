@@ -140,7 +140,7 @@ export const RoutedContent: React.FunctionComponent<RoutedContentProps> = (props
       {(props.config || []).map((item, idx) =>
         createRouteNode(item, props.basePath, `${props.keyPrefix}-route-${idx}`, ctx),
       )}
-      <Route component={props.NotFoundCmponent} />
+      <Route path="*" component={props.NotFoundCmponent} />
     </Switch>
   );
 };

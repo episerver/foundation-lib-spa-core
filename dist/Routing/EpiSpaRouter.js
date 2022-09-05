@@ -104,7 +104,7 @@ export const RoutedContent = (props) => {
     return (React.createElement(Switch, Object.assign({}, switchProps),
         props.children,
         (props.config || []).map((item, idx) => createRouteNode(item, props.basePath, `${props.keyPrefix}-route-${idx}`, ctx)),
-        React.createElement(Route, { component: props.NotFoundCmponent })));
+        React.createElement(Route, { path: "*", component: props.NotFoundCmponent })));
 };
 RoutedContent.displayName = 'Optimizely CMS: Route container';
 function createRouteNode(route, basePath = '', key, ctx) {
