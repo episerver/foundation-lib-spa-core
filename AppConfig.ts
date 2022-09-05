@@ -79,7 +79,7 @@ export type AppConfig = {
   /**
    * The not found component to apply to the website.
    */
-  notFoundComponent?: FunctionComponent;
+  notFoundComponent: FunctionComponent;
 
   /**
    * Content Area configuration

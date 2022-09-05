@@ -10,7 +10,7 @@ import { Spinner } from './Spinner';
 export const RoutedComponent: FunctionComponent<RouteComponentProps> = (props: RouteComponentProps) => {
   const epi = useEpiserver();
   const cfg = epi.config();
-  const NotFoundType = cfg.notFoundComponent || <></>;
+  const NotFound = cfg.notFoundComponent;
   const repo = useIContentRepository();
   const ssr = useServerSideRendering();
   const path = props.location.pathname;
@@ -46,13 +46,13 @@ export const RoutedComponent: FunctionComponent<RouteComponentProps> = (props: R
   // Handle content changes
   useEffect(() => {
     let isCancelled = false;
-    setIsLoading(true);
     if (!iContent) {
-      setIsLoading(false);
       return () => {
         isCancelled = true;
       };
     }
+
+    setIsLoading(true);
 
     const linkId = ContentLinkService.createLanguageId(iContent, lang, true);
 
@@ -93,25 +93,16 @@ export const RoutedComponent: FunctionComponent<RouteComponentProps> = (props: R
       isCancelled = true;
       repo.removeListener('afterPatch', afterPatch);
       repo.removeListener('afterUpdate', afterUpdate);
-      setIsLoading(false);
     };
   }, [repo, debug, lang, iContent]);
 
-  console.log(iContent);
-
   if (!isLoading && iContent === null && cfg.notFoundComponent !== undefined) {
-    console.log('404');
-
-    return <>{NotFoundType}</>;
+    return <NotFound />;
   }
 
   if (iContent === null) {
-    console.log('spinner');
-
     return <Spinner />;
   }
-
-  console.log('renderer');
 
   return <IContentRenderer data={iContent} path={props.location.pathname} />;
 };

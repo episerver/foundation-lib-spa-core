@@ -7,7 +7,7 @@ export const RoutedComponent = (props) => {
     var _a;
     const epi = useEpiserver();
     const cfg = epi.config();
-    const NotFoundType = cfg.notFoundComponent || React.createElement(React.Fragment, null);
+    const NotFound = cfg.notFoundComponent;
     const repo = useIContentRepository();
     const ssr = useServerSideRendering();
     const path = props.location.pathname;
@@ -41,13 +41,12 @@ export const RoutedComponent = (props) => {
     // Handle content changes
     useEffect(() => {
         let isCancelled = false;
-        setIsLoading(true);
         if (!iContent) {
-            setIsLoading(false);
             return () => {
                 isCancelled = true;
             };
         }
+        setIsLoading(true);
         const linkId = ContentLinkService.createLanguageId(iContent, lang, true);
         const afterPatch = (link, oldValue, newValue) => {
             const itemApiId = ContentLinkService.createLanguageId(link, lang, true);
@@ -83,19 +82,14 @@ export const RoutedComponent = (props) => {
             isCancelled = true;
             repo.removeListener('afterPatch', afterPatch);
             repo.removeListener('afterUpdate', afterUpdate);
-            setIsLoading(false);
         };
     }, [repo, debug, lang, iContent]);
-    console.log(iContent);
     if (!isLoading && iContent === null && cfg.notFoundComponent !== undefined) {
-        console.log('404');
-        return React.createElement(React.Fragment, null, NotFoundType);
+        return React.createElement(NotFound, null);
     }
     if (iContent === null) {
-        console.log('spinner');
         return React.createElement(Spinner, null);
     }
-    console.log('renderer');
     return React.createElement(IContentRenderer, { data: iContent, path: props.location.pathname });
 };
 RoutedComponent.displayName = 'Optimizely CMS: Path IContent resolver';
