@@ -31,10 +31,10 @@ export const RoutedComponent: FunctionComponent<RouteComponentProps> = (props: R
     let isCancelled = false;
     setIsLoading(true);
     repo.getByRoute(path).then((c) => {
+      setIsLoading(false);
       if (isCancelled) return;
       epi.setRoutedContent(c || undefined);
       setIContent(c);
-      setIsLoading(false);
     });
     return () => {
       isCancelled = true;
@@ -48,6 +48,7 @@ export const RoutedComponent: FunctionComponent<RouteComponentProps> = (props: R
     let isCancelled = false;
     if (!iContent) {
       return () => {
+        setIsLoading(false);
         isCancelled = true;
       };
     }
@@ -71,6 +72,7 @@ export const RoutedComponent: FunctionComponent<RouteComponentProps> = (props: R
       }
     };
     const afterUpdate: (item: IContent | null) => void = (item: IContent | null) => {
+      setIsLoading(false);
       if (!item) return;
       const itemApiId = ContentLinkService.createLanguageId(item, lang, true);
       if (debug)
@@ -78,7 +80,6 @@ export const RoutedComponent: FunctionComponent<RouteComponentProps> = (props: R
       if (linkId === itemApiId) {
         if (debug) console.debug('RoutedComponent.onContentUpdated => Updating iContent', itemApiId, item);
         setIContent(item);
-        setIsLoading(false);
       }
     };
     repo.addListener('afterPatch', afterPatch);
@@ -96,11 +97,15 @@ export const RoutedComponent: FunctionComponent<RouteComponentProps> = (props: R
     };
   }, [repo, debug, lang, iContent]);
 
-  if (!isLoading && iContent === null && cfg.notFoundComponent !== undefined) {
+  if (!isLoading && iContent === null) {
+    console.log('404');
+
     return <NotFound />;
   }
 
   if (iContent === null) {
+    console.log('spinner');
+
     return <Spinner />;
   }
 
