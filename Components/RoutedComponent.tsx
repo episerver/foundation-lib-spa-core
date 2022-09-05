@@ -47,8 +47,8 @@ export const RoutedComponent: FunctionComponent<RouteComponentProps> = (props: R
   useEffect(() => {
     let isCancelled = false;
     if (!iContent) {
+      setIsLoading(false);
       return () => {
-        setIsLoading(false);
         isCancelled = true;
       };
     }
