@@ -72,14 +72,17 @@ export const RoutedComponent: FunctionComponent<RouteComponentProps> = (props: R
       }
     };
     const afterUpdate: (item: IContent | null) => void = (item: IContent | null) => {
-      setIsLoading(false);
-      if (!item) return;
+      if (!item) {
+        setIsLoading(false);
+        return;
+      }
       const itemApiId = ContentLinkService.createLanguageId(item, lang, true);
       if (debug)
         console.debug('RoutedComponent.onContentPatched => Checking content ids (link, received)', linkId, itemApiId);
       if (linkId === itemApiId) {
         if (debug) console.debug('RoutedComponent.onContentUpdated => Updating iContent', itemApiId, item);
         setIContent(item);
+        setIsLoading(false);
       }
     };
     repo.addListener('afterPatch', afterPatch);

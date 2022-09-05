@@ -61,9 +61,10 @@ export const RoutedComponent = (props) => {
             }
         };
         const afterUpdate = (item) => {
-            setIsLoading(false);
-            if (!item)
+            if (!item) {
+                setIsLoading(false);
                 return;
+            }
             const itemApiId = ContentLinkService.createLanguageId(item, lang, true);
             if (debug)
                 console.debug('RoutedComponent.onContentPatched => Checking content ids (link, received)', linkId, itemApiId);
@@ -71,6 +72,7 @@ export const RoutedComponent = (props) => {
                 if (debug)
                     console.debug('RoutedComponent.onContentUpdated => Updating iContent', itemApiId, item);
                 setIContent(item);
+                setIsLoading(false);
             }
         };
         repo.addListener('afterPatch', afterPatch);
