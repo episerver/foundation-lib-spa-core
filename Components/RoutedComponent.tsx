@@ -100,7 +100,7 @@ export const RoutedComponent: FunctionComponent<RouteComponentProps> = (props: R
     };
   }, [repo, debug, lang, iContent]);
 
-  if (!isLoading && iContent === null) {
+  if (!isLoading && iContent === null && ssr.IsServerSideRendering && ssrData !== null) {
     console.log('404');
 
     return <NotFound />;
