@@ -64,8 +64,7 @@ export declare type AppConfig = {
      */
     layout?: LayoutComponent;
     /**
-     * The layout to apply to the website, this is the "frame" around the routed
-     * content.
+     * The not found component to apply to the website.
      */
     notFoundComponent?: FunctionComponent;
     /**

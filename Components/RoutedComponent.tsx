@@ -9,6 +9,8 @@ import { Spinner } from './Spinner';
 
 export const RoutedComponent: FunctionComponent<RouteComponentProps> = (props: RouteComponentProps) => {
   const epi = useEpiserver();
+  const cfg = epi.config();
+  const NotFoundType = cfg.notFoundComponent || <></>;
   const repo = useIContentRepository();
   const ssr = useServerSideRendering();
   const path = props.location.pathname;
@@ -18,6 +20,7 @@ export const RoutedComponent: FunctionComponent<RouteComponentProps> = (props: R
     ssrData = tmpState?.iContent ?? ssr.getIContentByPath(path);
   }
   const [iContent, setIContent] = useState<IContent | null>(ssrData);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const debug = epi.isDebugActive();
   const lang = epi.Language;
 
@@ -26,24 +29,31 @@ export const RoutedComponent: FunctionComponent<RouteComponentProps> = (props: R
   // Handle path changes
   useEffect(() => {
     let isCancelled = false;
+    setIsLoading(true);
     repo.getByRoute(path).then((c) => {
       if (isCancelled) return;
       epi.setRoutedContent(c || undefined);
       setIContent(c);
+      setIsLoading(false);
     });
     return () => {
       isCancelled = true;
       epi.setRoutedContent();
+      setIsLoading(false);
     };
   }, [path, repo, epi]);
 
   // Handle content changes
   useEffect(() => {
     let isCancelled = false;
-    if (!iContent)
+    setIsLoading(true);
+    if (!iContent) {
+      setIsLoading(false);
       return () => {
         isCancelled = true;
       };
+    }
+
     const linkId = ContentLinkService.createLanguageId(iContent, lang, true);
 
     const afterPatch: (link: Readonly<ContentReference>, oldValue: Readonly<IContent>, newValue: IContent) => void = (
@@ -57,6 +67,7 @@ export const RoutedComponent: FunctionComponent<RouteComponentProps> = (props: R
       if (linkId === itemApiId && !isCancelled) {
         if (debug) console.debug('RoutedComponent.onContentPatched => Updating iContent', itemApiId, newValue);
         setIContent(newValue);
+        setIsLoading(false);
       }
     };
     const afterUpdate: (item: IContent | null) => void = (item: IContent | null) => {
@@ -67,6 +78,7 @@ export const RoutedComponent: FunctionComponent<RouteComponentProps> = (props: R
       if (linkId === itemApiId) {
         if (debug) console.debug('RoutedComponent.onContentUpdated => Updating iContent', itemApiId, item);
         setIContent(item);
+        setIsLoading(false);
       }
     };
     repo.addListener('afterPatch', afterPatch);
@@ -81,8 +93,13 @@ export const RoutedComponent: FunctionComponent<RouteComponentProps> = (props: R
       isCancelled = true;
       repo.removeListener('afterPatch', afterPatch);
       repo.removeListener('afterUpdate', afterUpdate);
+      setIsLoading(false);
     };
   }, [repo, debug, lang, iContent]);
+
+  console.log(iContent);
+
+  if (!isLoading && iContent === null && cfg.notFoundComponent !== undefined) return <>{NotFoundType}</>;
 
   if (iContent === null) return <Spinner />;
   return <IContentRenderer data={iContent} path={props.location.pathname} />;
