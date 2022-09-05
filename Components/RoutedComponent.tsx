@@ -99,9 +99,20 @@ export const RoutedComponent: FunctionComponent<RouteComponentProps> = (props: R
 
   console.log(iContent);
 
-  if (!isLoading && iContent === null && cfg.notFoundComponent !== undefined) return <>{NotFoundType}</>;
+  if (!isLoading && iContent === null && cfg.notFoundComponent !== undefined) {
+    console.log('404');
 
-  if (iContent === null) return <Spinner />;
+    return <>{NotFoundType}</>;
+  }
+
+  if (iContent === null) {
+    console.log('spinner');
+
+    return <Spinner />;
+  }
+
+  console.log('renderer');
+
   return <IContentRenderer data={iContent} path={props.location.pathname} />;
 };
 RoutedComponent.displayName = 'Optimizely CMS: Path IContent resolver';

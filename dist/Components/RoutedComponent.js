@@ -87,10 +87,15 @@ export const RoutedComponent = (props) => {
         };
     }, [repo, debug, lang, iContent]);
     console.log(iContent);
-    if (!isLoading && iContent === null && cfg.notFoundComponent !== undefined)
+    if (!isLoading && iContent === null && cfg.notFoundComponent !== undefined) {
+        console.log('404');
         return React.createElement(React.Fragment, null, NotFoundType);
-    if (iContent === null)
+    }
+    if (iContent === null) {
+        console.log('spinner');
         return React.createElement(Spinner, null);
+    }
+    console.log('renderer');
     return React.createElement(IContentRenderer, { data: iContent, path: props.location.pathname });
 };
 RoutedComponent.displayName = 'Optimizely CMS: Path IContent resolver';
