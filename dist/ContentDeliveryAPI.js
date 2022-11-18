@@ -43,9 +43,9 @@ export class ContentDeliveryAPI {
      * @deprecated
      */
     constructor(pathProvider, config) {
-        this.componentService = '/api/episerver/v3.0/content/';
-        this.websiteService = '/api/episerver/v3/site/';
-        this.methodService = '/api/episerver/v3/action/';
+        this.componentService = '/api/haldex/v1.0/cda/v3/content/';
+        this.websiteService = '/api/haldex/v1.0/cda/v3/site/';
+        this.methodService = '/api/haldex/v1.0/cda/v3/action/';
         this.debug = false;
         /**
          * Marker to keep if we're in edit mode

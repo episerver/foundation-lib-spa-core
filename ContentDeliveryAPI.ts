@@ -47,9 +47,9 @@ export function getIContentFromPathResponse<IContentType extends IContent = ICon
  */
 export class ContentDeliveryAPI {
   protected config: AppConfig;
-  protected componentService = '/api/episerver/v3.0/content/';
-  protected websiteService = '/api/episerver/v3/site/';
-  protected methodService = '/api/episerver/v3/action/';
+  protected componentService = '/api/haldex/v1.0/cda/v3/content/';
+  protected websiteService = '/api/haldex/v1.0/cda/v3/site/';
+  protected methodService = '/api/haldex/v1.0/cda/v3/action/';
   protected debug = false;
   protected pathProvider: PathProvider;
 
