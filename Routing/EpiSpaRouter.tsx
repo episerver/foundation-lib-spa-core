@@ -83,11 +83,13 @@ const ElementNavigation: React.FunctionComponent = (props): React.ReactElement =
       }
 
       // Do not navigate to the same page
+      console.log('Same path', newPath === location.pathname);
       if (newPath === location.pathname) {
         if (config.enableDebug) console.info('ElementNavigation: Ignoring navigation to same path');
         event.preventDefault();
         return false;
       }
+      console.log('New path', newPath);
 
       // Navigate to the new path
       if (newPath) {
@@ -104,6 +106,7 @@ const ElementNavigation: React.FunctionComponent = (props): React.ReactElement =
           newPath = newPath.substr(config.basePath.length);
           if (newPath.substr(0, 1) !== '/') newPath = '/' + newPath; // Ensure we've an absolute path
         }
+        console.log('pushing url', newPath);
         history.push(newPath);
         event.preventDefault();
 
