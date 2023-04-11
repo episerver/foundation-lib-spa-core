@@ -72,12 +72,15 @@ const ElementNavigation: React.FunctionComponent = (props): React.ReactElement =
       // If we have a link, see if we need to navigate
       if (link.tagName.toLowerCase() === 'a') {
         const targetUrl: URL = new URL((link as HTMLAnchorElement).href, currentUrl);
-
+        const isSamePath = targetUrl.origin === currentUrl.origin
+        console.log(isSamePath)
         // Only act if we remain on the same domain
         if (targetUrl.origin === currentUrl.origin) {
           newPath = targetUrl.pathname;
+          console.log(newPath,'newpath' )
           if (targetUrl?.search?.length > 0) {
             newPath += targetUrl.search;
+            console.log(newPath, 'newpath after search is added')
           }
         }
       }
