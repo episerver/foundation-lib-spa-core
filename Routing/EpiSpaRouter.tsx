@@ -76,15 +76,22 @@ const ElementNavigation: React.FunctionComponent = (props): React.ReactElement =
         const targetUrl: URL = new URL((link as HTMLAnchorElement).href, currentUrl);
         const isSamePath = targetUrl.origin === currentUrl.origin;
         console.log(isSamePath);
+        let searchParam = ''
+        if(targetUrl){
+          const searchQuery =  link as HTMLAnchorElement
+          searchParam = searchQuery?.href?.split('?')?.[1]
+        }
         // Only act if we remain on the same domain
         if (targetUrl.origin === currentUrl.origin) {
           const newtargetSearch = targetUrl.search;
+          console.log(newtargetSearch)
           const newtargetPath = targetUrl.pathname;
+          console.log(newtargetPath)
           const newtarget = targetUrl;
           newPath = newtargetPath;
           console.log(newPath,'newpath' )
-          if (targetUrl?.search?.length > 0) {
-            newPath += newtargetSearch;
+          if (searchParam?.length > 0) {
+            newPath += newtargetSearch?.length > 0 ? newtargetSearch : searchParam;
             console.log(newPath, 'newpath after search is added')
           }
         }
