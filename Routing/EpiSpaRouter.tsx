@@ -74,8 +74,10 @@ const ElementNavigation: React.FunctionComponent = (props): React.ReactElement =
         // eslint-disable-next-line no-debugger
         debugger;
         const targetUrl: URL = new URL((link as HTMLAnchorElement).href, currentUrl);
-        const isSamePath = targetUrl.origin === currentUrl.origin;
-        console.log(isSamePath);
+      
+     
+        console.info(targetUrl, 'target url')
+        console.error(targetUrl, 'target url')
         let searchParam = ''
         if(targetUrl){
           const searchQuery =  link as HTMLAnchorElement
@@ -84,27 +86,32 @@ const ElementNavigation: React.FunctionComponent = (props): React.ReactElement =
         // Only act if we remain on the same domain
         if (targetUrl.origin === currentUrl.origin) {
           const newtargetSearch = targetUrl.search;
-          console.log(newtargetSearch)
+          if (epi.isDebugActive()){
+            console.info('new target search',newtargetSearch)
+            console.error('new target search',newtargetSearch)
+            console.error('targetUrl',targetUrl)
+          }
           const newtargetPath = targetUrl.pathname;
-          console.log(newtargetPath)
-          const newtarget = targetUrl;
+          console.error('newtargetPath',newtargetPath)
+        
           newPath = newtargetPath;
           console.log(newPath,'newpath' )
           if (searchParam?.length > 0) {
             newPath += newtargetSearch?.length > 0 ? newtargetSearch : searchParam;
-            console.log(newPath, 'newpath after search is added')
+            console.error(newPath, 'newpath after search is added')
+            console.info(newPath, 'newpath after search is added')
           }
         }
       }
 
       // Do not navigate to the same page
-      console.log('Same path', newPath === location.pathname);
+      console.info('Same path', newPath === location.pathname);
       if (newPath === location.pathname) {
         if (config.enableDebug) console.info('ElementNavigation: Ignoring navigation to same path');
         event.preventDefault();
         return false;
       }
-      console.log('New path', newPath);
+      console.info('New path', newPath);
 
       // Navigate to the new path
       if (newPath) {
@@ -121,7 +128,7 @@ const ElementNavigation: React.FunctionComponent = (props): React.ReactElement =
           newPath = newPath.substr(config.basePath.length);
           if (newPath.substr(0, 1) !== '/') newPath = '/' + newPath; // Ensure we've an absolute path
         }
-        console.log('pushing url', newPath);
+        console.info('pushing url', newPath);
         history.push(newPath);
         event.preventDefault();
 
