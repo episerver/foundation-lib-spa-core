@@ -64,7 +64,7 @@ const ElementNavigation: React.FunctionComponent = (props): React.ReactElement =
       const target: HTMLElement = event.target as any as HTMLElement;
       const currentUrl: URL = new URL(window.location.href);
       let newPath = '';
-
+      let searchParam = ''
       // Loop parents till we find the link
       let link = target;
       while (link.parentElement && link.tagName.toLowerCase() !== 'a') link = link.parentElement;
@@ -78,24 +78,29 @@ const ElementNavigation: React.FunctionComponent = (props): React.ReactElement =
      
         console.info(targetUrl, 'target url')
         console.error(targetUrl, 'target url')
-        let searchParam = ''
-        if(targetUrl){
+       
           const searchQuery =  link as HTMLAnchorElement
           searchParam = searchQuery?.href?.split('?')?.[1]
-        }
+
+        if (config.enableDebug){
+          console.info(searchQuery, 'new link')
+          console.info(searchParam, 'new searchParam')
+          console.warn(searchQuery, 'new link')
+          console.warn(searchParam, 'new searchParam')
+          console.error(searchQuery, 'new link')
+          console.error(searchParam, 'new searchParam')
+        } 
         // Only act if we remain on the same domain
         if (targetUrl.origin === currentUrl.origin) {
           const newtargetSearch = targetUrl.search;
-          if (epi.isDebugActive()){
             console.info('new target search',newtargetSearch)
             console.error('new target search',newtargetSearch)
             console.error('targetUrl',targetUrl)
-          }
           const newtargetPath = targetUrl.pathname;
           console.error('newtargetPath',newtargetPath)
         
           newPath = newtargetPath;
-          console.log(newPath,'newpath' )
+
           if (searchParam?.length > 0) {
             newPath += newtargetSearch?.length > 0 ? newtargetSearch : searchParam;
             console.error(newPath, 'newpath after search is added')
@@ -107,7 +112,7 @@ const ElementNavigation: React.FunctionComponent = (props): React.ReactElement =
       // Do not navigate to the same page
       console.info('Same path', newPath === location.pathname);
       if (newPath === location.pathname) {
-        if (config.enableDebug) console.info('ElementNavigation: Ignoring navigation to same path');
+        if (config.enableDebug) console.info('ElementNavigation: Ignoring navigation to same path', newPath, location.pathname, searchParam);
         event.preventDefault();
         return false;
       }
