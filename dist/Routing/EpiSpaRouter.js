@@ -41,28 +41,57 @@ const ElementNavigation = (props) => {
                 console.info('ElementNavigation: Enabling catch-all click handling for navigation');
         }
         const onWindowClick = (event) => {
+            var _a, _b;
             const target = event.target;
             const currentUrl = new URL(window.location.href);
             let newPath = '';
+            let searchParam = '';
             // Loop parents till we find the link
             let link = target;
             while (link.parentElement && link.tagName.toLowerCase() !== 'a')
                 link = link.parentElement;
             // If we have a link, see if we need to navigate
             if (link.tagName.toLowerCase() === 'a') {
+                // eslint-disable-next-line no-debugger
+                debugger;
                 const targetUrl = new URL(link.href, currentUrl);
+                console.info(targetUrl, 'target url');
+                console.error(targetUrl, 'target url');
+                const searchQuery = link;
+                searchParam = (_b = (_a = searchQuery === null || searchQuery === void 0 ? void 0 : searchQuery.href) === null || _a === void 0 ? void 0 : _a.split('?')) === null || _b === void 0 ? void 0 : _b[1];
+                if (config.enableDebug) {
+                    console.info(searchQuery, 'new link');
+                    console.info(searchParam, 'new searchParam');
+                    console.warn(searchQuery, 'new link');
+                    console.warn(searchParam, 'new searchParam');
+                    console.error(searchQuery, 'new link');
+                    console.error(searchParam, 'new searchParam');
+                }
                 // Only act if we remain on the same domain
                 if (targetUrl.origin === currentUrl.origin) {
-                    newPath = targetUrl.pathname;
+                    const newtargetSearch = targetUrl.search;
+                    console.info('new target search', newtargetSearch);
+                    console.error('new target search', newtargetSearch);
+                    console.error('targetUrl', targetUrl);
+                    const newtargetPath = targetUrl.pathname;
+                    console.error('newtargetPath', newtargetPath);
+                    newPath = newtargetPath;
+                    if ((searchParam === null || searchParam === void 0 ? void 0 : searchParam.length) > 0) {
+                        newPath += (newtargetSearch === null || newtargetSearch === void 0 ? void 0 : newtargetSearch.length) > 0 ? newtargetSearch : searchParam;
+                        console.error(newPath, 'newpath after search is added');
+                        console.info(newPath, 'newpath after search is added');
+                    }
                 }
             }
             // Do not navigate to the same page
+            console.info('Same path', newPath === location.pathname);
             if (newPath === location.pathname) {
                 if (config.enableDebug)
-                    console.info('ElementNavigation: Ignoring navigation to same path');
+                    console.info('ElementNavigation: Ignoring navigation to same path', newPath, location.pathname, searchParam);
                 event.preventDefault();
                 return false;
             }
+            console.info('New path', newPath);
             // Navigate to the new path
             if (newPath) {
                 if (link.hasAttribute('data-force-reload') ||
@@ -76,6 +105,7 @@ const ElementNavigation = (props) => {
                     if (newPath.substr(0, 1) !== '/')
                         newPath = '/' + newPath; // Ensure we've an absolute path
                 }
+                console.info('pushing url', newPath);
                 history.push(newPath);
                 event.preventDefault();
                 return false;
