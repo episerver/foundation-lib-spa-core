@@ -10,7 +10,7 @@ import { IComponentLoaderConfig } from './Loaders/ComponentLoader';
 import IContentDeliveryConfig from './ContentDelivery/Config';
 import { TypeMapperType } from './Loaders/BaseTypeMapper';
 import { FunctionComponent } from 'react';
-export declare type AppConfig = {
+export type AppConfig = {
     /**
      * Enable debug logging to the console
      */

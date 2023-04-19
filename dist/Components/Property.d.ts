@@ -1,7 +1,7 @@
 import React, { HTMLAttributes, ReactElement } from 'react';
 import IContent from '../Models/IContent';
 import IEpiserverContext from '../Core/IEpiserverContext';
-export declare type PropertyProps<T extends IContent> = HTMLAttributes<HTMLElement> & {
+export type PropertyProps<T extends IContent> = HTMLAttributes<HTMLElement> & {
     /**
      * The IContent from which a property will be rendered by this component
      *

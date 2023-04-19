@@ -1,14 +1,14 @@
 import IStateReducerInfo, { InitializationAction } from '../Core/IStateReducerInfo';
 import CmsState from './CmsState';
 export declare const StateKey = "OptiContentCloud";
-export declare type CmsSetStateAction = {
+export type CmsSetStateAction = {
     type: 'OptiContentCloud/SetState';
 } & CmsState;
-export declare type CmsStateActionType = InitializationAction | CmsSetStateAction;
-export declare type ContentAppState = {
+export type CmsStateActionType = InitializationAction | CmsSetStateAction;
+export type ContentAppState = {
     OptiContentCloud?: CmsState;
 };
-export declare type PartialAppState = ContentAppState & {
+export type PartialAppState = ContentAppState & {
     [key: string]: any;
 };
 export declare const CmsStateReducerInfo: IStateReducerInfo<CmsState, CmsStateActionType>;

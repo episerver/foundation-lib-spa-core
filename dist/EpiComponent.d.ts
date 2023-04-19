@@ -91,7 +91,7 @@ export interface ComponentProps<T extends IContent> {
 /**
  * Type do describe a generic EpiComponent type
  */
-export declare type EpiComponentType<T extends IContent = IContent> = new (props: ComponentProps<T>) => EpiComponent<T>;
+export type EpiComponentType<T extends IContent = IContent> = new (props: ComponentProps<T>) => EpiComponent<T>;
 /**
  * Base abstract class to be used by components representing an Episerver IContent component (e.g. Block, Page, Media,
  * Catalog, Product, etc...)

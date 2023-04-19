@@ -1,5 +1,5 @@
 import React from 'react';
-export declare type CmsCommunicatorProps = {
+export type CmsCommunicatorProps = {
     /**
      * Override the script path for the communicator script
      *

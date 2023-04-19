@@ -1,6 +1,11 @@
 import Database from './Database';
 import Transaction from './Transaction';
 export class IndexedDB {
+    get IsAvailable() { return this._isAvailable; }
+    get IsOpen() { return this._idb ? true : false; }
+    get Name() { return this._name; }
+    get Version() { return this._version; }
+    get Database() { return this._idb; }
     constructor(name, version, schemaUpgrade, autoOpen, debug = false) {
         this._opening = undefined;
         this._isAvailable = false;
@@ -17,11 +22,6 @@ export class IndexedDB {
                 this.open();
         }
     }
-    get IsAvailable() { return this._isAvailable; }
-    get IsOpen() { return this._idb ? true : false; }
-    get Name() { return this._name; }
-    get Version() { return this._version; }
-    get Database() { return this._idb; }
     open() {
         if (!this.IsAvailable)
             return Promise.reject("IndexedDB is not available in this browser");

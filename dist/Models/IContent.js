@@ -10,9 +10,6 @@ export function genericPropertyIsProperty(prop) {
         : false;
 }
 export class BaseIContent {
-    constructor(baseData) {
-        this._serverData = baseData;
-    }
     get contentLink() {
         return this.getProperty('contentLink');
     }
@@ -57,6 +54,9 @@ export class BaseIContent {
     }
     get status() {
         return this.getProperty('status');
+    }
+    constructor(baseData) {
+        this._serverData = baseData;
     }
     get typeName() {
         return this._typeName;

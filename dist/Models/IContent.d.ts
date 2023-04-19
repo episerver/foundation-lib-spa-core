@@ -4,11 +4,11 @@ import ContentTypePath from './ContentTypePath';
 import Language from './Language';
 import LanguageList from './LanguageList';
 import { IContentDeliveryResponseContext } from '../ContentDelivery/IContentDeliveryAPI';
-export declare type NameProperty = string | StringProperty;
-export declare type GenericProperty = string | null | undefined | Language | LanguageList | ContentTypePath | ContentLink | Property<unknown>;
+export type NameProperty = string | StringProperty;
+export type GenericProperty = string | null | undefined | Language | LanguageList | ContentTypePath | ContentLink | Property<unknown>;
 export declare function namePropertyIsString(prop: NameProperty): prop is string;
 export declare function genericPropertyIsProperty<TData>(prop: GenericProperty): prop is Property<TData>;
-export declare type IContent = {
+export type IContent = {
     contentLink: ContentLink;
     name: NameProperty;
     language?: Language;
@@ -61,4 +61,4 @@ export declare abstract class BaseIContent<T extends IContent = IContent> implem
  * Static definition for the IContent instance class, so that
  * it can be autoloaded using strong typing using TypeScript.
  */
-export declare type IContentType = new <T extends IContent>(baseData: T) => BaseIContent<T>;
+export type IContentType = new <T extends IContent>(baseData: T) => BaseIContent<T>;

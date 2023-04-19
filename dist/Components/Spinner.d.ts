@@ -2,16 +2,16 @@ import { ComponentType, ReactElement } from 'react';
 /**
  * The property definition for a spinner
  */
-export declare type SpinnerProps = {
+export type SpinnerProps = {
     timeout?: number;
 };
 /**
  * Interface definition of the instance type of a Spinner
  * component.
  */
-export declare type SpinnerComponent<P extends SpinnerProps = SpinnerProps> = ComponentType<P>;
-export declare type SpinnerInstance<P extends SpinnerProps = SpinnerProps> = ReactElement<P> | null;
-export declare type CoreSpinnerComponent = SpinnerComponent<SpinnerProps> & {
+export type SpinnerComponent<P extends SpinnerProps = SpinnerProps> = ComponentType<P>;
+export type SpinnerInstance<P extends SpinnerProps = SpinnerProps> = ReactElement<P> | null;
+export type CoreSpinnerComponent = SpinnerComponent<SpinnerProps> & {
     createInstance: <InstanceProps extends SpinnerProps = SpinnerProps>(props: InstanceProps) => SpinnerInstance<InstanceProps>;
     CreateInstance: <InstanceProps extends SpinnerProps = SpinnerProps>(props: InstanceProps) => SpinnerInstance<InstanceProps>;
 };

@@ -10,7 +10,7 @@ export interface TypeMapperTypeInfo {
  * Static interface for the typemapper, so it can be included
  * in the configuration
  */
-export declare type TypeMapperType = new () => BaseTypeMapper;
+export type TypeMapperType = new () => BaseTypeMapper;
 /**
  * Base implementation for the TypeMapper, which is used to dynamically load
  * the content types needed to interact with the system.

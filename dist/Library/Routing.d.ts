@@ -6,8 +6,8 @@ import IRouteConfigBase, { IRouteConfigItem as IRouteConfigItemBase, IRouteConfi
  */
 export declare const Router: import("react").FunctionComponent<RoutingNS.RouterProps>;
 export declare const Content: import("react").FunctionComponent<RoutingNS.RoutedContentProps>;
-export declare type RouterProps = RoutingNS.RouterProps;
-export declare type ContentProps = RoutingNS.RoutedContentProps;
-export declare type IRoutingConfig = IRouteConfigBase;
-export declare type IRoutingItem = IRouteConfigItemBase;
-export declare type RoutedComponentProps<T> = IRouteConfigComponentPropsBase<T>;
+export type RouterProps = RoutingNS.RouterProps;
+export type ContentProps = RoutingNS.RoutedContentProps;
+export type IRoutingConfig = IRouteConfigBase;
+export type IRoutingItem = IRouteConfigItemBase;
+export type RoutedComponentProps<T> = IRouteConfigComponentPropsBase<T>;

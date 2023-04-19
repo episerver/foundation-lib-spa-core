@@ -3,7 +3,7 @@ import IContent from '../Models/IContent';
 import Website from '../Models/Website';
 import { ContentReference } from '../Models/ContentLink';
 import IConfig from '../AppConfig';
-export declare type IServerContextAccessor = {
+export type IServerContextAccessor = {
     /**
      * Variable indicating if the accessor is ready for use
      */
@@ -58,11 +58,11 @@ export declare type IServerContextAccessor = {
      */
     getProp<T = unknown>(propname: string): T | undefined;
 };
-export declare type IStaticServerContextAccessor = {
+export type IStaticServerContextAccessor = {
     new (executionContext: Readonly<IExecutionContext>, config: Readonly<IConfig>): IServerContextAccessor;
     displayName?: string;
 };
-declare type FactoryMethod = {
+type FactoryMethod = {
     sortOrder: number;
     accessor: IStaticServerContextAccessor;
     test: (execContext: IExecutionContext, config: IConfig) => boolean;

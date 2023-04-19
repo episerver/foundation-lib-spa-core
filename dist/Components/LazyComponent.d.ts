@@ -1,6 +1,6 @@
 import React from 'react';
 import { SpinnerProps } from './Spinner';
-export declare type LazyComponentProps<T = any> = {
+export type LazyComponentProps<T = any> = {
     /**
      * The name of the component to load, this is the component path after
      * app/Components/ e.g. a value of CheckoutPage will load the default export

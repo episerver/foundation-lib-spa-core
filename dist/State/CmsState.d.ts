@@ -1,6 +1,6 @@
 import IContent from '../Models/IContent';
 import { ServerContext } from '../ServerSideRendering/ServerContext';
-export declare type CmsState = {
+export type CmsState = {
     currentLanguage?: string;
     iContent?: IContent;
     initialState?: ServerContext;

@@ -8,13 +8,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 export class Store {
+    get Raw() {
+        return this._idbs;
+    }
     constructor(database, storeName, objectStore) {
         this._storeName = storeName;
         this._database = database;
         this._idbs = objectStore || this._database.startTransaction(this._storeName, "readonly").getRawStore(this._storeName);
-    }
-    get Raw() {
-        return this._idbs;
     }
     indices() {
         const rawStore = this._idbs;

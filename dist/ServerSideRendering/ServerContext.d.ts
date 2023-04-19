@@ -1,13 +1,13 @@
 import ContentLink from '../Models/ContentLink';
 import IContent from '../Models/IContent';
 import Website from '../Models/Website';
-declare type IContentOrSerialized = IContent | string;
-declare type ContentLinkOrSerialzed = ContentLink | string;
-declare type WebsiteOrSerialzed = Website | string;
+type IContentOrSerialized = IContent | string;
+type ContentLinkOrSerialzed = ContentLink | string;
+type WebsiteOrSerialzed = Website | string;
 export declare function isSerializedIContent(data: IContentOrSerialized): data is string;
 export declare function isSerializedContentLink(data: ContentLinkOrSerialzed): data is string;
 export declare function isSerializedWebsite(data: WebsiteOrSerialzed): data is string;
-declare type LikeALocation = {
+type LikeALocation = {
     host: string;
     hostname: string;
     href: string;
@@ -20,7 +20,7 @@ declare type LikeALocation = {
  * The TypeScript definition of the ServerContext being passed from .Net to the
  * React Application.
  */
-export declare type DefaultServerContext = {
+export type DefaultServerContext = {
     /**
      * Window.location compatible location object.
      */
@@ -54,7 +54,7 @@ export declare type DefaultServerContext = {
      */
     onReady?: () => void;
 };
-export declare type SerializedServerContext = DefaultServerContext & {
+export type SerializedServerContext = DefaultServerContext & {
     /**
      * The IContent passed from the execution (JSON Encoded)
      */
@@ -72,7 +72,7 @@ export declare type SerializedServerContext = DefaultServerContext & {
      */
     contents: IContentOrSerialized[];
 };
-export declare type ServerContext<T extends DefaultServerContext = DefaultServerContext> = T & {
+export type ServerContext<T extends DefaultServerContext = DefaultServerContext> = T & {
     /**
      * Allow custom properties to be written/read from the
      * context.

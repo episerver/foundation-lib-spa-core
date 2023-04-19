@@ -4,7 +4,7 @@ import IEpiserverContext from '../Core/IEpiserverContext';
 import { IRepositoryConfig } from './IRepository';
 import IIContentRepository from './IIContentRepository';
 import IContentDeliveryAPI from '../ContentDelivery/IContentDeliveryAPI';
-declare type EpiContentSavedEvent = {
+type EpiContentSavedEvent = {
     successful: boolean;
     contentLink: string;
     hasContentLinkChanged: boolean;

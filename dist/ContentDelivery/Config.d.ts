@@ -2,7 +2,7 @@ import { AxiosAdapter } from 'axios';
 /**
  * ContentDeliveryAPI Configuration definition
  */
-export declare type Config = {
+export type Config = {
     /**
      * The Base URL where Episerver is running. In normal scenario's this is
      * the primary domain of the Episerver installation.

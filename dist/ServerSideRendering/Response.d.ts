@@ -1,4 +1,4 @@
-export declare type Response = {
+export type Response = {
     Body: string;
     HtmlAttributes?: string;
     Title?: string;

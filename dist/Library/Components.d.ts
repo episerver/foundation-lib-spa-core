@@ -1,7 +1,7 @@
 import React from 'react';
 import IContent from '../Models/IContent';
 import { PropertyProps } from '../Components/Property';
-export declare type PropertyComponent<T extends IContent> = React.ComponentType<PropertyProps<T>>;
+export type PropertyComponent<T extends IContent> = React.ComponentType<PropertyProps<T>>;
 export { default as Property } from '../Components/Property';
 export { default as Link } from '../Components/Link';
 export { default as LazyComponent } from '../Components/LazyComponent';

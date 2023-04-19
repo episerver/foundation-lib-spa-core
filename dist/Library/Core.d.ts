@@ -12,9 +12,9 @@ export declare const DefaultServiceContainer: typeof DefaultServiceContainerBase
 export declare const DefaultContext: IEpiserverContextBase;
 export declare const DefaultServices: typeof DefaultServicesBase;
 export declare const BaseInitializableModule: typeof CoreBaseInitializableModule;
-export declare type IEpiserverContext = IEpiserverContextBase;
-export declare type IEventEngine = IEventEngineBase;
-export declare type IInitializableModule = IInitializableModuleBase;
-export declare type IServiceContainer = IServiceContainerBase;
-export declare type IStateReducerInfo<S, A extends Action = AnyAction> = IStateReducerInfoBase<S, A>;
-export declare type IConfig = AppConfig;
+export type IEpiserverContext = IEpiserverContextBase;
+export type IEventEngine = IEventEngineBase;
+export type IInitializableModule = IInitializableModuleBase;
+export type IServiceContainer = IServiceContainerBase;
+export type IStateReducerInfo<S, A extends Action = AnyAction> = IStateReducerInfoBase<S, A>;
+export type IConfig = AppConfig;

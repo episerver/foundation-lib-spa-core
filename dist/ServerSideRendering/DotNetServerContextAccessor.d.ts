@@ -10,7 +10,7 @@ export interface ServerSideEnumerator<TData> {
     Map: <TOut>(func: (item: TData) => TOut) => TOut[];
     forEach: (func: (item: TData) => void) => void;
 }
-export declare type ServerSideAPI = {
+export type ServerSideAPI = {
     GetService: <T = unknown>(name: string) => T;
     MakeSafe: <T = unknown>(object: unknown) => T;
     LoadIContent: <T extends IContent = IContent>(complexReference: string) => T | null;

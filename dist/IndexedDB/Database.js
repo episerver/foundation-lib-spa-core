@@ -10,10 +10,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 import Transaction from './Transaction';
 import Store from './Store';
 export class Database {
-    constructor(idb) {
-        this._stores = [];
-        this._idb = idb;
-    }
     get Raw() {
         return this._idb;
     }
@@ -23,6 +19,10 @@ export class Database {
                 this._stores.push(storeName);
         }
         return this._stores;
+    }
+    constructor(idb) {
+        this._stores = [];
+        this._idb = idb;
     }
     replaceStore(name, keyPath, autoIncrement, indices) {
         return __awaiter(this, void 0, void 0, function* () {

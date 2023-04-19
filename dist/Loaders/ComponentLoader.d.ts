@@ -1,19 +1,19 @@
 import React, { ReactNode, ComponentType } from 'react';
 import IContent from '../Models/IContent';
 import { ComponentProps } from '../EpiComponent';
-export declare type TComponentType<T extends unknown = ComponentProps<IContent>> = ComponentType<T>;
-export declare type TComponentTypePromise<T extends unknown = ComponentProps<IContent>> = Promise<TComponentType<T>>;
+export type TComponentType<T extends unknown = ComponentProps<IContent>> = ComponentType<T>;
+export type TComponentTypePromise<T extends unknown = ComponentProps<IContent>> = Promise<TComponentType<T>>;
 /**
  * Type defintiion to allow access to the pre-loaded modules
  */
-export declare type LoadedModuleList = {
+export type LoadedModuleList = {
     [key: string]: ComponentType;
 };
-export declare type LoadingModuleList = {
+export type LoadingModuleList = {
     [key: string]: Promise<ComponentType>;
 };
-export declare type IComponentLoaderList = IComponentLoader[];
-export declare type IComponentLoaderConfig = (IComponentLoader | IComponentLoaderType)[] & {
+export type IComponentLoaderList = IComponentLoader[];
+export type IComponentLoaderConfig = (IComponentLoader | IComponentLoaderType)[] & {
     debug?: boolean;
 };
 export declare const isIComponentLoader: (toTest: IComponentLoader | IComponentLoaderType) => toTest is IComponentLoader;
@@ -23,7 +23,7 @@ export interface IComponentLoader {
     load: <T extends unknown = ComponentProps<IContent>>(componentName: string) => TComponentTypePromise<T>;
     setDebug: (debug: boolean) => void;
 }
-export declare type IComponentLoaderType = new () => IComponentLoader;
+export type IComponentLoaderType = new () => IComponentLoader;
 /**
  * Helper class that ensures components can be pre-loaded for server side
  * rendering whilest loading them asynchronously in browser to minimize the

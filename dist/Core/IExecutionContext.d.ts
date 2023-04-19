@@ -1,4 +1,4 @@
-export declare type IExecutionContext = {
+export type IExecutionContext = {
     isServerSideRendering: boolean;
     isDebugActive: boolean;
     isInEditMode: boolean;

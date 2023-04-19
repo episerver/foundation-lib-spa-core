@@ -5,7 +5,7 @@ import { ComponentProps } from '../EpiComponent';
 /**
  * The properties for the Episerver CMS Component
  */
-export declare type EpiComponentProps<T extends IContent = IContent> = Omit<ComponentProps<T>, 'data' | 'context'> & {
+export type EpiComponentProps<T extends IContent = IContent> = Omit<ComponentProps<T>, 'data' | 'context'> & {
     /**
      * The data for the component, if it has been fetched before.
      */

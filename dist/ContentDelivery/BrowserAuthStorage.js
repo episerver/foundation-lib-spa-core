@@ -3,6 +3,12 @@
  * in a browser
  */
 export class BrowserAuthStorage {
+    get storage() {
+        if (!(window === null || window === void 0 ? void 0 : window.localStorage)) {
+            throw new Error('LocalAuthStorage must be used in a browser supporting LocalStorage');
+        }
+        return window.localStorage;
+    }
     constructor(key = "episerver_id") {
         this.clearToken = () => {
             this.storage.removeItem(this._key);
@@ -22,12 +28,6 @@ export class BrowserAuthStorage {
             return JSON.parse(atob(stringToken));
         };
         this._key = key;
-    }
-    get storage() {
-        if (!(window === null || window === void 0 ? void 0 : window.localStorage)) {
-            throw new Error('LocalAuthStorage must be used in a browser supporting LocalStorage');
-        }
-        return window.localStorage;
     }
 }
 export default BrowserAuthStorage;

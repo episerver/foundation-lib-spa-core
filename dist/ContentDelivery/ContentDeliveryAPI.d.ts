@@ -95,7 +95,7 @@ export declare class ContentDeliveryAPI implements IContentDeliveryAPi {
     protected errorCounter: number;
     protected createNetworkErrorResponse<T extends unknown = any>(error: T, response?: AxiosResponse): NetworkErrorData<T>;
 }
-export declare type AxiosHeaders = {
+export type AxiosHeaders = {
     [key: string]: string;
 };
 export default ContentDeliveryAPI;

@@ -124,13 +124,13 @@ export const buildComponentName = (item, contentType) => {
     return `app/Components/${baseName}`;
 };
 class EpiComponentErrorBoundary extends React.Component {
-    constructor(props) {
-        super(props);
-        this.state = { hasError: false };
-    }
     static getDerivedStateFromError() {
         // Update state so the next render will show the fallback UI.
         return { hasError: true };
+    }
+    constructor(props) {
+        super(props);
+        this.state = { hasError: false };
     }
     componentDidCatch(error, errorInfo) {
         console.error('EpiComponent caught error', error, errorInfo);

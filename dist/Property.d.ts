@@ -3,7 +3,7 @@ import ContentLink from './Models/ContentLink';
 /**
  * Default untyped property definition
  */
-export declare type Property<ValueType = any, ExpandedType = any> = {
+export type Property<ValueType = any, ExpandedType = any> = {
     propertyDataType: string;
     value: ValueType;
     expandedValue?: ExpandedType;
@@ -11,14 +11,14 @@ export declare type Property<ValueType = any, ExpandedType = any> = {
 /**
  * Strong typed property definition
  */
-export declare type StringProperty = Property<string>;
-export declare type NumberProperty = Property<number>;
-export declare type BooleanProperty = Property<boolean>;
-export declare type ContentReferenceProperty = Property<ContentLink, IContent>;
-export declare type ContentReferenceListProperty = Property<ContentLink[], IContent[]>;
-export declare type ContentAreaProperty = Property<ContentAreaPropertyValue, IContent[]>;
-export declare type LinkListProperty = Property<LinkProperty[]>;
-export declare type LinkProperty = {
+export type StringProperty = Property<string>;
+export type NumberProperty = Property<number>;
+export type BooleanProperty = Property<boolean>;
+export type ContentReferenceProperty = Property<ContentLink, IContent>;
+export type ContentReferenceListProperty = Property<ContentLink[], IContent[]>;
+export type ContentAreaProperty = Property<ContentAreaPropertyValue, IContent[]>;
+export type LinkListProperty = Property<LinkProperty[]>;
+export type LinkProperty = {
     href: string;
     title: string;
     target: string;
@@ -28,11 +28,11 @@ export declare type LinkProperty = {
 /**
  * Definition of the ContentArea property value as used within the ContentDelivery API
  */
-export declare type ContentAreaPropertyValue = ContentAreaPropertyItem[];
+export type ContentAreaPropertyValue = ContentAreaPropertyItem[];
 /**
  * A single item within an ContentArea, as returned by the ContentDelivery API
  */
-export declare type ContentAreaPropertyItem = {
+export type ContentAreaPropertyItem = {
     contentLink: ContentLink;
     displayOption: string;
     tag: string;

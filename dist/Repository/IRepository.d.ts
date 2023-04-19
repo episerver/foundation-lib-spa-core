@@ -19,12 +19,12 @@ export declare enum IRepositoryPolicy {
      */
     PreferOffline = "PreferOffline"
 }
-export declare type IRepositoryItem<T> = {
+export type IRepositoryItem<T> = {
     data: T;
     added?: number;
     accessed?: number;
 };
-export declare type IRepositoryConfig = {
+export type IRepositoryConfig = {
     /**
      * The load method policy
      *

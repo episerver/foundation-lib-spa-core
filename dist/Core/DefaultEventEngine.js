@@ -4,6 +4,12 @@ import EventEmitter from 'eventemitter3';
  * The default event engine for the SPA
  */
 export default class DefaultEventEngine {
+    get debug() {
+        return this._debug;
+    }
+    set debug(val) {
+        this._debug = val;
+    }
     constructor() {
         this._listeners = {};
         this._events = [];
@@ -13,12 +19,6 @@ export default class DefaultEventEngine {
         if (ctx.addEventListener) {
             ctx.addEventListener('message', this.onPostMessageReceived.bind(this), false);
         }
-    }
-    get debug() {
-        return this._debug;
-    }
-    set debug(val) {
-        this._debug = val;
     }
     log(...args) {
         if (this.debug)

@@ -7,8 +7,8 @@ import WebsiteList from './Models/WebsiteList';
 import Website from './Models/Website';
 import PathProvider from './PathProvider';
 import Property from './Property';
-export declare type PathResponse<T = any, C extends IContent = IContent> = C | ActionResponse<T, C>;
-export declare type NetworkErrorData<T = any> = IContent & {
+export type PathResponse<T = any, C extends IContent = IContent> = C | ActionResponse<T, C>;
+export type NetworkErrorData<T = any> = IContent & {
     error: Property<T>;
 };
 export declare function PathResponseIsIContent(iContent: PathResponse): iContent is IContent;

@@ -433,7 +433,7 @@ export class ContentDeliveryAPI {
                 if (this._config.Debug)
                     console.info('ContentDeliveryAPI Requesting', requestConfig.method + ' ' + requestConfig.url, requestConfig.data);
                 const response = yield this.Axios.request(requestConfig);
-                if (response.status >= 400 && !returnOnError) {
+                if (response.status >= 400 && !returnOnError && response.status !== 401) {
                     if (this._config.Debug)
                         console.info(`ContentDeliveryAPI Error ${response.status}: ${response.statusText}`, requestConfig.method + ' ' + requestConfig.url);
                     throw new Error(`${response.status}: ${response.statusText}`);

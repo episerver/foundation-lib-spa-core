@@ -8,12 +8,12 @@ import { PathResponse, NetworkErrorData } from '../ContentDeliveryAPI';
 import { IOAuthResponse } from './IAuthService';
 import IAuthTokenProvider from './IAuthTokenProvider';
 export declare function isNetworkError(content: any): content is NetworkErrorData;
-export declare type IContentDeliverySearchResults<T extends IContent = IContent> = {
+export type IContentDeliverySearchResults<T extends IContent = IContent> = {
     TotalMatching: number;
     Results: T[];
 };
-export declare type IContentDeliveryResponse<T> = [T, IContentDeliveryResponseContext];
-export declare type IContentDeliveryResponseContext = {
+export type IContentDeliveryResponse<T> = [T, IContentDeliveryResponseContext];
+export type IContentDeliveryResponseContext = {
     etag?: string;
     date?: string;
     cacheControl?: string[];
@@ -30,7 +30,7 @@ export declare type IContentDeliveryResponseContext = {
  * request/response caching, however that may or may not be desired for your
  * use case.
  */
-export declare type IContentDeliveryAPI = {
+export type IContentDeliveryAPI = {
     /**
      * Flag to get if the page is running in the Episerver Shell, or related
      * views.

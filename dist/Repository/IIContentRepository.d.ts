@@ -8,7 +8,7 @@ import WebsiteList from '../Models/WebsiteList';
 /**
  * The data structure stored within the iContent repository
  */
-export declare type IContentRepositoryItem<T extends IContent = IContent> = IRepositoryItem<T> & {
+export type IContentRepositoryItem<T extends IContent = IContent> = IRepositoryItem<T> & {
     apiId: string;
     guid: string;
     contentId: string;
@@ -47,7 +47,7 @@ export interface IEventingRepository<EventTypes extends EventEmitter.ValidEventT
     removeListener<T extends EventEmitter.EventNames<EventTypes>>(event: T, fn?: EventEmitter.EventListener<EventTypes, T>, context?: Context, once?: boolean): this;
     off<T extends EventEmitter.EventNames<EventTypes>>(event: T, fn?: EventEmitter.EventListener<EventTypes, T>, context?: Context, once?: boolean): this;
 }
-export declare type WebsiteRepositoryItem<T extends Website = Website> = IRepositoryItem<T> & {
+export type WebsiteRepositoryItem<T extends Website = Website> = IRepositoryItem<T> & {
     hosts: string;
 };
 export interface IIContentRepository extends IPatchableRepository<ContentReference, IContent>, IEventingRepository<IPatchableRepositoryEvents<ContentReference, IContent>, IIContentRepository> {
@@ -100,5 +100,5 @@ export interface IIContentRepository extends IPatchableRepository<ContentReferen
     getWebsite: (hostname: string, language?: string) => Promise<Website | null>;
     getCurrentWebsite: () => Promise<Readonly<Website> | null>;
 }
-export declare type IIContentRepositoryType = new (api: IContentDeliveryAPI, config?: Partial<IRepositoryConfig>) => IIContentRepository;
+export type IIContentRepositoryType = new (api: IContentDeliveryAPI, config?: Partial<IRepositoryConfig>) => IIContentRepository;
 export default IIContentRepository;
